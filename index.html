@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.57 «Читаемость» — рабочий MVP</title>
+﻿<title>Эллинг v1.58 «Настройки» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -185,6 +185,18 @@
   .wiz-step.on span{background:var(--accent);color:#fff}
   .wiz-step.ok span{background:var(--good)}
   .wiz-step.ok{color:var(--good)}
+  /* v1.58: двухпанельные настройки (рубрикатор слева) — как Ozon/Яндекс/Bitrix */
+  .set-wrap{display:grid;grid-template-columns:236px 1fr;gap:20px;align-items:start}
+  .set-rail{position:sticky;top:78px;display:flex;flex-direction:column;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--sh)}
+  .set-cat{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;background:none;border:none;cursor:pointer;text-align:left;width:100%;font:inherit;font-size:13.5px;font-weight:600;color:var(--ink2);transition:background .15s,color .15s;position:relative}
+  .set-cat:hover{background:var(--panel2);color:var(--ink)}
+  .set-cat.on{background:var(--accent-soft);color:var(--accent)}
+  .set-cat.on::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+  .set-cat svg.ic{width:17px;height:17px;flex:none;opacity:.8}
+  .set-cat.on svg.ic{opacity:1}
+  .set-main{min-width:0}
+  .set-sec[hidden]{display:none}
+  @media(max-width:860px){.set-wrap{grid-template-columns:1fr}.set-rail{position:static;flex-direction:row;overflow-x:auto;flex-wrap:nowrap;top:0}.set-cat{white-space:nowrap}.set-cat.on::before{display:none}}
   .bench-dealpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
   .bench-dealpick label{font-size:13px;font-weight:600;color:var(--ink2)}
   .bench-dealpick select{font:inherit;font-size:13.5px;font-weight:600;padding:9px 13px;border-radius:10px;border:1px solid var(--line);
@@ -1875,7 +1887,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.57';
+const APP_VER = '1.58';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2031,14 +2043,17 @@ function vSettings(){
     ['Закупки','спецификации, поставщики, ПП 719','CRM-воронка'],
     ['Логист','отгрузки, комплектация, пропуска','CRM, инженерная БЗ'],
   ];
-  return `<div class="panel" style="margin-bottom:14px"><h3>Оформление</h3>
+  const tab = S.setTab||'users';
+  const SET_CATS=[['users','i-deals','Пользователи и роли'],['integrations','i-supply','Интеграции'],['migrate','i-supply','Миграция реестра'],['auto','i-today','Автоматизации'],['notify','i-bell','Уведомления'],['theme','i-settings','Оформление'],['api','i-kb','API'],['system','i-plan','Система']];
+  return `<div class="set-wrap"><aside class="set-rail">${SET_CATS.map(([id,ic,l])=>`<button class="set-cat ${tab===id?'on':''}" data-settab="${id}"><svg class="ic"><use href="#${ic}"/></svg><span>${l}</span></button>`).join('')}</aside><div class="set-main">
+    <section class="set-sec" data-sec="theme" ${tab==='theme'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Оформление</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${[['auto','◐ Авто (по системе)'],['dark','☾ Тёмная'],['light','☀ Светлая']].map(([v,l])=>
           `<button class="chip" data-settheme="${v}" aria-pressed="${cur===v}">${l}</button>`).join('')}
       </div>
       <p style="font-size:12px;color:var(--muted);margin-top:10px">Выбор сохраняется в этом браузере и не влияет на других пользователей.</p>
-    </div>
-    ${(()=>{ const imp=S.imp||(S.imp={text:'',rows:[],headers:[],map:{},msg:''});
+    </div></section>
+    <section class="set-sec" data-sec="migrate" ${tab==='migrate'?'':'hidden'}>${(()=>{ const imp=S.imp||(S.imp={text:'',rows:[],headers:[],map:{},msg:''});
       const _done=/✓/.test(imp.msg||''); const _step=_done?3:imp.rows.length?2:1;
       return `<div class="panel wiz" id="migWiz" style="margin-bottom:14px"><h3>Мастер миграции реестра <span style="font-family:var(--mono);font-size:10px;color:var(--accent)">· L1 · запуск за день, без внедренца</span></h3>
       <div class="wiz-steps">
@@ -2072,8 +2087,8 @@ function vSettings(){
         </table>${imp.rows.length>4?`<div style="font-size:11px;color:var(--muted);padding:4px 10px">…ещё ${imp.rows.length-4}</div>`:''}</div>
         <button class="btn" id="impDo" style="margin-top:12px">Импортировать ${imp.rows.length} заказов →</button>
       </div>`:''}
-    </div>`; })()}
-    <div class="panel" style="margin-bottom:14px"><h3>Пользователи и роли <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· RBAC · в проде: SSO/OIDC + приглашения</span></h3>
+    </div>`; })()}</section>
+    <section class="set-sec" data-sec="users" ${tab==='users'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Пользователи и роли <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· RBAC · в проде: SSO/OIDC + приглашения</span></h3>
       ${Object.keys(PEOPLE).map(p=>`<div class="loadrow"><span class="nm">${av(p)} ${PEOPLE[p].full}</span>
         <span style="font-size:12.5px;color:var(--ink2);flex:1">${PEOPLE[p].role}</span></div>`).join('')}
     </div>
@@ -2082,8 +2097,8 @@ function vSettings(){
         <tr>${['Роль','Видит','Скрыто'].map(h=>`<th style="font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)">${h}</th>`).join('')}</tr>
         ${ROLE_MATRIX.map(r=>`<tr>${r.map((c,i)=>`<td style="padding:7px 10px;border-bottom:1px solid var(--line2);color:${i===0?'var(--ink)':'var(--ink2)'};${i===0?'font-weight:640;white-space:nowrap':''}">${c}</td>`).join('')}</tr>`).join('')}
       </table></div>
-    </div>
-    <div class="panel" style="margin-bottom:14px"><h3>Автоматизации <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· правила «триггер → действие» · убийца статусных звонков</span></h3>
+    </div></section>
+    <section class="set-sec" data-sec="auto" ${tab==='auto'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Автоматизации <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· правила «триггер → действие» · убийца статусных звонков</span></h3>
       ${(S.rules||[]).map(r=>`<div class="loadrow" style="align-items:flex-start">
         <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;flex:1">
           <input type="checkbox" data-rule="${r.id}" ${r.enabled?'checked':''} style="accent-color:var(--accent);margin-top:3px;width:16px;height:16px">
@@ -2093,8 +2108,8 @@ function vSettings(){
       <button class="chip" id="runAuto" style="margin-top:8px">▶ Прогнать сейчас</button>
       ${S.autoMsg?`<div class="ai-box" style="margin-top:8px">${esc(S.autoMsg)}</div>`:''}
       <p style="font-size:12px;color:var(--muted);margin-top:8px">Просрочка проверяется автоматически каждую минуту. В демо есть просроченная задача СТ-2465 — правило уже включено, нажмите «Прогнать» и смотрите колокол 🔔.</p>
-    </div>
-    <div class="panel" style="margin-bottom:14px"><h3>Каналы уведомлений вне приложения <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· заводы живут в почте и мессенджерах</span></h3>
+    </div></section>
+    <section class="set-sec" data-sec="notify" ${tab==='notify'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Каналы уведомлений вне приложения <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· заводы живут в почте и мессенджерах</span></h3>
       <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Уведомления (@упоминания, просрочки, статусы) дублируются туда, где человек уже есть — не нужно заходить в систему, чтобы узнать. В демо доставка имитируется; в проде — почтовый шлюз и Telegram-бот.</p>
       ${[['mail','Электронная почта','дублировать на Outlook / SMTP'],['tg','Telegram','бот присылает в личку или групповой чат отдела']].map(([k,t,d])=>`
         <div class="loadrow" style="align-items:center;gap:12px">
@@ -2104,9 +2119,9 @@ function vSettings(){
         </div>`).join('')}
       <button class="btn ghost" id="notifTest" style="margin-top:10px">Отправить тестовое уведомление</button>
       ${S.notifMsg?`<div class="ai-box" style="margin-top:10px">${esc(S.notifMsg)}</div>`:''}
-    </div>
-    ${vAgent()}
-    <div class="panel" style="margin-bottom:14px"><h3>Публичный REST API <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· v1 · встраивание и миграция</span></h3>
+    </div></section>
+    <section class="set-sec" data-sec="integrations" ${tab==='integrations'?'':'hidden'}>${vAgent()}</section>
+    <section class="set-sec" data-sec="api" ${tab==='api'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Публичный REST API <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· v1 · встраивание и миграция</span></h3>
       <div style="font-size:13px;color:var(--ink2);line-height:1.8">
         База: <code style="font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px">${location.origin}/api/v1</code><br>
         Токен: <code style="font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px">elling-demo-token</code> <span style="font-size:11px;color:var(--muted)">(демо; в проде — выдача/ротация на пользователя)</span>
@@ -2125,14 +2140,14 @@ function vSettings(){
 curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: application/json" \\
   -d '{"title":"Оценка ТЗ","assignee":"petrov"}' ${location.origin}/api/v1/tasks</div>
       <p style="font-size:12px;color:var(--muted);margin-top:10px">${SRV.on?'Сервер запущен — API активен.':'API работает при запущенном сервере (Запустить_сервер.bat).'} Соответствует джентльменскому минимуму трекера из паритет-чека с Jira/Я.Трекером.</p>
-    </div>
-    <div class="panel"><h3>Система</h3>
+    </div></section>
+    <section class="set-sec" data-sec="system" ${tab==='system'?'':'hidden'}><div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
-        Версия: Эллинг v1.21 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
+        Версия: Эллинг v${APP_VER} · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
         <button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>
       </div>
-    </div>`;
+    </div></section></div></div>`;
 }
 const RSTAGES = ['Техпроект (П)','РКД','Закупка / Тендер','Контракт'];
 const PST = {ok:['var(--good)','заложено'],warn:['var(--warn)','под угрозой'],lost:['var(--risk)','перезаложено']};
@@ -2931,7 +2946,9 @@ document.addEventListener('click', e=>{
   const ngh = e.target.closest('[data-navgroup]');
   if(ngh){ const id=ngh.dataset.navgroup; S.navOpen=S.navOpen||{}; S.navOpen[id]=!S.navOpen[id]; syncNavOpen(); return; }
   const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; document.body.classList.remove('nav-open'); render(); return; }
-  if(e.target.closest('[data-migrate]')){ S.view='settings'; S._scrollMig=1; document.body.classList.remove('nav-open'); render(); return; }
+  if(e.target.closest('[data-migrate]')){ S.view='settings'; S.setTab='migrate'; S._scrollMig=1; document.body.classList.remove('nav-open'); render(); return; }
+  const stab = e.target.closest('[data-settab]');
+  if(stab){ S.setTab=stab.dataset.settab; render(); const m=$('content'); if(m&&m.scrollIntoView) try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
   const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
   const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); return; }
   const adv = e.target.closest('[data-advance]');
