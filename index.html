@@ -1,10 +1,10 @@
-﻿<title>Эллинг v1.19 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.20 «Пульт» — рабочий MVP</title>
 <style>
   /* Палитра «грунт и сталь» · акцент — сурик (красно-рыжий грунт корпуса на стапеле); циан-сталь — только для данных */
   :root{
-    --bg:#EBEEF3; --panel:#FFFFFF; --panel2:#F4F6FA; --side:#0E1620; --side-ink:#93A7BC; --side-act:#FF7A33;
+    --bg:#F5F6F8; --panel:#FFFFFF; --panel2:#F3F5F8; --side:#0E1620; --side-ink:#93A7BC; --side-act:#FF7A33;
     --ink:#111A24; --ink2:#48586A; --muted:#7C8C9C;
-    --line:#DCE2EB; --line2:#E9EDF3;
+    --line:#E3E7EC; --line2:#ECEFF3; --sh:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);
     --accent:#C24309; --accent-soft:#FBE7DB; --steel:#0E7C93;
     --navy:#1F3A50; --navy-soft:#E4EBF3;
     --good:#1E7D46; --good-soft:#E1F1E7; --warn:#A9660A; --warn-soft:#F8EEDA; --risk:#C0362E; --risk-soft:#F9E4E1;
@@ -16,22 +16,22 @@
   }
   @media (prefers-color-scheme: dark){
     :root{--bg:#080C12;--panel:#111A24;--panel2:#17222F;--side:#060A0F;--side-ink:#8195A9;
-      --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#22303E;--line2:#1A2734;
+      --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#26343F;--line2:#1E2A36;--sh:0 1px 2px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.35);
       --accent:#FF7A33;--accent-soft:#37220F;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;
       --good:#5FD08B;--good-soft:#122A1B;--warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
       
       --glow:0 0 0 1px rgba(255,122,51,.18), 0 10px 40px -10px rgba(0,0,0,.6);
       --shadow:0 16px 50px -18px rgba(0,0,0,.7);}
   }
-  :root[data-theme="light"]{--bg:#EBEEF3;--panel:#FFFFFF;--panel2:#F4F6FA;--side:#0E1620;--side-ink:#93A7BC;
-    --ink:#111A24;--ink2:#48586A;--muted:#7C8C9C;--line:#DCE2EB;--line2:#E9EDF3;--accent:#C24309;
+  :root[data-theme="light"]{--bg:#F5F6F8;--panel:#FFFFFF;--panel2:#F3F5F8;--side:#0E1620;--side-ink:#93A7BC;
+    --ink:#111A24;--ink2:#48586A;--muted:#7C8C9C;--line:#E3E7EC;--line2:#ECEFF3;--sh:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);--accent:#C24309;
     --accent-soft:#FBE7DB;--steel:#0E7C93;--navy:#1F3A50;--navy-soft:#E4EBF3;--good:#1E7D46;--good-soft:#E1F1E7;
     --warn:#A9660A;--warn-soft:#F8EEDA;--risk:#C0362E;--risk-soft:#F9E4E1;
     
     --glow:0 0 0 1px rgba(194,67,9,.16), 0 8px 30px -8px rgba(30,50,70,.18);
     --shadow:0 10px 34px -14px rgba(20,35,55,.28);}
   :root[data-theme="dark"]{--bg:#080C12;--panel:#111A24;--panel2:#17222F;--side:#060A0F;--side-ink:#8195A9;
-    --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#22303E;--line2:#1A2734;--accent:#FF7A33;
+    --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#26343F;--line2:#1E2A36;--sh:0 1px 2px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.35);--accent:#FF7A33;
     --accent-soft:#37220F;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;--good:#5FD08B;--good-soft:#122A1B;
     --warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
     
@@ -72,8 +72,8 @@
 
   /* ===== main ===== */
   main{flex:1;min-width:0;display:flex;flex-direction:column}
-  .topbar{display:flex;align-items:center;gap:12px;padding:13px 24px;background:var(--panel);
-    border-bottom:1px solid var(--line);flex-wrap:wrap;position:sticky;top:0;z-index:30}
+  .topbar{display:flex;align-items:center;gap:12px;padding:15px 30px;background:var(--panel);
+    border-bottom:1px solid var(--line2);flex-wrap:wrap;position:sticky;top:0;z-index:30}
   /* сигнатура: шпангоутная линейка — засечки плазовой разбивки корпуса вдоль нижнего края шапки */
   .topbar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:6px;pointer-events:none;
     background:repeating-linear-gradient(90deg,var(--accent) 0 1px,transparent 1px 24px);
@@ -81,7 +81,8 @@
   .topbar h1{font-size:19px;margin:0;font-weight:750;letter-spacing:-.02em}
   .topbar .crumb{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.02em}
   .topbar .spacer{flex:1}
-  .search{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13.5px;color:var(--ink);width:220px;font-family:var(--sans)}
+  .search{background:var(--panel2);border:1px solid transparent;border-radius:9px;padding:9px 13px;font-size:13.5px;color:var(--ink);width:250px;font-family:var(--sans);transition:background .15s,border-color .15s}
+  .search:hover{background:var(--line2)}
   .userbox{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
   .userbox select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;color:var(--ink);font-size:13px;font-family:var(--sans)}
   .icobtn{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);
@@ -111,7 +112,8 @@
     border:1px solid var(--line);border-radius:8px;padding:4px 10px;color:var(--ink2);cursor:pointer;margin:0 6px 6px 0}
   .lnk:hover{border-color:var(--accent);color:var(--accent)}
   .lnk.block{border-color:var(--risk);color:var(--risk)}
-  .content{padding:20px 22px 60px;overflow-x:hidden}
+  .content{padding:26px 30px 64px;overflow-x:hidden;max-width:1440px}
+  @media(max-width:720px){.content{padding:18px 16px 56px}}
 
   .av{width:27px;height:27px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:11px;font-weight:700;flex:none;vertical-align:middle}
   .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 17px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;
@@ -127,9 +129,13 @@
   .chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;align-items:center}
   .chips .lbl{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-right:2px}
 
-  /* === спокойная глубина: состояние передаёт рамка, не подпрыгивание (impeccable · product) === */
-  .wcard,.kbcard,.anacard,.ocard,.mod,.role,.pain{transition:border-color .18s}
-  .wcard:hover,.kbcard:hover,.anacard:hover,.ocard:hover{border-color:var(--accent)}
+  /* === современная поверхность: мягкая слоистая элевация + светлые границы (не XP-коробки) === */
+  .panel,.wcard,.evfeed,.stat,.flow-wrap,.anacard,.kbcard,.ocard,.card,.mod,.role,.pain,.tcard,.bell-drop{
+    border-color:var(--line2);box-shadow:var(--sh)}
+  .col{border-color:var(--line2)}
+  .panel,.wcard,.evfeed,.stat,.anacard,.kbcard,.ocard,.flow-wrap{border-radius:12px}
+  .wcard,.kbcard,.anacard,.ocard,.mod,.role,.pain{transition:border-color .18s,box-shadow .18s}
+  .wcard:hover,.kbcard:hover,.anacard:hover,.ocard:hover{border-color:var(--line);box-shadow:0 4px 12px rgba(16,24,40,.08),var(--sh)}
   .tsec h3 .cnt{background:var(--panel2);color:var(--ink2);border:1px solid var(--line);font-weight:700}
   .step.current .node{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
   .content{scroll-behavior:smooth}
@@ -141,7 +147,7 @@
   @media(max-width:920px){.today{grid-template-columns:1fr}}
   .tsec h3{font-size:15px;letter-spacing:-.01em;color:var(--ink);margin:0 0 10px;font-weight:700;display:flex;gap:8px;align-items:center}
   .tsec h3 .cnt{border-radius:99px;font-size:11px;padding:1px 8px;font-family:var(--mono)}
-  .wcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;cursor:pointer}
+  .wcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:17px 20px;margin-bottom:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;cursor:pointer}
   .wcard:hover{border-color:var(--accent)}
   .wcard.urgent{border-color:var(--risk);background:var(--risk-soft,var(--panel2))}
   .wcard .body{flex:1;min-width:220px}
@@ -444,7 +450,7 @@
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
 </svg>
 <aside>
-  <div class="logo"><span class="dot"></span> Эллинг <small>v1.19 · Пульт</small></div>
+  <div class="logo"><span class="dot"></span> Эллинг <small>v1.20 · Пульт</small></div>
   <nav id="nav">
     <button data-nav="today"><svg class="ic"><use href="#i-today"/></svg> Сегодня <span class="n" id="todayN"></span></button>
     <button data-nav="deals"><svg class="ic"><use href="#i-deals"/></svg> Сделки</button>
@@ -1602,7 +1608,7 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
     <div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
-        Версия: Эллинг v1.19 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
+        Версия: Эллинг v1.20 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
         <button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>
       </div>
     </div>`;
