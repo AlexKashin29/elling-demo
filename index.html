@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.13 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.14 «Пульт» — рабочий MVP</title>
 <style>
   /* Палитра «грунт и сталь» · акцент — сурик (красно-рыжий грунт корпуса на стапеле); циан-сталь — только для данных */
   :root{
@@ -416,7 +416,7 @@
 </style>
 
 <aside>
-  <div class="logo"><span class="dot"></span> Эллинг <small>v1.13 · Пульт</small></div>
+  <div class="logo"><span class="dot"></span> Эллинг <small>v1.14 · Пульт</small></div>
   <nav id="nav">
     <button data-nav="today"><span class="ic">☀</span> Сегодня <span class="n" id="todayN"></span></button>
     <button data-nav="deals"><span class="ic">₽</span> Сделки</button>
@@ -1552,7 +1552,7 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
     <div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
-        Версия: Эллинг v1.13 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
+        Версия: Эллинг v1.14 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
         <button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>
       </div>
     </div>`;
@@ -1899,8 +1899,58 @@ function chartThroughput(){
     <div class="chart-box"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
       <line x1="${PL}" y1="${PT+ih}" x2="${W-14}" y2="${PT+ih}" style="stroke:var(--line);stroke-width:1"/>${bars}</svg></div>`;
 }
+function chartDealFunnel(){
+  const active=(S.deals||[]).filter(d=>d.stage!=='lost');
+  const rows=DEAL_STAGES.map(([sk,sn,sc])=>{ const ds=active.filter(d=>d.stage===sk);
+    return {sn,sc,n:ds.length,sum:ds.reduce((a,d)=>a+d.sum,0)}; });
+  const maxN=Math.max(1,...rows.map(r=>r.n));
+  const total=active.reduce((a,d)=>a+d.sum,0);
+  const forecast=active.reduce((a,d)=>a+d.sum*((DEAL_PROB[d.stage]||0)/100),0);
+  const lost=(S.deals||[]).filter(d=>d.stage==='lost').length;
+  return `<div class="chart-head"><h3>Воронка продаж <span class="ch-sub">сделки по стадиям · взвешенный прогноз</span></h3></div>
+    ${rows.map(r=>`<div style="display:flex;align-items:center;gap:10px;margin:6px 0">
+      <span style="width:132px;flex:none;font-size:12.5px;color:var(--ink)">${r.sn}</span>
+      <span style="flex:1;background:var(--panel2);border-radius:6px;height:22px;position:relative;overflow:hidden">
+        <i style="position:absolute;left:0;top:0;bottom:0;width:${Math.round(r.n/maxN*100)}%;background:${r.sc};opacity:.85;border-radius:6px"></i></span>
+      <span style="width:36px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--ink)">${r.n}</span>
+      <span style="width:84px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">${r.sum?fmtSum(r.sum):'—'}</span>
+    </div>`).join('')}
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--ink2)">
+      <span>Сумма воронки: <b style="color:var(--ink)">${fmtSum(total)}</b></span>
+      <span>Взвешенный прогноз: <b style="color:var(--accent)">${fmtSum(forecast)}</b></span>
+      ${lost?`<span>Проиграно: <b style="color:var(--risk)">${lost}</b></span>`:''}
+    </div>
+    <p class="ch-note">Прогноз считается из стадий и вероятностей, а не из оптимизма менеджера — системное смещение ручных прогнозов на этом рынке доходит до −35%.</p>`;
+}
+function chartEstFunnel(){
+  const es=S.estimates||[]; const tot=es.length;
+  const responded=es.filter(e=>e.status==='wip'||e.status==='done').length;
+  const completed=es.filter(e=>e.status==='done').length;
+  const ackOver=es.filter(e=>e.status==='new'&&(e.ackSlaMin-e.ageMin)<0).length;
+  const slaPct=tot?Math.round((tot-ackOver)/tot*100):100;
+  const newOnes=es.filter(e=>e.status==='new');
+  const avgQ=newOnes.length?Math.round(newOnes.reduce((a,e)=>a+e.ageMin,0)/newOnes.length):0;
+  const steps=[['Поступило',tot,'var(--steel)'],['Взято в работу',responded,'var(--navy)'],['Просчитано',completed,'var(--good)']];
+  const mx=Math.max(1,tot);
+  return `<div class="chart-head"><h3>Конверсия просчёта <span class="ch-sub">путь заявки на оценку ТЗ + SLA</span></h3></div>
+    ${steps.map(([l,n,c])=>`<div style="display:flex;align-items:center;gap:10px;margin:6px 0">
+      <span style="width:132px;flex:none;font-size:12.5px;color:var(--ink)">${l}</span>
+      <span style="flex:1;background:var(--panel2);border-radius:6px;height:22px;position:relative;overflow:hidden">
+        <i style="position:absolute;left:0;top:0;bottom:0;width:${Math.round(n/mx*100)}%;background:${c};opacity:.85;border-radius:6px"></i></span>
+      <span style="width:36px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--ink)">${n}</span>
+    </div>`).join('')}
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--ink2)">
+      <span>В SLA отклика (≤ 4 ч): <b style="color:${slaPct>=80?'var(--good)':'var(--warn)'}">${slaPct}%</b></span>
+      <span>Просрочен отклик сейчас: <b style="color:${ackOver?'var(--risk)':'var(--good)'}">${ackOver}</b></span>
+      <span>Средний возраст в очереди: <b style="color:var(--ink)">${fmtDur(avgQ)}</b></span>
+    </div>
+    <p class="ch-note">Здесь умирает конверсия — не у продавца, а в очереди ИЦ. Цель: держать отклик ≤ 4 часов у ≥ 80% заявок.</p>`;
+}
 function vReports(){
   const cnt = c => S.tasks.filter(t=>t.col===c).length;
+  const estAll = S.estimates||[]; const ackOver=estAll.filter(e=>e.status==='new'&&(e.ackSlaMin-e.ageMin)<0).length;
+  const slaPct = estAll.length?Math.round((estAll.length-ackOver)/estAll.length*100):100;
+  const dForecast = (S.deals||[]).filter(d=>d.stage!=='lost').reduce((a,d)=>a+d.sum*((DEAL_PROB[d.stage]||0)/100),0);
   const savedCalls = S.orders.reduce((a,o)=>a+o.feed.filter(f=>f[2]).length,0);
   const atRisk = S.orders.filter(o=>o.risk==='risk'||o.risk==='warn').length;
   const loads = Object.keys(PEOPLE).filter(p=>PEOPLE[p].role==='инженер'||PEOPLE[p].role==='рук. ИЦ')
@@ -1911,9 +1961,12 @@ function vReports(){
       <div class="stat"><div class="v" style="color:var(--warn);-webkit-text-fill-color:var(--warn)">${atRisk}</div><div class="l">с риском срока</div></div>
       <div class="stat"><div class="v">${cnt('wip')}</div><div class="l">задач в работе (WIP 6)</div></div>
       <div class="stat"><div class="v" style="color:var(--good);-webkit-text-fill-color:var(--good)">${savedCalls}</div><div class="l">событий вместо звонков</div></div>
-      <div class="stat"><div class="v">4,2 <span style="font-size:15px">дн</span></div><div class="l">lead time оценки ТЗ</div></div>
+      <div class="stat"><div class="v" style="color:${slaPct>=80?'var(--good)':'var(--warn)'};-webkit-text-fill-color:${slaPct>=80?'var(--good)':'var(--warn)'}">${slaPct}<span style="font-size:15px">%</span></div><div class="l">просчётов в SLA отклика</div></div>
+      <div class="stat"><div class="v" style="color:var(--accent);-webkit-text-fill-color:var(--accent)">${fmtSum(dForecast)}</div><div class="l">взвешенный прогноз воронки</div></div>
     </div>
-    <div class="panel">${chartCFD()}</div>
+    <div class="panel">${chartDealFunnel()}</div>
+    <div class="panel" style="margin-top:14px">${chartEstFunnel()}</div>
+    <div class="panel" style="margin-top:14px">${chartCFD()}</div>
     <div class="panel" style="margin-top:14px">${chartThroughput()}</div>
     <div class="panel" style="margin-top:14px"><h3>Загрузка инженерного центра</h3>
       ${loads.map(([p,n])=>`<div class="loadrow"><span class="nm">${av(p)} ${PEOPLE[p].full} · ${PEOPLE[p].role}</span>
