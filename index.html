@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.14 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.15 «Пульт» — рабочий MVP</title>
 <style>
   /* Палитра «грунт и сталь» · акцент — сурик (красно-рыжий грунт корпуса на стапеле); циан-сталь — только для данных */
   :root{
@@ -416,7 +416,7 @@
 </style>
 
 <aside>
-  <div class="logo"><span class="dot"></span> Эллинг <small>v1.14 · Пульт</small></div>
+  <div class="logo"><span class="dot"></span> Эллинг <small>v1.15 · Пульт</small></div>
   <nav id="nav">
     <button data-nav="today"><span class="ic">☀</span> Сегодня <span class="n" id="todayN"></span></button>
     <button data-nav="deals"><span class="ic">₽</span> Сделки</button>
@@ -757,8 +757,8 @@ const AH = extra => Object.assign({'X-API-Token': TOK()}, extra||{});
 let ACTS = [];            // накопитель описаний действий (ревью v0.5: не терять при дебаунсе)
 let SYNCING = false;      // рендер по данным с сервера не должен порождать обратный пуш (эхо-цикл)
 const SHARED = ['orders','epics','seq','tasks','deals','suppliers','certs','notices','estimates','portalDocs','portalQA','connectors','agentLog','docs','projects','kbProjects','drawings','rules','notes','savedFilters'];
-// S.fired — клиент-локальный (не синкается): каждая вкладка хранит, что уже отработала,
-// чтобы таймер не повторял; повтор демо после сброса работает, дубли между клиентами гасит дедуп notify()
+// Дедуп автоматизаций живёт на самой задаче (t.autoFired) — задачи синкаются, поэтому
+// повторное срабатывание в другой вкладке/клиенте не задваивает комментарии и лог (ревью v1.15)
 function sharedData(){ const o={}; SHARED.forEach(k=>o[k]=S[k]); return o; }
 function adoptShared(d){ if(!d) return; SHARED.forEach(k=>{ if(d[k]!==undefined) S[k]=d[k]; }); }
 function setSrv(on){ SRV.on = on; const el = $('srvState');
@@ -1005,25 +1005,30 @@ function notify(userIds, text, taskKey){
 }
 function myNotes(){ return (S.notes||[]).filter(n=>n.to===S.currentUser); }
 /* Движок: срабатывает при изменениях и по таймеру. Идемпотентен — каждое правило
-   для задачи срабатывает один раз (ключ в S.fired), чтобы не спамить и не зациклиться. */
+   для задачи срабатывает один раз (ключ в t.autoFired, живёт на задаче и синкается),
+   плюс контентные гварды на push, чтобы не задваивать при гонке между клиентами. */
 function runAutomations(trigger, task){
-  S.rules = S.rules || []; S.fired = S.fired || [];
+  S.rules = S.rules || [];
   let changed = false;
   const fire = (rule, t, key) => {
-    if(S.fired.includes(key)) return;
-    S.fired.push(key); changed = true;
+    t.autoFired = t.autoFired || [];
+    if(t.autoFired.includes(key)) return;
+    t.autoFired.push(key); changed = true;
     const recips = [t.who, ...(t.watchers||[])];
     if(rule.act.comment){
-      t.comments = t.comments||[]; t.comments.push({a:'⚙ Автоматизация', m:`Задача просрочена (срок ${t.due}). Требуется внимание.`});
+      t.comments = t.comments||[];
+      const cm = `Задача просрочена (срок ${t.due}). Требуется внимание.`;
+      if(!t.comments.some(c=>c.a==='⚙ Автоматизация' && c.m===cm)) t.comments.push({a:'⚙ Автоматизация', m:cm});
     }
-    if(rule.act.prio && t.prio!=='hi'){ t.prio='hi'; t.log.push('автоматизация: приоритет поднят до высокого'); }
+    if(rule.act.prio && t.prio!=='hi'){ t.prio='hi'; const pl='автоматизация: приоритет поднят до высокого'; if(!t.log.includes(pl)) t.log.push(pl); }
     if(rule.act.notify){
       // текст по триггеру ПРАВИЛА, а не по аргументу вызова (ревью v0.9)
       const txt = rule.trigger==='overdue' ? `просрочена: ${t.ttl.slice(0,50)}`
         : rule.trigger==='to_rev' ? `ждёт согласования: ${t.ttl.slice(0,50)}` : `изменилась: ${t.ttl.slice(0,50)}`;
       notify(rule.trigger==='to_rev' ? ['maksimov', ...recips] : recips, txt, t.key);
     }
-    t.log.push(`автоматизация «${rule.name.slice(0,40)}»`);
+    const lm = `автоматизация «${rule.name.slice(0,40)}»`;
+    if(!t.log.includes(lm)) t.log.push(lm);
     ACTS.push(`автоматизация: ${rule.name.slice(0,30)} → ${t.key}`);
   };
   S.rules.filter(r=>r.enabled).forEach(rule=>{
@@ -1552,7 +1557,7 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
     <div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
-        Версия: Эллинг v1.14 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
+        Версия: Эллинг v1.15 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
         <button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>
       </div>
     </div>`;
