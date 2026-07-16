@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.34 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.35 «Пульт» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1907,9 +1907,40 @@ function vToday(){
           t.col==='wip'?'в работе у вас':'в вашей очереди'}${t.sla?` · <b>${t.sla}</b>`:''} ${dueBadge(t)}</div></div>
       ${pa?`<button class="btn big" data-move="${t.key}|${pa[0]}">${pa[1]}</button>`:''}</div>`;
   };
-  return `<div class="hello">${p.role==='директор'?'Портфель под контролем':'Добрый день'}, ${p.full}
-      <small>${p.role} · что требует вашего участия сегодня</small></div>
-    <div class="today">
+  const isBoss = p.role==='директор' || p.role==='рук. ИЦ';
+  const pulse = isBoss ? (()=>{
+    const ords=S.orders||[];
+    const cOk=ords.filter(o=>o.risk==='ok').length, cWarn=ords.filter(o=>o.risk==='warn').length, cRisk=ords.filter(o=>o.risk==='risk').length;
+    const forecast=(S.deals||[]).filter(d=>d.stage!=='lost').reduce((a,d)=>a+d.sum*((DEAL_PROB[d.stage]||0)/100),0);
+    const estAll=S.estimates||[]; const ackOver=estAll.filter(e=>e.status==='new'&&(e.ackSlaMin-e.ageMin)<0).length;
+    const slaPct=estAll.length?Math.round((estAll.length-ackOver)/estAll.length*100):100;
+    const cc=c=>`color:${c};-webkit-text-fill-color:${c}`;
+    const attn=[
+      ...ords.filter(o=>o.risk==='risk').map(o=>({t:'Срыв срока',n:'№'+o.num+' · '+o.title,c:'var(--risk)',go:'flow'})),
+      ...ords.filter(o=>o.risk==='warn').map(o=>({t:'Риск срока',n:'№'+o.num+' · '+o.title,c:'var(--warn)',go:'flow'})),
+      ...(ackOver?[{t:'Просрочен отклик ИЦ',n:ackOver+' заявок ждут просчёта дольше 4 ч',c:'var(--risk)',go:'estimates'}]:[]),
+    ];
+    return `<div class="stats" style="margin:8px 0 16px">
+      <div class="stat"><div class="v">${ords.length}</div><div class="l">заказов в портфеле</div></div>
+      <div class="stat"><div class="v" style="${cc('var(--good)')}">${cOk}</div><div class="l">в графике</div></div>
+      <div class="stat"><div class="v" style="${cc('var(--warn)')}">${cWarn}</div><div class="l">риск срока</div></div>
+      <div class="stat"><div class="v" style="${cc('var(--risk)')}">${cRisk}</div><div class="l">срыв — вмешаться</div></div>
+      <div class="stat"><div class="v" style="${cc('var(--accent)')}">${fmtSum(forecast)}</div><div class="l">прогноз воронки</div></div>
+      <div class="stat"><div class="v" style="${cc(slaPct>=80?'var(--good)':'var(--warn)')}">${slaPct}%</div><div class="l">просчёт в SLA (4 ч)</div></div>
+    </div>
+    ${attn.length?`<div class="tsec" style="margin-bottom:18px"><h3>Требует внимания сейчас <span class="cnt">${attn.length}</span></h3>
+      ${attn.map(a=>`<div class="wcard" data-nav2="${a.go}" style="cursor:pointer">
+        <div class="body"><span class="k" style="color:${a.c};font-weight:700">${a.t}</span><div class="t">${esc(a.n)}</div></div>
+        <span class="stchip" style="color:${a.c};border:1px solid ${a.c}">открыть →</span></div>`).join('')}</div>`
+    :`<div class="zero" style="margin-bottom:18px">Портфель в графике — ничего не требует вмешательства.</div>`}`;
+  })() : '';
+  return `<div class="hello">${p.role==='директор'?'Портфель под контролем':isBoss?'Инженерный центр':'Добрый день'}, ${p.full}
+      <small>${p.role} · ${isBoss?'состояние портфеля и что требует вмешательства':'что требует вашего участия сегодня'}</small></div>
+    ${pulse}
+    ${isBoss ? `<div class="tsec"><h3>Последние события по заказам</h3>
+        <div class="evfeed">${events.map(({o,f})=>`<div class="ev"><span class="t">${esc(f[0])}</span>
+          <span><b>№${esc(o.num)}</b> · ${safe(f[1])}${f[2]?'<span class="nocall">вместо звонка</span>':''}</span></div>`).join('')}</div></div>`
+    : `<div class="today">
       <div>
         <div class="tsec"><h3>Ждут вашего решения ${wait.length?`<span class="cnt">${wait.length}</span>`:''}</h3>
           ${wait.map(t=>wcard(t,true)).join('')||'<div class="zero">Ничего не ждёт вашего решения.</div>'}</div>
@@ -1920,7 +1951,7 @@ function vToday(){
         <div class="evfeed">${events.map(({o,f})=>`<div class="ev"><span class="t">${esc(f[0])}</span>
           <span><b>№${esc(o.num)}</b> · ${safe(f[1])}${f[2]?'<span class="nocall">вместо звонка</span>':''}</span></div>`).join('')}</div>
       </div>
-    </div>`;
+    </div>`}`;
 }
 
 function vFlow(){
