@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.27 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.28 «Пульт» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -470,6 +470,15 @@
     .topbar{padding:12px 16px}
   }
   @media(max-width:600px){ .search-wrap{display:none} .topbar h1{font-size:18px} }
+  @media print{
+    aside,.nav-backdrop,.topbar .spacer,.search-wrap,.bell-wrap,#helpBtn,#themeBtn,.hamburger,.exp-bar,.userbox{display:none!important}
+    main{width:100%}.content{padding:0;max-width:none}
+    body{background:#fff;color:#000;display:block}
+    .topbar{position:static;border:none;padding:0 0 8px}
+    .panel,.stat,.chart-box,.evfeed,.flow-wrap{box-shadow:none!important;border:1px solid #ddd;break-inside:avoid}
+    .stats .stat{background:#fff!important}
+    @page{margin:14mm}
+  }
 </style>
 
 <svg style="display:none" aria-hidden="true">
@@ -1057,6 +1066,24 @@ async function loadAudit(){
 /* ================= helpers ================= */
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+function exportReportCSV(){
+  const S1=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const sec=[];
+  sec.push('ЭЛЛИНГ — портфель заказов');
+  sec.push(['№ заказа','Изделие','Заказчик','Судно','ГОЗ','Этап','Статус риска','Срок','Сумма'].map(S1).join(';'));
+  (S.orders||[]).forEach(o=>sec.push([o.num,o.title,o.customer,o.vessel,o.goz?'да':'нет',
+    (STAGE_NAMES[o.stage]||['—'])[0],(RISK[o.risk]||['','—'])[1],o.due,o.sum].map(S1).join(';')));
+  sec.push('');
+  sec.push('Воронка сделок');
+  sec.push(['Сделка','Заказчик','Стадия','Вероятность %','Сумма'].map(S1).join(';'));
+  (S.deals||[]).forEach(d=>sec.push([d.title,d.company,(DST[d.stage]?DST[d.stage][1]:'проиграно'),
+    (DEAL_PROB[d.stage]!=null?DEAL_PROB[d.stage]:''),d.sum].map(S1).join(';')));
+  const csv='﻿'+sec.join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='Эллинг_отчёт.csv'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },100);
+}
 function emptyBox(icon,title,hint,actionLabel,actionAttr){
   return `<div class="empty-box">
     ${icon?`<svg class="eb-ic ic"><use href="#${icon}"/></svg>`:''}
@@ -2105,7 +2132,11 @@ function vReports(){
   const loads = Object.keys(PEOPLE).filter(p=>PEOPLE[p].role==='инженер'||PEOPLE[p].role==='рук. ИЦ')
     .map(p=>[p, S.tasks.filter(t=>t.who===p&&t.col!=='done').length]);
   const maxL = Math.max(1,...loads.map(l=>l[1]));
-  return `<div class="stats">
+  return `<div class="exp-bar" style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn ghost" id="expCSV">Выгрузить в Excel (CSV)</button>
+      <button class="btn ghost" id="expPrint">Печать / PDF</button>
+    </div>
+    <div class="stats">
       <div class="stat"><div class="v">${S.orders.length}</div><div class="l">заказов в портфеле</div></div>
       <div class="stat"><div class="v" style="color:var(--warn);-webkit-text-fill-color:var(--warn)">${atRisk}</div><div class="l">с риском срока</div></div>
       <div class="stat"><div class="v">${cnt('wip')}</div><div class="l">задач в работе (WIP 6)</div></div>
@@ -2476,6 +2507,8 @@ document.addEventListener('click', e=>{
       save(); render(); openTask(t.key);
     } return;
   }
+  if(e.target.id==='expCSV'){ exportReportCSV(); return; }
+  if(e.target.id==='expPrint'){ window.print(); return; }
   const kbt = e.target.closest('[data-kbtab]');
   if(kbt){ S.kbTab = kbt.dataset.kbtab; S.kbMsg=''; render(); return; }
   const clx = e.target.closest('[data-clapply]');
