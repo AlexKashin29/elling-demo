@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.49 «Кросс-орг Т1» — рабочий MVP</title>
+﻿<title>Эллинг v1.50 «Мост Т2» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -980,6 +980,7 @@ function seed(){
       {id:'ccad',tag:'ЛОЦМАН',name:'КОМПАС / ЛОЦМАН:PLM',sys:'АСКОН · чертежи DWG, состав изделия (BOM), извещения',dir:'←',status:'ok',last:'сегодня 10:30',note:'читаем чертежи и состав из вашего PLM — САПР не заменяем'},
       {id:'ceis',tag:'ЕИС',name:'ЕИС · тендеры',sys:'zakupki.gov.ru · 44/223-ФЗ',dir:'←',status:'ok',last:'сегодня 08:00',note:'автозагрузка тендеров по фильтру проекта'},
       {id:'cedo',tag:'ЭДО',name:'ЭДО · Диадок / СБИС',sys:'УПД, договоры',dir:'↔',status:'setup',last:'—',note:'обмен документами — в настройке'},
+      {id:'cbridge',tag:'Мост',name:'Эллинг Мост · федерация нитей заказа',sys:'инсталляция ↔ инсталляция · верфь ↔ поставщик',dir:'↔',status:'ok',last:'сегодня 11:40',note:'синхронизация статусов, документов и приёмки между вашим облаком и коробкой верфи; экономика и кухня не передаются'},
     ],
     agentLog:[
       {ts:'09:14',conn:'1С',dir:'→',obj:'Заказ №2417 · этап «КД/ОКР»',res:'ok'},
@@ -1848,7 +1849,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.49';
+const APP_VER = '1.50';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2998,6 +2999,13 @@ document.addEventListener('click', e=>{
                 {type:'Спецификация',name:'Состав изделия ДУ-100 · BOM (из ЛОЦМАН)',ver:'из PLM',where:'спецификация'}]});
         obj='импортированы чертёж + состав изделия ДУ-100';
         S.agentMsg='Из КОМПАС/ЛОЦМАН прочитаны сборочный чертёж и состав изделия ДУ-100 — теперь в Базе знаний и в ИИ-поиске. САПР остаётся у вас, мы только читаем. Откройте «Базу знаний».';
+      } else if(c.id==='cbridge'){                   // Т2: федерация нитей заказа с контуром верфи
+        const gozOrd=(S.orders||[]).filter(o=>o.goz).slice(0,2);
+        gozOrd.forEach(o=>{ o.feed=o.feed||[]; o.feed.unshift(['сейчас','<b>Мост:</b> нить заказа синхронизирована с контуром верфи — статус этапа и приёмка ВП сверены',1]); });
+        S.agentLog.unshift({ts:'сейчас',conn:'Мост',dir:'←',obj:'от верфи: приёмка ВП по №2417 обновлена',res:'ok'});
+        S.agentLog.unshift({ts:'сейчас',conn:'Мост',dir:'→',obj:'верфи: «проект передан» + документы по '+gozOrd.length+' нитям',res:'ok'});
+        obj='федерация: синхронизировано '+gozOrd.length+' нити заказа с верфью';
+        S.agentMsg='Эллинг Мост синхронизировал нити заказа с контуром верфи: наружу ушли статусы «проект передан» и документы, внутрь пришло обновление приёмки ВП. Экономика и внутренние задачи не передавались. Откройте «Портал заказчика» — там видно, что уходит верфи.';
       } else { S.agentMsg=null; }
       S.agentLog.unshift({ts:'сейчас',conn:c.tag||c.name,dir:c.dir||'←',obj,res:'ok'});
       ACTS.push('импорт через Агент: '+(c.tag||c.name)); save(); render(); toast('Синхронизировано: '+(c.tag||c.name),'ok');
