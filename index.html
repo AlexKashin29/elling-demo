@@ -137,8 +137,8 @@
   .hello small{display:block;font-size:13.5px;color:var(--muted);font-weight:400;margin-top:2px}
   .today{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start;margin-top:16px}
   @media(max-width:920px){.today{grid-template-columns:1fr}}
-  .tsec h3{font-size:13px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:600;display:flex;gap:8px;align-items:center}
-  .tsec h3 .cnt{background:var(--accent);color:#fff;border-radius:99px;font-size:10px;padding:1px 8px}
+  .tsec h3{font-size:15px;letter-spacing:-.01em;color:var(--ink);margin:0 0 10px;font-weight:700;display:flex;gap:8px;align-items:center}
+  .tsec h3 .cnt{border-radius:99px;font-size:11px;padding:1px 8px;font-family:var(--mono)}
   .wcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;cursor:pointer}
   .wcard:hover{border-color:var(--accent)}
   .wcard.urgent{border-color:var(--risk);background:var(--risk-soft,var(--panel2))}
@@ -188,8 +188,8 @@
   .board{display:grid;grid-template-columns:repeat(4,minmax(235px,1fr));gap:12px;align-items:start;min-width:960px}
   .col{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px;min-height:120px}
   .col.dragover{border-color:var(--accent);background:var(--accent-soft)}
-  .col h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
-    margin:2px 4px 9px;display:flex;justify-content:space-between;font-weight:600}
+  .col h3{font-size:13px;color:var(--ink2);
+    margin:2px 4px 9px;display:flex;justify-content:space-between;font-weight:700;letter-spacing:-.01em}
   .col h3 .wip{color:var(--warn)}
   .tcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
   .tcard:hover{border-color:var(--accent)}
@@ -316,7 +316,7 @@
   .dwg-stage svg{width:100%;height:100%;display:block}
   .dwg-pin{cursor:pointer}
   .dwg-side{grid-area:side;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:16px 18px}
-  .dwg-side h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .dwg-side h4{font-size:13.5px;color:var(--ink);font-weight:700;margin:0 0 10px;letter-spacing:-.01em}
   .dwg-note{display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:12.5px;color:var(--ink2);cursor:pointer}
   .dwg-note:hover{color:var(--ink)}
   .dwg-note b{color:var(--ink)}
@@ -346,7 +346,7 @@
   .wl-mod .mi{font-size:16px;flex:none;margin-top:1px}
   .wl-mod b{font-size:13.5px;display:block}
   .wl-mod span{font-size:11.5px;color:var(--muted);line-height:1.4}
-  .wl h3{font-size:13px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .wl h3{font-size:14px;color:var(--ink);font-weight:700;margin:0 0 10px;letter-spacing:-.01em}
   .wl-step{display:flex;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line2);cursor:pointer;font-size:13.5px;color:var(--ink)}
   .wl-step:hover{color:var(--accent)}
   .wl-step .num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
@@ -388,7 +388,7 @@
   .fields{display:grid;grid-template-columns:110px 1fr;gap:9px 12px;align-items:center;margin-bottom:16px}
   .fields label{font-size:12px;font-weight:600;color:var(--ink2)}
   .fields select,.fields input{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--ink);font-size:13px;font-family:var(--sans);width:100%}
-  .drawer h4{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px;font-weight:600}
+  .drawer h4{font-size:13.5px;color:var(--ink);margin:18px 0 8px;font-weight:700;letter-spacing:-.01em}
   .sub{display:flex;gap:9px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line2);font-size:13.5px;color:var(--ink)}
   .sub input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
   .sub.done span{text-decoration:line-through;color:var(--muted)}
