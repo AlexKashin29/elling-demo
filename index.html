@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.35 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.36 «Пульт» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -232,14 +232,17 @@
   /* board */
   .board-wrap{overflow-x:auto;padding-bottom:10px}
   .board{display:grid;grid-template-columns:repeat(4,minmax(235px,1fr));gap:12px;align-items:start;min-width:960px}
-  .col{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px;min-height:120px}
-  .col.dragover{border-color:var(--accent);background:var(--accent-soft)}
+  .col{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px;min-height:120px;transition:background .15s,border-color .15s,box-shadow .15s}
+  .col.dragover{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
   .col h3{font-size:13px;color:var(--ink2);
     margin:2px 4px 9px;display:flex;justify-content:space-between;font-weight:700;letter-spacing:-.01em}
   .col h3 .wip{color:var(--warn)}
-  .tcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
-  .tcard:hover{border-color:var(--accent)}
-  .tcard.dragging{opacity:.4}
+  .tcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:grab}
+  .tcard:hover{border-color:var(--accent);box-shadow:var(--sh)}
+  .tcard:active{cursor:grabbing}
+  .tcard.dragging{opacity:.55;transform:scale(.97) rotate(1.4deg);box-shadow:var(--sh-lg);cursor:grabbing}
+  @keyframes cardPop{0%{transform:scale(1)}30%{transform:scale(1.04)}100%{transform:scale(1)}}
+  .tcard.moved{animation:cardPop .45s cubic-bezier(.16,1,.3,1);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
   .tcard .top{display:flex;gap:8px;align-items:center;margin-bottom:3px}
   .tcard .key{font-family:var(--mono);font-size:10px;color:var(--muted)}
   .prio{font-weight:800;font-size:12px}
@@ -2843,21 +2846,22 @@ document.addEventListener('dragstart', e=>{
   e.dataTransfer.setData('text/plain', (c.dataset.task? 'T:'+c.dataset.task : c.dataset.deal? 'D:'+c.dataset.deal : ''));
   c.classList.add('dragging');
 });
-document.addEventListener('dragend', e=>{ const c=e.target.closest('.tcard'); if(c) c.classList.remove('dragging'); });
-document.addEventListener('dragover', e=>{ const col=e.target.closest('.col'); if(col){ e.preventDefault(); col.classList.add('dragover'); } });
-document.addEventListener('dragleave', e=>{ const col=e.target.closest('.col'); if(col) col.classList.remove('dragover'); });
+function clearDragover(){ document.querySelectorAll('.col.dragover').forEach(c=>c.classList.remove('dragover')); }
+function popCard(sel){ try{ requestAnimationFrame(()=>{ const el=document.querySelector(sel); if(el) el.classList.add('moved'); }); }catch(x){} }
+document.addEventListener('dragend', e=>{ const c=e.target.closest('.tcard'); if(c) c.classList.remove('dragging'); clearDragover(); });
+document.addEventListener('dragover', e=>{ const col=e.target.closest('.col'); if(col){ e.preventDefault(); if(!col.classList.contains('dragover')){ clearDragover(); col.classList.add('dragover'); } } });
 document.addEventListener('drop', e=>{
-  const col = e.target.closest('.col'); if(!col) return;
-  e.preventDefault(); col.classList.remove('dragover');
+  const col = e.target.closest('.col'); if(!col){ clearDragover(); return; }
+  e.preventDefault(); clearDragover();
   const raw = e.dataTransfer.getData('text/plain');
   if(raw.startsWith('D:') && col.dataset.dealcol){        // сделка → новая стадия воронки
     const d = dealById(raw.slice(2));
-    if(d && d.stage!==col.dataset.dealcol){ moveDeal(d, col.dataset.dealcol); render(); }
+    if(d && d.stage!==col.dataset.dealcol){ moveDeal(d, col.dataset.dealcol); render(); popCard(`[data-deal="${raw.slice(2)}"]`); }
     return;
   }
   if(raw.startsWith('T:') && col.dataset.col){            // задача → новый статус доски
     const t = task(raw.slice(2));
-    if(t && t.col!==col.dataset.col) moveTask(t,col.dataset.col,'перетащил '+PEOPLE[S.currentUser].full);
+    if(t && t.col!==col.dataset.col){ moveTask(t,col.dataset.col,'перетащил '+PEOPLE[S.currentUser].full); render(); popCard(`[data-task="${raw.slice(2)}"]`); return; }
     render();
   }
 });
