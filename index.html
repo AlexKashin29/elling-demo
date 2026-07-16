@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.63 «Управление по ролям» — рабочий MVP</title>
+﻿<title>Эллинг v1.64 «Экспорт по ролям» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1454,16 +1454,17 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 function exportReportCSV(){
   const S1=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const fin=canFin(); const M=v=>fin?v:'скрыто ролью';
   const sec=[];
   sec.push('ЭЛЛИНГ — портфель заказов');
   sec.push(['№ заказа','Изделие','Заказчик','Судно','ГОЗ','Этап','Статус риска','Срок','Сумма'].map(S1).join(';'));
   (S.orders||[]).forEach(o=>sec.push([o.num,o.title,o.customer,o.vessel,o.goz?'да':'нет',
-    (STAGE_NAMES[o.stage]||['—'])[0],(RISK[o.risk]||['','—'])[1],o.due,o.sum].map(S1).join(';')));
+    (STAGE_NAMES[o.stage]||['—'])[0],(RISK[o.risk]||['','—'])[1],o.due,M(o.sum)].map(S1).join(';')));
   sec.push('');
   sec.push('Воронка сделок');
   sec.push(['Сделка','Заказчик','Стадия','Вероятность %','Сумма'].map(S1).join(';'));
   (S.deals||[]).forEach(d=>sec.push([d.title,d.company,(DST[d.stage]?DST[d.stage][1]:'проиграно'),
-    (DEAL_PROB[d.stage]!=null?DEAL_PROB[d.stage]:''),d.sum].map(S1).join(';')));
+    (DEAL_PROB[d.stage]!=null?DEAL_PROB[d.stage]:''),M(d.sum)].map(S1).join(';')));
   const csv='﻿'+sec.join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -1993,7 +1994,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.63';
+const APP_VER = '1.64';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
