@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.62 «Финансы по ролям» — рабочий MVP</title>
+﻿<title>Эллинг v1.63 «Управление по ролям» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -906,6 +906,10 @@ const ROLE_VIEWS = {
 function canView(v){ const role=(PEOPLE[S.currentUser]||{}).role; const a=ROLE_VIEWS[role]||ALL_VIEWS; return (v==='order'?a.indexOf('flow'):a.indexOf(v))>=0; }
 /* финансовая видимость (маржа, суммы, ТКП): дирекция + продажи; остальным скрыто */
 function canFin(){ const r=(PEOPLE[S.currentUser]||{}).role; return r==='директор'||r==='зам. директора'||r==='рук. продаж'||r==='продажи'; }
+/* управленческие функции: интеграции, миграция, автоматизации, API — руководители и дирекция */
+function canManage(){ const p=PEOPLE[S.currentUser]||{}; return p.lvl!=null && p.lvl<=2; }
+/* администрирование: управление ролями/доступами и данными — только директор */
+function canAdmin(){ return (PEOPLE[S.currentUser]||{}).role==='директор'; }
 function directReports(uid){ return Object.keys(PEOPLE).filter(k=>PEOPLE[k].mgr===uid); }
 function subordinates(uid){ const out=[]; directReports(uid).forEach(d=>{ out.push(d); out.push.apply(out,subordinates(d)); }); return out; }
 function orgTree(){
@@ -1989,7 +1993,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.62';
+const APP_VER = '1.63';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2145,10 +2149,11 @@ function vSettings(){
     ['Закупки','спецификации, поставщики, ПП 719','CRM-воронка'],
     ['Логист','отгрузки, комплектация, пропуска','CRM, инженерная БЗ'],
   ];
-  const tab = S.setTab||'org';
   const cont = S.orgContour||'cloud';
-  const SET_CATS=[['org','i-portal','Организация'],['users','i-deals','Пользователи и роли'],['integrations','i-supply','Интеграции'],['migrate','i-supply','Миграция реестра'],['auto','i-today','Автоматизации'],['notify','i-bell','Уведомления'],['theme','i-settings','Оформление'],['api','i-kb','API'],['system','i-plan','Система']];
-  return `<div class="set-wrap"><aside class="set-rail">${SET_CATS.map(([id,ic,l])=>`<button class="set-cat ${tab===id?'on':''}" data-settab="${id}"><svg class="ic"><use href="#${ic}"/></svg><span>${l}</span></button>`).join('')}</aside><div class="set-main">
+  const SET_CATS=[['org','i-portal','Организация','all'],['users','i-deals','Пользователи и роли','all'],['integrations','i-supply','Интеграции','manage'],['migrate','i-supply','Миграция реестра','manage'],['auto','i-today','Автоматизации','manage'],['notify','i-bell','Уведомления','all'],['theme','i-settings','Оформление','all'],['api','i-kb','API','manage'],['system','i-plan','Система','all']];
+  const cats = SET_CATS.filter(c=>c[3]!=='manage'||canManage());
+  const tab = cats.some(c=>c[0]===(S.setTab||'org'))?(S.setTab||'org'):'org';
+  return `<div class="set-wrap"><aside class="set-rail">${cats.map(([id,ic,l])=>`<button class="set-cat ${tab===id?'on':''}" data-settab="${id}"><svg class="ic"><use href="#${ic}"/></svg><span>${l}</span></button>`).join('')}</aside><div class="set-main">
     <section class="set-sec" data-sec="org" ${tab==='org'?'':'hidden'}>
       <div class="panel" style="margin-bottom:14px">
         <div class="org-head"><span class="org-mark"></span>
@@ -2222,6 +2227,7 @@ function vSettings(){
     <section class="set-sec" data-sec="users" ${tab==='users'?'':'hidden'}>
       <div class="panel" style="margin-bottom:14px"><h3>Оргструктура и подчинённость <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· RBAC по иерархии · в проде: SSO/OIDC</span></h3>
         <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Роль определяет и <b>доступ к данным</b>, и <b>объём функций</b>. Старший по иерархии видит подчинённых и их роли; у него шире и доступ, и набор действий. Уровни: <b>Дирекция → Руководитель отдела → Сотрудник</b>.</p>
+        <div class="ai-box" style="margin:0 0 12px;font-size:12.5px">${canAdmin()?'🔓 Вы — директор: можете менять роли и права доступа.':'🔒 Изменение ролей и прав доступа — у директора. Вам доступен просмотр структуры и своей команды.'}</div>
         ${orgTree()}
       </div>
       <div class="panel" style="margin-bottom:14px"><h3>Моя команда <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· переключите роль вверху справа — увидите своих подчинённых</span></h3>
@@ -2283,7 +2289,7 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
         Версия: Эллинг v${APP_VER} · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
-        <button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>
+        ${canAdmin()?'<button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>':'<span style="font-size:12px;color:var(--muted)">Управление данными и сбросом — у директора.</span>'}
       </div>
     </div></section></div></div>`;
 }
@@ -2876,7 +2882,7 @@ const ROLE_TILES = {
   'инженер':[['kb','i-kb','Найти в базе знаний'],['board','i-board','Доска ИЦ'],['notices','i-notices','Извещения'],['estimates','i-est','Просчёт']],
   'рук. ИЦ':[['board','i-board','Доска ИЦ'],['estimates','i-est','Очередь просчёта'],['team','i-deals','Моя команда'],['plan','i-plan','Планирование']],
   'продажи':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['estimates','i-est','Просчёт ТКП'],['portal','i-portal','Портал заказчика']],
-  'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика'],['migrate','i-supply','Мастер миграции']],
+  'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика']],
   'логист':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика']],
   'директор':[['reports','i-reports','Отчёты'],['team','i-deals','Моя команда'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа']],
   'зам. директора':[['reports','i-reports','Отчёты'],['team','i-deals','Моя команда'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа']],
