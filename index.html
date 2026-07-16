@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.39 «Морской» — рабочий MVP</title>
+﻿<title>Эллинг v1.40 «Роли» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -75,6 +75,34 @@
   aside nav button svg.ic{opacity:.85}
   aside nav button[aria-current="true"] svg.ic{opacity:1}
   aside nav button .n{margin-left:auto;font-size:10.5px;background:#E5484D;color:#fff;border-radius:99px;padding:1px 7px;font-weight:700;min-width:18px;text-align:center;box-shadow:0 1px 3px rgba(229,72,77,.5)}
+  /* ---- v1.40: сгруппированное меню под роли ---- */
+  aside nav{display:flex;flex-direction:column;gap:2px}
+  .navhead .gl{flex:1}
+  .navhead{color:var(--side-ink)}
+  .navhead .chev{margin-left:auto;width:13px;height:13px;opacity:.55;transition:transform .26s cubic-bezier(.16,1,.3,1)}
+  .navgroup.open>.navhead .chev{transform:rotate(180deg);opacity:.9}
+  .navbody{display:flex;flex-direction:column;gap:2px;overflow:hidden;max-height:0;opacity:0;
+    transition:max-height .3s cubic-bezier(.16,1,.3,1),opacity .2s ease,margin .2s}
+  .navgroup.open>.navbody{max-height:300px;opacity:1;margin:2px 0 4px}
+  .navbody button{padding-left:36px;font-size:13.5px;font-weight:550}
+  .navbody button svg.ic{width:15px;height:15px;opacity:.65}
+  .navbody button[aria-current="true"] svg.ic{opacity:1}
+  .navgroup.has-active:not(.open)>.navhead .gl::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+    background:var(--accent);margin-left:8px;vertical-align:middle;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent)}
+  /* ---- v1.40: ролевой хаб быстрых действий на «Сегодня» ---- */
+  .hub{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 22px}
+  .hub-tile{display:flex;align-items:center;gap:12px;text-align:left;padding:16px 15px;border-radius:14px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);cursor:pointer;box-shadow:var(--sh);font:inherit;font-weight:650;font-size:14px;
+    position:relative;transition:transform .16s cubic-bezier(.16,1,.3,1),box-shadow .16s,border-color .16s}
+  .hub-tile:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:var(--sh-lg)}
+  .hub-tile:active{transform:translateY(-1px)}
+  .hub-tile svg.ic{width:22px;height:22px;color:var(--accent);flex:none;stroke-width:1.7}
+  .hub-tile .ht-l{flex:1;line-height:1.25}
+  .hub-tile .ht-c{background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:1px 9px;font-size:12px;font-weight:800;flex:none}
+  .hub-tile svg.ic.ht-go{width:15px;height:15px;color:var(--muted);transform:rotate(-90deg);opacity:.55}
+  .hub-tile:hover svg.ic.ht-go{color:var(--accent);opacity:1}
+  @media(max-width:900px){.hub{grid-template-columns:1fr 1fr}}
+  @media(max-width:520px){.hub{grid-template-columns:1fr}}
   aside .create{margin:16px 4px 6px}
   aside .create button{width:100%;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 88%,#fff),var(--accent) 70%);color:#fff;border:none;border-radius:12px;padding:12px;font-weight:600;font-size:14px;cursor:pointer;
     box-shadow:0 2px 8px -2px color-mix(in srgb,var(--accent) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.22);transition:filter .15s;letter-spacing:-.01em}
@@ -562,24 +590,13 @@
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-bench" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 4-6"/><circle cx="7" cy="15" r="1"/><circle cx="20" cy="7" r="1"/></symbol>
+  <symbol id="i-ship" viewBox="0 0 24 24"><path d="M3 15l1.5 5a1 1 0 0 0 .95.7h13.1a1 1 0 0 0 .95-.7L21 15"/><path d="M4 15l7.2-2.4a2 2 0 0 1 1.3 0L20 15"/><path d="M12 12V6"/><path d="M9 6h6"/><path d="M12 3v3"/></symbol>
 </svg>
 <aside>
-  <div class="logo"><span class="dot"></span> Эллинг <small>v1.21 · Пульт</small></div>
-  <nav id="nav">
-    <button data-nav="today"><svg class="ic"><use href="#i-today"/></svg> Сегодня <span class="n" id="todayN"></span></button>
-    <button data-nav="deals"><svg class="ic"><use href="#i-deals"/></svg> Сделки</button>
-    <button data-nav="flow"><svg class="ic"><use href="#i-flow"/></svg> Заказы</button>
-    <button data-nav="radar"><svg class="ic"><use href="#i-radar"/></svg> Радар закладок <span class="n" id="radarN"></span></button>
-    <button data-nav="estimates"><svg class="ic"><use href="#i-est"/></svg> Просчёт <span class="n" id="estN"></span></button>
-    <button data-nav="board"><svg class="ic"><use href="#i-board"/></svg> Доска ИЦ</button>
-    <button data-nav="plan"><svg class="ic"><use href="#i-plan"/></svg> Планирование</button>
-    <button data-nav="kb"><svg class="ic"><use href="#i-kb"/></svg> База знаний</button>
-    <button data-nav="supply"><svg class="ic"><use href="#i-supply"/></svg> Снабжение <span class="n" id="supplyN"></span></button>
-    <button data-nav="notices"><svg class="ic"><use href="#i-notices"/></svg> Извещения <span class="n" id="noticesN"></span></button>
-    <button data-nav="portal"><svg class="ic"><use href="#i-portal"/></svg> Портал заказчика <span class="n" id="portalN"></span></button>
-    <button data-nav="reports"><svg class="ic"><use href="#i-reports"/></svg> Отчёты</button>
-    <button data-nav="settings"><svg class="ic"><use href="#i-settings"/></svg> Настройки</button>
-  </nav>
+  <div class="logo"><span class="dot"></span> Эллинг <small>ОС заказа</small></div>
+  <nav id="nav"><!-- строится buildNav() под роль --></nav>
   <div class="create"><button id="createBtn" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg class="ic" style="stroke-width:2.2"><use href="#i-plus"/></svg>Создать задачу</button></div>
   <div class="bottom"><span id="srvState">локальный режим</span><br><button id="resetBtn" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;padding:0;font:inherit">сбросить демо</button></div>
 </aside>
@@ -1980,6 +1997,7 @@ function vToday(){
   })() : '';
   return `<div class="hello">${p.role==='директор'?'Портфель под контролем':isBoss?'Инженерный центр':'Добрый день'}, ${p.full}
       <small>${p.role} · ${isBoss?'состояние портфеля и что требует вмешательства':'что требует вашего участия сегодня'}</small></div>
+    ${hubTiles()}
     ${pulse}
     ${isBoss ? `<div class="tsec"><h3>Последние события по заказам</h3>
         <div class="evfeed">${events.map(({o,f})=>`<div class="ev"><span class="t">${esc(f[0])}</span>
@@ -2431,10 +2449,87 @@ function openTask(key){
 function closeDrawer(){ $('drawer').classList.remove('open'); $('drawerBg').classList.remove('open'); }
 
 /* ================= render ================= */
+/* ---- v1.40: сгруппированная навигация под роли ---- */
+const NAVGROUPS = [
+  {solo:true, view:'today', icon:'i-today', label:'Сегодня', badge:'todayN'},
+  {id:'sales', icon:'i-deals', label:'Продажи', items:[
+    {view:'deals', icon:'i-deals', label:'Сделки'},
+    {view:'radar', icon:'i-radar', label:'Радар закладок', badge:'radarN'},
+    {view:'estimates', icon:'i-est', label:'Просчёт', badge:'estN'},
+  ]},
+  {id:'orders', icon:'i-supply', label:'Заказы и снабжение', items:[
+    {view:'flow', icon:'i-flow', label:'Ось заказа'},
+    {view:'supply', icon:'i-supply', label:'Снабжение', badge:'supplyN'},
+    {view:'portal', icon:'i-portal', label:'Портал заказчика', badge:'portalN'},
+  ]},
+  {id:'ic', icon:'i-board', label:'Инженерный центр', items:[
+    {view:'board', icon:'i-board', label:'Доска ИЦ'},
+    {view:'kb', icon:'i-kb', label:'База знаний'},
+    {view:'notices', icon:'i-notices', label:'Извещения', badge:'noticesN'},
+    {view:'plan', icon:'i-plan', label:'Планирование'},
+  ]},
+  {id:'analytics', icon:'i-reports', label:'Аналитика', items:[
+    {view:'reports', icon:'i-reports', label:'Отчёты'},
+  ]},
+  {solo:true, view:'settings', icon:'i-settings', label:'Настройки'},
+];
+const ROLE_GROUP = {'инженер':'ic','рук. ИЦ':'ic','продажи':'sales','закупки':'orders','логист':'orders','директор':'analytics'};
+function navOpenForRole(u){ const g=ROLE_GROUP[(PEOPLE[u]||{}).role]||'ic'; const o={}; o[g]=true; return o; }
+function groupOfView(v){
+  if(v==='order') return 'orders';
+  for(const g of NAVGROUPS){ if(!g.solo && g.items.some(i=>i.view===v)) return g.id; }
+  return null;
+}
+function buildNav(){
+  const nav=$('nav'); if(!nav) return;
+  nav.innerHTML = NAVGROUPS.map(g=>{
+    if(g.solo) return `<button class="navsolo" data-nav="${g.view}"><svg class="ic"><use href="#${g.icon}"/></svg> ${g.label}${g.badge?` <span class="n" id="${g.badge}"></span>`:''}</button>`;
+    return `<div class="navgroup" data-group="${g.id}">`
+      + `<button class="navhead" data-navgroup="${g.id}" aria-expanded="false"><svg class="ic"><use href="#${g.icon}"/></svg> <span class="gl">${g.label}</span><svg class="ic chev"><use href="#i-chev"/></svg></button>`
+      + `<div class="navbody">${g.items.map(i=>`<button data-nav="${i.view}"><svg class="ic"><use href="#${i.icon}"/></svg> ${i.label}${i.badge?` <span class="n" id="${i.badge}"></span>`:''}</button>`).join('')}</div>`
+      + `</div>`;
+  }).join('');
+}
+function syncNavOpen(){
+  if(!S.navOpen) S.navOpen = navOpenForRole(S.currentUser);
+  const gv=groupOfView(S.view); if(gv) S.navOpen[gv]=true;
+  document.querySelectorAll('#nav .navgroup').forEach(el=>{
+    const id=el.dataset.group, open=!!S.navOpen[id];
+    el.classList.toggle('open', open);
+    const h=el.querySelector('.navhead'); if(h) h.setAttribute('aria-expanded', open);
+    const g=NAVGROUPS.find(x=>x.id===id);
+    el.classList.toggle('has-active', !!(g && g.items && g.items.some(i=>i.view===S.view)));
+  });
+}
+/* ролевой хаб быстрых действий на «Сегодня» */
+const ROLE_TILES = {
+  'инженер':[['kb','i-kb','Найти в базе знаний'],['board','i-board','Доска ИЦ'],['notices','i-notices','Извещения'],['estimates','i-est','Просчёт']],
+  'рук. ИЦ':[['board','i-board','Доска ИЦ'],['estimates','i-est','Очередь просчёта'],['plan','i-plan','Планирование'],['kb','i-kb','База знаний']],
+  'продажи':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['estimates','i-est','Просчёт ТКП'],['portal','i-portal','Портал заказчика']],
+  'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика'],['settings','i-settings','Импорт 1С/ЛОЦМАН']],
+  'логист':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика'],['reports','i-reports','Отчёты']],
+  'директор':[['reports','i-reports','Отчёты'],['flow','i-flow','Ось заказа'],['deals','i-deals','Воронка сделок'],['radar','i-radar','Радар закладок']],
+};
+function navCount(v){ try{
+  if(v==='estimates') return estAlerts();
+  if(v==='notices') return noticesAlerts();
+  if(v==='supply') return supplyAlerts();
+  if(v==='portal') return portalPending();
+  if(v==='radar') return (S.projects||[]).flatMap(p=>p.positions).filter(x=>x.st!=='ok').length;
+  if(v==='board') return S.tasks.filter(t=>t.who===S.currentUser&&t.col!=='done').length;
+}catch(e){} return 0; }
+function hubTiles(){
+  const tiles = ROLE_TILES[(PEOPLE[S.currentUser]||{}).role] || ROLE_TILES['инженер'];
+  return `<div class="hub">${tiles.map(([v,ic,lb])=>{ const c=navCount(v);
+    return `<button class="hub-tile" data-nav2="${v}"><svg class="ic"><use href="#${ic}"/></svg>`
+      + `<span class="ht-l">${lb}</span>${c?`<span class="ht-c">${c}</span>`:''}`
+      + `<svg class="ic ht-go"><use href="#i-chev"/></svg></button>`; }).join('')}</div>`;
+}
 function render(){
+  syncNavOpen();
   document.querySelectorAll('#nav [data-nav]').forEach(b=>b.setAttribute('aria-current', b.dataset.nav===S.view));
   const myWork = S.tasks.filter(t=>t.who===S.currentUser&&t.col!=='done').length;
-  $('todayN').textContent = myWork||''; $('todayN').style.display = myWork?'':'none';
+  const tN=$('todayN'); if(tN){ tN.textContent = myWork||''; tN.style.display = myWork?'':'none'; }
   $('pageTitle').textContent = S.view==='order' ? 'Заказ' : TITLES[S.view];
   const radarAlerts = (S.projects||[]).flatMap(p=>p.positions).filter(x=>x.st!=='ok').length;
   const rn = $('radarN'); if(rn){ rn.textContent = radarAlerts||''; rn.style.display = radarAlerts?'':'none'; }
@@ -2528,6 +2623,8 @@ document.addEventListener('click', e=>{
   if(mv){ const [key,to]=mv.dataset.move.split('|'); const t=task(key); if(t){ moveTask(t,to); render(); if($('drawer').classList.contains('open')) openTask(key); } return; }
   if(e.target.closest('#navToggle')){ document.body.classList.toggle('nav-open'); return; }
   if(e.target.id==='navBackdrop'){ document.body.classList.remove('nav-open'); return; }
+  const ngh = e.target.closest('[data-navgroup]');
+  if(ngh){ const id=ngh.dataset.navgroup; S.navOpen=S.navOpen||{}; S.navOpen[id]=!S.navOpen[id]; syncNavOpen(); return; }
   const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; document.body.classList.remove('nav-open'); render(); return; }
   const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
   const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); return; }
@@ -2853,7 +2950,7 @@ document.addEventListener('change', e=>{
     rd.readAsText(f,'utf-8'); } return; }
   const im=e.target.closest('[data-impmap]');
   if(im){ S.imp.map[im.dataset.impmap]=e.target.value; return; }
-  if(e.target.id==='userSel'){ S.currentUser=e.target.value; render(); return; }
+  if(e.target.id==='userSel'){ S.currentUser=e.target.value; S.navOpen=navOpenForRole(S.currentUser); render(); return; }
   const rc = e.target.closest('[data-rule]');
   if(rc){ const r=(S.rules||[]).find(x=>x.id===rc.dataset.rule); if(r){ r.enabled = e.target.checked?1:0;
     ACTS.push(`правило «${r.name.slice(0,24)}» ${r.enabled?'включено':'выключено'}`); save(); } return; }
@@ -2963,6 +3060,7 @@ function createTask(){
 }
 
 applyTheme(localStorage.getItem(THEME_KEY));
+buildNav();
 render();
 bootstrapSrv();
 try{ if(!localStorage.getItem(WELCOME_KEY)) openWelcome(); }catch(e){}  // приветствие при первом входе
