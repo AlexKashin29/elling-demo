@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.18 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.19 «Пульт» — рабочий MVP</title>
 <style>
   /* Палитра «грунт и сталь» · акцент — сурик (красно-рыжий грунт корпуса на стапеле); циан-сталь — только для данных */
   :root{
@@ -60,7 +60,9 @@
   aside nav button:hover{background:rgba(255,255,255,.06);color:#fff}
   aside nav button[aria-current="true"]{background:rgba(255,122,51,.13);color:#fff}
   aside nav button[aria-current="true"]::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
-  aside nav button .ic{width:20px;text-align:center;opacity:.9}
+  svg.ic{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  aside nav button svg.ic{opacity:.85}
+  aside nav button[aria-current="true"] svg.ic{opacity:1}
   aside nav button .n{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--accent);color:#fff;border-radius:99px;padding:1px 7px;font-weight:700}
   aside .create{margin:16px 4px 6px}
   aside .create button{width:100%;background:var(--accent);color:#fff;border:none;border-radius:11px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;
@@ -119,7 +121,7 @@
   .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
   .btn.ghost:hover{border-color:var(--accent);filter:none}
   .btn.big{padding:11px 22px;font-size:14px}
-  .chip{font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer;transition:.14s}
+  .chip{font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer;transition:border-color .14s,background .14s,color .14s}
   .chip:hover{border-color:var(--muted);color:var(--ink)}
   .chip[aria-pressed="true"]{border-color:var(--accent);color:#fff;background:var(--accent)}
   .chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;align-items:center}
@@ -365,9 +367,9 @@
   .chart-tip .tr i{width:9px;height:9px;border-radius:2px}
   .chart-tip b{font-family:var(--mono)}
   .ch-note{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6;max-width:60em}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
-  .stat .v{font-size:28px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
-    color:var(--accent)}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px}
+  .stat .v{font-size:21px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+    color:var(--ink)}
   .stat .l{font-size:12px;color:var(--muted);margin-top:3px}
   .loadrow{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;color:var(--ink2)}
   .loadrow .nm{width:170px;flex:none}
@@ -424,24 +426,41 @@
   @media(max-width:760px){ aside{display:none} }
 </style>
 
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></symbol>
+  <symbol id="i-deals" viewBox="0 0 24 24"><path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></symbol>
+  <symbol id="i-flow" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></symbol>
+  <symbol id="i-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></symbol>
+  <symbol id="i-est" viewBox="0 0 24 24"><path d="M10 2h4"/><path d="M12 14l3-3"/><circle cx="12" cy="14" r="8"/></symbol>
+  <symbol id="i-board" viewBox="0 0 24 24"><rect x="4" y="4" width="4.6" height="13" rx="1"/><rect x="9.7" y="4" width="4.6" height="8" rx="1"/><rect x="15.4" y="4" width="4.6" height="16" rx="1"/></symbol>
+  <symbol id="i-plan" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-kb" viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></symbol>
+  <symbol id="i-supply" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7l8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+  <symbol id="i-notices" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8"/></symbol>
+  <symbol id="i-portal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></symbol>
+  <symbol id="i-reports" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M2 14h4M10 8h4M18 16h4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+</svg>
 <aside>
-  <div class="logo"><span class="dot"></span> Эллинг <small>v1.18 · Пульт</small></div>
+  <div class="logo"><span class="dot"></span> Эллинг <small>v1.19 · Пульт</small></div>
   <nav id="nav">
-    <button data-nav="today"><span class="ic">☀</span> Сегодня <span class="n" id="todayN"></span></button>
-    <button data-nav="deals"><span class="ic">₽</span> Сделки</button>
-    <button data-nav="flow"><span class="ic">⚓</span> Заказы</button>
-    <button data-nav="radar"><span class="ic">◎</span> Радар закладок <span class="n" id="radarN"></span></button>
-    <button data-nav="estimates"><span class="ic">◷</span> Просчёт <span class="n" id="estN"></span></button>
-    <button data-nav="board"><span class="ic">▦</span> Доска ИЦ</button>
-    <button data-nav="plan"><span class="ic">☰</span> Планирование</button>
-    <button data-nav="kb"><span class="ic">🕮</span> База знаний</button>
-    <button data-nav="supply"><span class="ic">◈</span> Снабжение <span class="n" id="supplyN"></span></button>
-    <button data-nav="notices"><span class="ic">✎</span> Извещения <span class="n" id="noticesN"></span></button>
-    <button data-nav="portal"><span class="ic">◐</span> Портал заказчика <span class="n" id="portalN"></span></button>
-    <button data-nav="reports"><span class="ic">◔</span> Отчёты</button>
-    <button data-nav="settings"><span class="ic">⚙</span> Настройки</button>
+    <button data-nav="today"><svg class="ic"><use href="#i-today"/></svg> Сегодня <span class="n" id="todayN"></span></button>
+    <button data-nav="deals"><svg class="ic"><use href="#i-deals"/></svg> Сделки</button>
+    <button data-nav="flow"><svg class="ic"><use href="#i-flow"/></svg> Заказы</button>
+    <button data-nav="radar"><svg class="ic"><use href="#i-radar"/></svg> Радар закладок <span class="n" id="radarN"></span></button>
+    <button data-nav="estimates"><svg class="ic"><use href="#i-est"/></svg> Просчёт <span class="n" id="estN"></span></button>
+    <button data-nav="board"><svg class="ic"><use href="#i-board"/></svg> Доска ИЦ</button>
+    <button data-nav="plan"><svg class="ic"><use href="#i-plan"/></svg> Планирование</button>
+    <button data-nav="kb"><svg class="ic"><use href="#i-kb"/></svg> База знаний</button>
+    <button data-nav="supply"><svg class="ic"><use href="#i-supply"/></svg> Снабжение <span class="n" id="supplyN"></span></button>
+    <button data-nav="notices"><svg class="ic"><use href="#i-notices"/></svg> Извещения <span class="n" id="noticesN"></span></button>
+    <button data-nav="portal"><svg class="ic"><use href="#i-portal"/></svg> Портал заказчика <span class="n" id="portalN"></span></button>
+    <button data-nav="reports"><svg class="ic"><use href="#i-reports"/></svg> Отчёты</button>
+    <button data-nav="settings"><svg class="ic"><use href="#i-settings"/></svg> Настройки</button>
   </nav>
-  <div class="create"><button id="createBtn">+ Создать задачу</button></div>
+  <div class="create"><button id="createBtn" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg class="ic" style="stroke-width:2.2"><use href="#i-plus"/></svg>Создать задачу</button></div>
   <div class="bottom"><span id="srvState">локальный режим</span><br><button id="resetBtn" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;padding:0;font:inherit">сбросить демо</button></div>
 </aside>
 
@@ -451,7 +470,7 @@
     <span class="crumb" id="crumb"></span>
     <span class="spacer"></span>
     <input class="search" id="q" placeholder="Поиск по задачам…" aria-label="Поиск">
-    <div class="bell-wrap"><button class="icobtn" id="bellBtn" title="Уведомления">🔔<span class="bell-badge" id="bellN"></span></button>
+    <div class="bell-wrap"><button class="icobtn" id="bellBtn" title="Уведомления"><svg class="ic" style="pointer-events:none"><use href="#i-bell"/></svg><span class="bell-badge" id="bellN"></span></button>
       <div class="bell-drop" id="bellDrop"></div></div>
     <button class="icobtn" id="helpBtn" title="О продукте и тур">?</button>
     <button class="icobtn" id="themeBtn" title="Тема: авто → тёмная → светлая">◐</button>
@@ -906,7 +925,7 @@ function renderDwg(){
       <span class="dwg-sp"></span>
       ${[['contour','Контур'],['dims','Размеры'],['title','Штамп'],['notes','Замечания']].map(([k,l])=>
         `<button class="dwg-lb ${L[k]?'on':''}" data-dlayer="${k}">${l}</button>`).join('')}
-      <button class="dwg-lb ${DWG.mode==='annotate'?'on':''}" id="dwgAnn" title="кликните по чертежу, чтобы оставить замечание">✎ Замечание</button>
+      <button class="dwg-lb ${DWG.mode==='annotate'?'on':''}" id="dwgAnn" title="кликните по чертежу, чтобы оставить замечание">Замечание</button>
       <button class="dwg-zb" data-dzoom="out">−</button><button class="dwg-zb" data-dzoom="fit">↺</button><button class="dwg-zb" data-dzoom="in">＋</button>
       <button class="dwg-zb" id="dwgClose">✕</button>
     </div>
@@ -915,7 +934,7 @@ function renderDwg(){
       <h4>Замечания · ${d.annotations.length}</h4>
       ${d.annotations.length? d.annotations.map((a,i)=>`<div class="dwg-note" data-gopin="${esc(a.id)}">
         <span class="dwg-num">${i+1}</span><div><b>${esc(a.author)}</b><br>${esc(a.text)}</div></div>`).join('')
-        : '<div class="empty" style="padding:10px 2px">Замечаний нет. Нажмите «✎ Замечание» и кликните по чертежу — как это делает верфь при согласовании.</div>'}
+        : '<div class="empty" style="padding:10px 2px">Замечаний нет. Нажмите «Замечание» и кликните по чертежу — как это делает верфь при согласовании.</div>'}
       ${DWG.mode==='annotate'?'<div class="ai-box" style="margin-top:10px;font-size:12.5px">Режим замечаний: кликните по месту на чертеже.</div>':''}
     </div>`;
   $('dwgViewer').classList.add('open');
@@ -1098,8 +1117,8 @@ function supplyAlerts(){
 function vSupply(){
   const tab=S.supTab||'sup';
   const head=`<div style="display:flex;gap:6px;margin-bottom:16px">
-      <button class="chip" data-suptab="sup" aria-pressed="${tab==='sup'}">◈ Поставщики и ПП 719</button>
-      <button class="chip" data-suptab="cert" aria-pressed="${tab==='cert'}">📜 Сертификаты РМРС</button>
+      <button class="chip" data-suptab="sup" aria-pressed="${tab==='sup'}">Поставщики и ПП 719</button>
+      <button class="chip" data-suptab="cert" aria-pressed="${tab==='cert'}">Сертификаты РМРС</button>
     </div>`;
   if(tab==='cert'){
     const certs=(S.certs||[]).slice().sort((a,b)=>certDays(a)-certDays(b));
@@ -1282,7 +1301,7 @@ function vNotices(){
       </div>
       <div style="font-size:13px;color:var(--ink2);margin:10px 0">Причина: ${NREASON[n.reason]||n.reason}. ${esc(n.note)}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-        ${(n.orders||[]).map(o=>`<span class="stchip" style="font-size:10px">⚓ заказ №${esc(o)}</span>`).join('')}</div>
+        ${(n.orders||[]).map(o=>`<span class="stchip" style="font-size:10px">заказ №${esc(o)}</span>`).join('')}</div>
       ${(()=>{ const bt='padding-top:10px;border-top:1px solid var(--line2)';
         if(n.status==='draft'||n.status==='review')
           return `<div style="${bt}"><button class="btn ghost" style="padding:5px 12px;font-size:12px" data-notadv="${n.id}">→ ${NST[NST_NEXT[n.status]][0]}</button></div>`;
@@ -1361,7 +1380,7 @@ function openDeal(id){
         <option value="lost" ${d.stage==='lost'?'selected':''}>Проиграно</option></select>
       ${d.stage!=='assess'?`<button class="btn" data-dealassess="${d.id}">Запросить оценку в ИЦ</button>`:''}
       ${d.stage==='contract'&&!d.orderNum?`<button class="btn" data-dealwin="${d.id}">Создать заказ →</button>`:''}
-      ${d.orderNum&&d.orderId?`<button class="chip" data-order="${esc(d.orderId)}">⚓ Заказ №${esc(d.orderNum)}</button>`:''}
+      ${d.orderNum&&d.orderId?`<button class="chip" data-order="${esc(d.orderId)}">Заказ №${esc(d.orderNum)}</button>`:''}
     </div>
     <h4>Активности</h4>
     ${(d.acts||[]).slice().reverse().map(a=>`<div class="logline">${esc(a[0])} · ${esc(a[1])}</div>`).join('')||'<div class="empty">нет</div>'}
@@ -1583,7 +1602,7 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
     <div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
-        Версия: Эллинг v1.18 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
+        Версия: Эллинг v1.19 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
         <button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>
       </div>
     </div>`;
@@ -1635,11 +1654,11 @@ function vToday(){
       ${pa?`<button class="btn big" data-move="${t.key}|${pa[0]}">${pa[1]}</button>`:''}</div>`;
   };
   return `<div class="hello">${p.role==='директор'?'Портфель под контролем':'Добрый день'}, ${p.full}
-      <small>${p.role} · один экран — всё, что требует вас. Остальное система двигает сама.</small></div>
+      <small>${p.role} · что требует вашего участия сегодня</small></div>
     <div class="today">
       <div>
         <div class="tsec"><h3>Ждут вашего решения ${wait.length?`<span class="cnt">${wait.length}</span>`:''}</h3>
-          ${wait.map(t=>wcard(t,true)).join('')||'<div class="zero">✓ Никто не заблокирован вами. Так держать.</div>'}</div>
+          ${wait.map(t=>wcard(t,true)).join('')||'<div class="zero">Ничего не ждёт вашего решения.</div>'}</div>
         <div class="tsec" style="margin-top:18px"><h3>Ваша очередь ${queue.length?`<span class="cnt">${queue.length}</span>`:''}</h3>
           ${queue.map(t=>wcard(t)).join('')||'<div class="zero">✓ Очередь пуста.</div>'}</div>
       </div>
@@ -1672,7 +1691,7 @@ function vFlow(){
         }).join('')}</tr>`;
       }).join('')}
     </table></div>
-    <p class="flow-hint">Один взгляд — весь портфель: где каждый заказ, что в графике, куда вмешаться. Фишка заказа стоит на текущем этапе; клик открывает ось заказа с задачами и лентой. Директор больше не «узнаёт о срыве последним».</p>`;
+    <p class="flow-hint">Фишка заказа стоит на текущем этапе. Клик по заказу открывает его ось: этапы, задачи, лента и документы.</p>`;
 }
 
 function chipsHTML(){
@@ -1705,7 +1724,7 @@ function vBoard(){
     return `<div class="col" data-col="${c.id}"><h3>${c.name} · ${ts.filter(visible).length}${c.wip?` <span class="wip">${over?'⚠ ':''}WIP ${ts.length}/${c.wip}</span>`:''}</h3>
       ${ts.map(cardHTML).join('')||'<div class="empty">пусто</div>'}</div>`;
   }).join('')+`</div></div>
-  <p class="flow-hint" style="margin-top:8px">Доска — инструмент инженерного центра. Остальные роли живут в «Сегодня» и «Заказах» — им канбан не нужен.</p>`;
+  <p class="flow-hint" style="margin-top:8px">Доска инженерного центра: перетаскивайте карточки между статусами; связи и сроки — в карточке задачи.</p>`;
 }
 
 function vPlan(){
@@ -1717,7 +1736,7 @@ function vPlan(){
     return `<div class="bl-epic">
       <header><span class="etag" style="color:${e.c};border:1px solid ${e.c}">${e.id}</span>
         <span class="ename">${e.name}</span>
-        ${ord?`<button class="chip" data-order="${ord.id}">⚓ заказ №${ord.num}</button>`:''}
+        ${ord?`<button class="chip" data-order="${ord.id}">заказ №${ord.num}</button>`:''}
         <span class="ecount">${done}/${ts.length}</span><span class="bar"><i style="width:${pct}%"></i></span></header>
       ${ts.filter(visible).map(t=>`<div class="bl-row" data-task="${t.key}">
         <span class="key">${t.key}</span><span class="ttl">${esc(t.ttl)}</span>
@@ -1916,7 +1935,7 @@ function chartCFD(){
       <line id="cfdCross" x1="0" y1="${PT}" x2="0" y2="${PT+ih}" style="stroke:var(--ink);stroke-width:1;opacity:0;pointer-events:none"/>
       <rect x="${PL}" y="${PT}" width="${iw}" height="${ih}" fill="transparent" id="cfdHit"/>
     </svg><div class="chart-tip" id="cfdTip"></div></div>
-    <p class="ch-note">Расширяющаяся полоса «Очередь/В работе» = растёт незавершёнка (риск затора). Ровный рост «Готово» снизу = стабильная пропускная способность. Такой график в Jira — только через платные плагины.</p>`;
+    <p class="ch-note">Расширение полосы «Очередь/В работе» — растёт незавершёнка, риск затора. Ровный рост «Готово» — стабильная пропускная способность.</p>`;
 }
 function chartThroughput(){
   const base=[3,5,2,6,4]; const doneNow=S.tasks.filter(t=>t.col==='done').length;
@@ -2022,7 +2041,7 @@ function openTask(key){
     <div class="primact">${pa?`<button class="btn big" data-move="${t.key}|${pa[0]}">${pa[1]}</button>`:'<span class="stchip st-done">Готово ✓</span>'}
       <span class="st">одно главное действие — остальное ниже</span></div>
     <div class="desc">${safe(t.desc||'')}</div>
-    ${ord?`<button class="chip" data-order="${ord.id}" style="margin:4px 0 12px">⚓ Заказ №${esc(ord.num)} · этап «${STAGE_NAMES[ord.stage][0]}»</button>`:''}
+    ${ord?`<button class="chip" data-order="${ord.id}" style="margin:4px 0 12px">Заказ №${esc(ord.num)} · этап «${STAGE_NAMES[ord.stage][0]}»</button>`:''}
     <div class="fields">
       <label>Статус</label><select id="f_col">${COLS.map(c=>`<option value="${c.id}" ${t.col===c.id?'selected':''}>${c.name}</option>`).join('')}</select>
       <label>Исполнитель</label><select id="f_who">${Object.keys(PEOPLE).map(p=>`<option value="${p}" ${t.who===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('')}</select>
@@ -2067,7 +2086,7 @@ function render(){
   const rn = $('radarN'); if(rn){ rn.textContent = radarAlerts||''; rn.style.display = radarAlerts?'':'none'; }
   $('crumb').textContent = S.view==='flow'?'весь портфель одним взглядом': S.view==='today'?'ваш рабочий день':
     S.view==='radar'?'закладки в проектах судов: П → РКД → тендер':
-    S.view==='board'?'инженерный центр · спринт 14': S.view==='kb'?'ИИ-поиск: гибридный RAG (демо)':'';
+    S.view==='board'?'инженерный центр · спринт 14': S.view==='kb'?'поиск по архиву: шифр + смысл':'';
   const sa=supplyAlerts(); const sn=$('supplyN'); if(sn){ sn.textContent=sa||''; sn.style.display=sa?'':'none'; }
   const na=noticesAlerts(); const nn=$('noticesN'); if(nn){ nn.textContent=na||''; nn.style.display=na?'':'none'; }
   const ea=estAlerts(); const en=$('estN'); if(en){ en.textContent=ea||''; en.style.display=ea?'':'none'; }
@@ -2084,16 +2103,16 @@ function render(){
 /* ---- v1.6: приветствие и тур ---- */
 const WELCOME_KEY = 'elling_welcomed';
 const WL_MODS = [
-  ['today','☀','Сегодня','что требует вас — одна кнопка на задачу'],
-  ['flow','⚓','Заказы','весь портфель со светофором риска'],
-  ['radar','◎','Радар закладок','позицию перезаложили — тревога до тендера'],
-  ['estimates','◷','Просчёт','очередь оценки ТЗ в ИЦ с SLA 4 ч / 3 дн'],
-  ['board','▦','Доска ИЦ','канбан инженерного центра, связи, сроки'],
-  ['kb','🕮','База знаний','поиск аналогов по ТЗ + вьюер чертежей'],
-  ['notices','✎','Извещения','изменения КД по ГОСТ 2.503 + контроль модели'],
-  ['portal','◐','Портал заказчика','внешний вид заказа для заказчика и ВП без внутренней кухни'],
-  ['reports','◔','Отчёты','диаграмма потока, аудит, метрики'],
-  ['settings','⚙','Настройки','импорт реестра, автоматизации, API'],
+  ['today','i-today','Сегодня','что требует вас — одна кнопка на задачу'],
+  ['flow','i-flow','Заказы','весь портфель со светофором риска'],
+  ['radar','i-radar','Радар закладок','позицию перезаложили — тревога до тендера'],
+  ['estimates','i-est','Просчёт','очередь оценки ТЗ в ИЦ с SLA 4 ч / 3 дн'],
+  ['board','i-board','Доска ИЦ','канбан инженерного центра, связи, сроки'],
+  ['kb','i-kb','База знаний','поиск аналогов по ТЗ + вьюер чертежей'],
+  ['notices','i-notices','Извещения','изменения КД по ГОСТ 2.503 + контроль модели'],
+  ['portal','i-portal','Портал заказчика','внешний вид заказа для заказчика и ВП без внутренней кухни'],
+  ['reports','i-reports','Отчёты','диаграмма потока, аудит, метрики'],
+  ['settings','i-settings','Настройки','импорт реестра, автоматизации, API'],
 ];
 const WL_STEPS = [
   ['today','Начните с «Сегодня» — переключайте роли вверху справа, у каждой свой экран'],
@@ -2111,7 +2130,7 @@ function openWelcome(){
     <h2>Здесь <span class="g">строится</span> ваш заказ</h2>
     <p class="sub">Трекер + CRM проектных продаж + инженерная база знаний с ИИ — <b>в одной системе, где судостроительная отрасль уже описана</b>. Ниже — восемь модулей. Клик открывает.</p>
     <div class="wl-grid">
-      ${WL_MODS.map(([v,i,t,d])=>`<div class="wl-mod" data-wlgo="${v}"><span class="mi">${i}</span><div><b>${t}</b><span>${d}</span></div></div>`).join('')}
+      ${WL_MODS.map(([v,i,t,d])=>`<div class="wl-mod" data-wlgo="${v}"><svg class="ic mi"><use href="#${i}"/></svg><div><b>${t}</b><span>${d}</span></div></div>`).join('')}
     </div>
     <h3>Рекомендованный путь демо</h3>
     ${WL_STEPS.map(([v,t],n)=>`<div class="wl-step" data-wlgo="${v}"><span class="num">${n+1}</span><span>${t}</span></div>`).join('')}
