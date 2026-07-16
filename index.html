@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.59 «Организация» — рабочий MVP</title>
+﻿<title>Эллинг v1.60 «Иерархия ролей» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -217,6 +217,16 @@
   .plan-sub{font-size:12.5px;color:var(--muted);margin-top:3px;max-width:44ch}
   .plan-price{font-size:22px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
   .plan-price small{font-size:12px;font-weight:500;color:var(--muted)}
+  .org-tree{display:flex;flex-direction:column;gap:2px}
+  .org-node{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;position:relative}
+  .org-node:hover{background:var(--panel2)}
+  .org-node .av{flex:none}
+  .on-main{flex:1;min-width:0}
+  .on-main b{font-size:13.5px}
+  .on-role{font-size:11.5px;color:var(--accent);font-weight:600;margin-left:6px}
+  .on-scope{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+  .on-sub{flex:none;font-size:10.5px;font-weight:700;color:var(--good);background:var(--good-soft);border-radius:99px;padding:2px 9px;white-space:nowrap}
+  .on-sub.muted{color:var(--muted);background:var(--panel2)}
   @media(max-width:860px){.set-wrap{grid-template-columns:1fr}.set-rail{position:static;flex-direction:row;overflow-x:auto;flex-wrap:nowrap;top:0}.set-cat{white-space:nowrap}.set-cat.on::before{display:none}}
   .bench-dealpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
   .bench-dealpick label{font-size:13px;font-weight:600;color:var(--ink2)}
@@ -841,15 +851,70 @@
 /* ================= data ================= */
 const LSKEY = 'stapel_v03';
 const PEOPLE = {
-  petrov:{n:'Пт',full:'Петров',role:'инженер',c:'#2E6E8E'},
-  ivanov:{n:'Ив',full:'Иванов',role:'инженер',c:'#5B7A2E'},
-  smirnov:{n:'См',full:'Смирнов',role:'инженер',c:'#7A4E8E'},
-  maksimov:{n:'Мк',full:'Максимов',role:'рук. ИЦ',c:'#1F3A50'},
-  sokolova:{n:'Ск',full:'Соколова',role:'продажи',c:'#B3541E'},
-  kuznetsova:{n:'Кз',full:'Кузнецова',role:'закупки',c:'#8E2E4E'},
-  loginov:{n:'Лг',full:'Логинов',role:'логист',c:'#3E6E5E'},
-  orlov:{n:'Ор',full:'Орлов',role:'директор',c:'#6E5E2E'},
+  orlov:{n:'Ор',full:'Орлов',role:'директор',c:'#6E5E2E',lvl:0,mgr:null,dept:'дирекция'},
+  volkov:{n:'Вл',full:'Волков',role:'зам. директора',c:'#4A5A6E',lvl:1,mgr:'orlov',dept:'дирекция'},
+  maksimov:{n:'Мк',full:'Максимов',role:'рук. ИЦ',c:'#1F3A50',lvl:2,mgr:'volkov',dept:'инженерный центр'},
+  belov:{n:'Бл',full:'Белов',role:'рук. продаж',c:'#C2691F',lvl:2,mgr:'volkov',dept:'продажи'},
+  kuzmin:{n:'Км',full:'Кузьмин',role:'рук. закупок',c:'#7A2E4E',lvl:2,mgr:'volkov',dept:'закупки'},
+  gromov:{n:'Гр',full:'Громов',role:'рук. логистики',c:'#2E6E5E',lvl:2,mgr:'volkov',dept:'логистика'},
+  petrov:{n:'Пт',full:'Петров',role:'инженер',c:'#2E6E8E',lvl:3,mgr:'maksimov',dept:'инженерный центр'},
+  ivanov:{n:'Ив',full:'Иванов',role:'инженер',c:'#5B7A2E',lvl:3,mgr:'maksimov',dept:'инженерный центр'},
+  smirnov:{n:'См',full:'Смирнов',role:'инженер',c:'#7A4E8E',lvl:3,mgr:'maksimov',dept:'инженерный центр'},
+  sokolova:{n:'Ск',full:'Соколова',role:'продажи',c:'#B3541E',lvl:3,mgr:'belov',dept:'продажи'},
+  kuznetsova:{n:'Кз',full:'Кузнецова',role:'закупки',c:'#8E2E4E',lvl:3,mgr:'kuzmin',dept:'закупки'},
+  loginov:{n:'Лг',full:'Логинов',role:'логист',c:'#3E6E5E',lvl:3,mgr:'gromov',dept:'логистика'},
 };
+/* ---- v1.60: ролевая иерархия — доступы/scope по уровням, «вижу подчинённых» ---- */
+const ROLE_META = {
+  'директор':      {scope:'вся компания · настройка ролей и доступов', tier:'Дирекция'},
+  'зам. директора':{scope:'вся компания · дашборды и аудит',           tier:'Дирекция'},
+  'рук. ИЦ':       {scope:'инженерный центр + смежные (чтение)',       tier:'Руководитель'},
+  'рук. продаж':   {scope:'отдел продаж + производство (чтение)',      tier:'Руководитель'},
+  'рук. закупок':  {scope:'снабжение и ПП 719 + заказы (чтение)',      tier:'Руководитель'},
+  'рук. логистики':{scope:'логистика и отгрузки + заказы',             tier:'Руководитель'},
+  'инженер':       {scope:'свои задачи, БЗ, чертежи',                  tier:'Сотрудник'},
+  'продажи':       {scope:'свои сделки, радар, портал',               tier:'Сотрудник'},
+  'закупки':       {scope:'свои позиции снабжения, ПП 719',           tier:'Сотрудник'},
+  'логист':        {scope:'свои отгрузки и комплектация',             tier:'Сотрудник'},
+};
+const ACC_MODS = ['CRM/Сделки','Заказы','Снабжение','Инж.центр','Финансы','Отчёты','Аудит','Доступы'];
+const ACC = {
+  'директор':      ['○','○','○','○','✓','✓','✓','✓'],
+  'зам. директора':['○','○','○','○','✓','✓','✓','○'],
+  'рук. ИЦ':       ['—','○','—','✓','—','○','—','—'],
+  'рук. продаж':   ['✓','○','—','○','○','○','—','—'],
+  'рук. закупок':  ['—','○','✓','—','—','○','—','—'],
+  'рук. логистики':['—','✓','○','—','—','○','—','—'],
+  'инженер':       ['—','○','—','✓','—','—','—','—'],
+  'продажи':       ['✓','○','—','—','○','—','—','—'],
+  'закупки':       ['—','○','✓','—','—','—','—','—'],
+  'логист':        ['—','✓','○','—','—','—','—','—'],
+};
+function directReports(uid){ return Object.keys(PEOPLE).filter(k=>PEOPLE[k].mgr===uid); }
+function subordinates(uid){ const out=[]; directReports(uid).forEach(d=>{ out.push(d); out.push.apply(out,subordinates(d)); }); return out; }
+function orgTree(){
+  const node=(uid,depth)=>{ const p=PEOPLE[uid]; const kids=directReports(uid); const sub=subordinates(uid).length;
+    return `<div class="org-node" style="padding-left:${depth*22}px">
+        <span class="av" style="background:${p.c}">${p.n}</span>
+        <div class="on-main"><b>${esc(p.full)}</b> <span class="on-role">${esc(p.role)}</span>
+          <span class="on-scope">${esc((ROLE_META[p.role]||{}).scope||'')}</span></div>
+        ${sub?`<span class="on-sub">${sub} в подчинении</span>`:'<span class="on-sub muted">исполнитель</span>'}
+      </div>` + kids.map(k=>node(k,depth+1)).join('');
+  };
+  const root=Object.keys(PEOPLE).find(k=>!PEOPLE[k].mgr)||'orlov';
+  return `<div class="org-tree">${node(root,0)}</div>`;
+}
+function myTeamPanel(){
+  const me=S.currentUser, p=PEOPLE[me]||{}; const reports=directReports(me); const all=subordinates(me);
+  const mgr=p.mgr?PEOPLE[p.mgr]:null;
+  const head=`<p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Вы — <b>${esc(p.full)}</b> · ${esc(p.role)} <span class="stchip">${esc((ROLE_META[p.role]||{}).tier||'')}</span>${mgr?` · руководитель: <b>${esc(mgr.full)}</b> (${esc(mgr.role)})`:''}.</p>`;
+  if(!reports.length) return head+'<div class="empty">Прямых подчинённых нет — вы исполнитель. Доступ ограничен вашим участком (см. матрицу ниже).</div>';
+  return head+`<p style="font-size:12.5px;color:var(--muted);margin:0 0 8px">Вы видите роли и работу <b>${all.length}</b> сотрудник(ов) в подчинении. Прямые подчинённые:</p>`+
+    reports.map(k=>{ const kp=PEOPLE[k]; const ks=subordinates(k).length;
+      return `<div class="loadrow"><span class="nm">${av(k)} ${esc(kp.full)}</span>
+        <span style="flex:1;font-size:12.5px;color:var(--ink2)">${esc(kp.role)}${ks?` · ведёт отдел (${ks})`:''}</span>
+        <span class="stchip" style="font-size:10px">${esc((ROLE_META[kp.role]||{}).scope||'')}</span></div>`; }).join('');
+}
 const STAGE_NAMES = [
   ['Лид',0],['Оценка ТЗ',0],['КП',0],['Цена ВП',1],['Контракт',0],['КД / ОКР',0],
   ['Производство',0],['Приёмка',1],['Отгрузка',0],['ПНР',0],['Гарантия',0]];
@@ -1908,7 +1973,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.59';
+const APP_VER = '1.60';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2138,16 +2203,23 @@ function vSettings(){
         <button class="btn" id="impDo" style="margin-top:12px">Импортировать ${imp.rows.length} заказов →</button>
       </div>`:''}
     </div>`; })()}</section>
-    <section class="set-sec" data-sec="users" ${tab==='users'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Пользователи и роли <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· RBAC · в проде: SSO/OIDC + приглашения</span></h3>
-      ${Object.keys(PEOPLE).map(p=>`<div class="loadrow"><span class="nm">${av(p)} ${PEOPLE[p].full}</span>
-        <span style="font-size:12.5px;color:var(--ink2);flex:1">${PEOPLE[p].role}</span></div>`).join('')}
-    </div>
-    <div class="panel" style="margin-bottom:14px"><h3>Ролевая модель — кто что видит</h3>
-      <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px">
-        <tr>${['Роль','Видит','Скрыто'].map(h=>`<th style="font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)">${h}</th>`).join('')}</tr>
-        ${ROLE_MATRIX.map(r=>`<tr>${r.map((c,i)=>`<td style="padding:7px 10px;border-bottom:1px solid var(--line2);color:${i===0?'var(--ink)':'var(--ink2)'};${i===0?'font-weight:640;white-space:nowrap':''}">${c}</td>`).join('')}</tr>`).join('')}
-      </table></div>
-    </div></section>
+    <section class="set-sec" data-sec="users" ${tab==='users'?'':'hidden'}>
+      <div class="panel" style="margin-bottom:14px"><h3>Оргструктура и подчинённость <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· RBAC по иерархии · в проде: SSO/OIDC</span></h3>
+        <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Роль определяет и <b>доступ к данным</b>, и <b>объём функций</b>. Старший по иерархии видит подчинённых и их роли; у него шире и доступ, и набор действий. Уровни: <b>Дирекция → Руководитель отдела → Сотрудник</b>.</p>
+        ${orgTree()}
+      </div>
+      <div class="panel" style="margin-bottom:14px"><h3>Моя команда <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· переключите роль вверху справа — увидите своих подчинённых</span></h3>
+        ${myTeamPanel()}
+      </div>
+      <div class="panel" style="margin-bottom:14px"><h3>Матрица доступа — роль × модуль</h3>
+        <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:12.5px;min-width:640px">
+          <tr><th style="font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)">Роль</th>
+            ${ACC_MODS.map(m=>`<th style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding:8px 6px;border-bottom:1px solid var(--line)">${m}</th>`).join('')}</tr>
+          ${Object.keys(ACC).map(role=>`<tr><td style="padding:7px 10px;border-bottom:1px solid var(--line2);color:var(--ink);font-weight:640;white-space:nowrap">${role}</td>
+            ${ACC[role].map(c=>`<td style="text-align:center;padding:7px 6px;border-bottom:1px solid var(--line2);font-weight:700;color:${c==='✓'?'var(--good)':c==='○'?'var(--steel)':'var(--muted)'}">${c}</td>`).join('')}</tr>`).join('')}
+        </table></div>
+        <p style="font-size:11.5px;color:var(--muted);margin-top:10px"><b style="color:var(--good)">✓</b> полный доступ (правка) · <b style="color:var(--steel)">○</b> только чтение · <b>—</b> нет доступа. Финансы (маржа, себестоимость) видят дирекция и продажи (свои сделки); инженерам скрыто.</p>
+      </div></section>
     <section class="set-sec" data-sec="auto" ${tab==='auto'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Автоматизации <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· правила «триггер → действие» · убийца статусных звонков</span></h3>
       ${(S.rules||[]).map(r=>`<div class="loadrow" style="align-items:flex-start">
         <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;flex:1">
@@ -2245,7 +2317,7 @@ function vToday(){
           t.col==='wip'?'в работе у вас':'в вашей очереди'}${t.sla?` · <b>${t.sla}</b>`:''} ${dueBadge(t)}</div></div>
       ${pa?`<button class="btn big" data-move="${t.key}|${pa[0]}">${pa[1]}</button>`:''}</div>`;
   };
-  const isBoss = p.role==='директор' || p.role==='рук. ИЦ';
+  const isBoss = (p.lvl!=null && p.lvl<=2);   // директор, зам, руководители отделов — управленческий вид
   const pulse = isBoss ? (()=>{
     const ords=S.orders||[];
     const cOk=ords.filter(o=>o.risk==='ok').length, cWarn=ords.filter(o=>o.risk==='warn').length, cRisk=ords.filter(o=>o.risk==='risk').length;
@@ -2272,7 +2344,7 @@ function vToday(){
         <span class="stchip" style="color:${a.c};border:1px solid ${a.c}">открыть →</span></div>`).join('')}</div>`
     :`<div class="zero" style="margin-bottom:18px">Портфель в графике — ничего не требует вмешательства.</div>`}`;
   })() : '';
-  return `<div class="hello hello-ship">${p.role==='директор'?'Портфель под контролем':isBoss?'Инженерный центр':'Добрый день'}, ${p.full}
+  return `<div class="hello hello-ship">${p.lvl===0?'Портфель под контролем':p.lvl===1?'Дирекция':p.lvl===2?('Отдел · '+(p.dept||'')):'Добрый день'}, ${p.full}
       <small>${p.role} · ${isBoss?'состояние портфеля и что требует вмешательства':'что требует вашего участия сегодня'}</small>
       <svg class="hello-ship-art" viewBox="0 0 240 90" aria-hidden="true"><use href="#i-ship-hero"/></svg></div>
     ${hubTiles()}
@@ -2754,7 +2826,7 @@ const NAVGROUPS = [
   ]},
   {solo:true, view:'settings', icon:'i-settings', label:'Настройки'},
 ];
-const ROLE_GROUP = {'инженер':'ic','рук. ИЦ':'ic','продажи':'sales','закупки':'orders','логист':'orders','директор':'analytics'};
+const ROLE_GROUP = {'инженер':'ic','рук. ИЦ':'ic','продажи':'sales','рук. продаж':'sales','закупки':'orders','рук. закупок':'orders','логист':'orders','рук. логистики':'orders','директор':'analytics','зам. директора':'analytics'};
 function navOpenForRole(u){ const g=ROLE_GROUP[(PEOPLE[u]||{}).role]||'ic'; const o={}; o[g]=true; return o; }
 function groupOfView(v){
   if(v==='order') return 'orders';
@@ -2785,11 +2857,15 @@ function syncNavOpen(){
 /* ролевой хаб быстрых действий на «Сегодня» */
 const ROLE_TILES = {
   'инженер':[['kb','i-kb','Найти в базе знаний'],['board','i-board','Доска ИЦ'],['notices','i-notices','Извещения'],['estimates','i-est','Просчёт']],
-  'рук. ИЦ':[['board','i-board','Доска ИЦ'],['estimates','i-est','Очередь просчёта'],['plan','i-plan','Планирование'],['kb','i-kb','База знаний']],
+  'рук. ИЦ':[['board','i-board','Доска ИЦ'],['estimates','i-est','Очередь просчёта'],['team','i-deals','Моя команда'],['plan','i-plan','Планирование']],
   'продажи':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['estimates','i-est','Просчёт ТКП'],['portal','i-portal','Портал заказчика']],
   'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика'],['migrate','i-supply','Мастер миграции']],
   'логист':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика'],['reports','i-reports','Отчёты']],
-  'директор':[['reports','i-reports','Отчёты'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа'],['migrate','i-supply','Мастер миграции']],
+  'директор':[['reports','i-reports','Отчёты'],['team','i-deals','Моя команда'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа']],
+  'зам. директора':[['reports','i-reports','Отчёты'],['team','i-deals','Моя команда'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа']],
+  'рук. продаж':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['team','i-deals','Моя команда'],['reports','i-reports','Отчёты']],
+  'рук. закупок':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['team','i-deals','Моя команда'],['reports','i-reports','Отчёты']],
+  'рук. логистики':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['team','i-deals','Моя команда'],['portal','i-portal','Портал заказчика']],
 };
 function navCount(v){ try{
   if(v==='estimates') return estAlerts();
@@ -2798,11 +2874,12 @@ function navCount(v){ try{
   if(v==='portal') return portalPending();
   if(v==='radar') return (S.projects||[]).flatMap(p=>p.positions).filter(x=>x.st!=='ok').length;
   if(v==='board') return S.tasks.filter(t=>t.who===S.currentUser&&t.col!=='done').length;
+  if(v==='team') return directReports(S.currentUser).length;
 }catch(e){} return 0; }
 function hubTiles(){
   const tiles = ROLE_TILES[(PEOPLE[S.currentUser]||{}).role] || ROLE_TILES['инженер'];
   return `<div class="hub">${tiles.map(([v,ic,lb])=>{ const c=navCount(v);
-    const attr = v==='migrate' ? 'data-migrate="1"' : `data-nav2="${v}"`;
+    const attr = v==='migrate' ? 'data-migrate="1"' : v==='team' ? 'data-team="1"' : `data-nav2="${v}"`;
     return `<button class="hub-tile" ${attr}><svg class="ic"><use href="#${ic}"/></svg>`
       + `<span class="ht-l">${lb}</span>${c?`<span class="ht-c">${c}</span>`:''}`
       + `<svg class="ic ht-go"><use href="#i-chev"/></svg></button>`; }).join('')}</div>`;
@@ -2997,6 +3074,7 @@ document.addEventListener('click', e=>{
   if(ngh){ const id=ngh.dataset.navgroup; S.navOpen=S.navOpen||{}; S.navOpen[id]=!S.navOpen[id]; syncNavOpen(); return; }
   const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; document.body.classList.remove('nav-open'); render(); return; }
   if(e.target.closest('[data-migrate]')){ S.view='settings'; S.setTab='migrate'; S._scrollMig=1; document.body.classList.remove('nav-open'); render(); return; }
+  if(e.target.closest('[data-team]')){ S.view='settings'; S.setTab='users'; document.body.classList.remove('nav-open'); render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
   const stab = e.target.closest('[data-settab]');
   if(stab){ S.setTab=stab.dataset.settab; render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
   const cont = e.target.closest('[data-contour]');
