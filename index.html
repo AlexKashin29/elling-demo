@@ -169,13 +169,14 @@
   .ldot{width:10px;height:10px;border-radius:50%;display:inline-block;vertical-align:-1px;margin-right:5px}
   .flow-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
   table.flow{border-collapse:collapse;min-width:1080px;width:100%}
-  .flow th{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
-    padding:12px 4px;border-bottom:1px solid var(--line);font-weight:600;text-align:center;background:var(--panel2)}
-  .flow th:first-child{text-align:left;padding-left:16px;position:sticky;left:0;background:var(--panel2);z-index:2;min-width:230px}
+  .flow th{font-size:11px;color:var(--muted);
+    padding:12px 6px;border-bottom:1px solid var(--line);font-weight:600;text-align:center;background:var(--panel)}
+  .flow th:first-child{text-align:left;padding-left:18px;position:sticky;left:0;background:var(--panel);z-index:2;min-width:240px}
   .flow th.goz{color:var(--accent)}
-  .flow td{border-bottom:1px solid var(--line2);padding:0;height:64px;position:relative;text-align:center}
+  .flow td{border-bottom:1px solid var(--line2);padding:0;height:66px;position:relative;text-align:center;transition:background .12s}
   .flow tr:last-child td{border-bottom:none}
-  .flow td.oc{position:sticky;left:0;background:var(--panel);z-index:1;text-align:left;padding:10px 14px;cursor:pointer;min-width:230px}
+  .flow td.oc{position:sticky;left:0;background:var(--panel);z-index:1;text-align:left;padding:11px 16px;cursor:pointer;min-width:240px}
+  .flow tbody tr:hover td, .flow tr:hover td{background:var(--panel2)}
   .flow tr:hover td.oc{background:var(--panel2)}
   .flow .onum{font-family:var(--mono);font-size:10px;color:var(--muted)}
   .flow .onm{font-size:13.5px;font-weight:680;line-height:1.3}
