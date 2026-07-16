@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.23 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.24 «Пульт» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -737,6 +737,7 @@ function seed(){
     connectors:[
       {id:'c1s',tag:'1С',name:'1С:Предприятие · обмен',sys:'от 7.7 до ERP 2.5 / УПП',dir:'↔',status:'ok',last:'сегодня 09:14',note:'заказы, номенклатура, ИГК, статус раздельного учёта ГОЗ'},
       {id:'cmail',tag:'Почта',name:'Почтовый шлюз заказа',sys:'Outlook / SMTP / IMAP',dir:'←',status:'ok',last:'сегодня 11:02',note:'входящие ТЗ и письма падают в ленту заказа'},
+      {id:'ccad',tag:'ЛОЦМАН',name:'КОМПАС / ЛОЦМАН:PLM',sys:'АСКОН · чертежи DWG, состав изделия (BOM), извещения',dir:'←',status:'ok',last:'сегодня 10:30',note:'читаем чертежи и состав из вашего PLM — САПР не заменяем'},
       {id:'ceis',tag:'ЕИС',name:'ЕИС · тендеры',sys:'zakupki.gov.ru · 44/223-ФЗ',dir:'←',status:'ok',last:'сегодня 08:00',note:'автозагрузка тендеров по фильтру проекта'},
       {id:'cedo',tag:'ЭДО',name:'ЭДО · Диадок / СБИС',sys:'УПД, договоры',dir:'↔',status:'setup',last:'—',note:'обмен документами — в настройке'},
     ],
@@ -1510,7 +1511,8 @@ function resCol(r){ return r==='ok'?'var(--good)':r==='warn'?'var(--warn)':'var(
 function vAgent(){
   const conns=S.connectors||[];
   return `<div class="panel" style="margin-bottom:14px"><h3>Эллинг Агент · коннекторы <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· встраивается в ландшафт завода, не заменяет его</span></h3>
-    <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Агент подключается к тому, что уже стоит на заводе: 1С любой версии от 7.7 до ERP, любой Outlook через почтовый шлюз, ЕИС и ЭДО. Данные ходят в обе стороны — переезжать никуда не нужно.</p>
+    <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Агент подключается к тому, что уже стоит на заводе: 1С (от 7.7 до ERP), КОМПАС/ЛОЦМАН:PLM, любой Outlook, ЕИС, ЭДО. Мы читаем ваши заказы, чертежи и состав изделий — <b>не заставляем переезжать и не заменяем САПР</b>. Нажмите «Синхронизировать» у 1С или ЛОЦМАН — данные появятся в «Заказах» и «Базе знаний».</p>
+    ${S.agentMsg?`<div class="ai-box" style="margin:0 0 12px">✓ ${esc(S.agentMsg)}</div>`:''}
     ${conns.map(c=>{ const st=CONN_ST[c.status]||CONN_ST.error;
       return `<div class="loadrow" style="align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0">
@@ -2295,10 +2297,27 @@ document.addEventListener('click', e=>{
   }
   const ag = e.target.closest('[data-agentsync]');
   if(ag){ const c=(S.connectors||[]).find(x=>x.id===ag.dataset.agentsync);
-    if(c){ const was=c.status; c.status='ok'; c.last='сейчас';
-      S.agentLog=S.agentLog||[]; S.agentLog.unshift({ts:'сейчас',conn:c.tag||c.name,dir:c.dir||'↔',
-        obj:was==='setup'?'коннектор настроен и синхронизирован':'ручная синхронизация выполнена',res:'ok'});
-      ACTS.push('обмен через Агент: '+(c.tag||c.name)); save(); render();
+    if(c){ const was=c.status; c.status='ok'; c.last='сейчас'; S.agentLog=S.agentLog||[];
+      let obj = was==='setup'?'коннектор настроен и синхронизирован':'ручная синхронизация выполнена';
+      if(c.id==='c1s'){                              // импорт заказа из 1С
+        S.seq=(S.seq||2470)+1; const num=String(2450+((S.orders||[]).length));
+        S.orders.push({id:'IMP'+S.seq, num, title:'Насос ЦВ-160 (импорт из 1С)', customer:'Средне-Невский ССЗ', vessel:'пр. 12700', goz:0, due:'по 1С', sum:'—', stage:4, risk:'ok', src:'1С',
+          feed:[['сейчас','<b>Заказ импортирован из 1С</b> — номенклатура и ИГК подтянуты; раздельный учёт остаётся в 1С',1]]});
+        obj='импортирован заказ №'+num+' + номенклатура';
+        S.agentMsg='Из 1С импортирован заказ №'+num+' с номенклатурой. Раздельный учёт ГОЗ остаётся в вашей 1С — Эллинг только отражает статус. Откройте «Заказы».';
+      } else if(c.id==='ccad'){                       // импорт чертежа + состава из ЛОЦМАН в базу знаний
+        S.seq=(S.seq||2470)+1;
+        S.kbProjects=S.kbProjects||[]; S.kbProjects.unshift({id:'IMPKB'+S.seq, izdelie:'Клапан запорный ДУ-100 (импорт из ЛОЦМАН)', code:'ДУ-100', order:'из PLM', year:2026, hours:48,
+          customer:'—', vessel:'—', status:'прочитан из PLM', src:'ЛОЦМАН',
+          tz:'Импортировано из КОМПАС / ЛОЦМАН:PLM без выгрузки в файлы. Запорный клапан ДУ-100, PN 40, материал корпуса — сталь 20. Прочитаны сборочный чертёж и состав изделия (BOM) актуальной ревизии PLM.',
+          tags:'клапан запорный ду-100 pn40 сталь лоцман компас plm импорт bom',
+          docs:[{type:'Чертёж',name:'СБ.ДУ-100.00.00 · сборочный (из ЛОЦМАН)',ver:'актуальная ревизия PLM',code:'СБ.ДУ-100',where:'DWG · вьюер'},
+                {type:'Спецификация',name:'Состав изделия ДУ-100 · BOM (из ЛОЦМАН)',ver:'из PLM',where:'спецификация'}]});
+        obj='импортированы чертёж + состав изделия ДУ-100';
+        S.agentMsg='Из КОМПАС/ЛОЦМАН прочитаны сборочный чертёж и состав изделия ДУ-100 — теперь в Базе знаний и в ИИ-поиске. САПР остаётся у вас, мы только читаем. Откройте «Базу знаний».';
+      } else { S.agentMsg=null; }
+      S.agentLog.unshift({ts:'сейчас',conn:c.tag||c.name,dir:c.dir||'←',obj,res:'ok'});
+      ACTS.push('импорт через Агент: '+(c.tag||c.name)); save(); render();
     } return;
   }
   const po = e.target.closest('[data-portalorder]');
