@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.55 «Скролл» — рабочий MVP</title>
+﻿<title>Эллинг v1.56 «Скролл+фильтры» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1873,7 +1873,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.55';
+const APP_VER = '1.56';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2259,7 +2259,7 @@ function chipsHTML(){
     <button class="chip" data-chip="hi" aria-pressed="${S.chips.hi}">Высокий приоритет</button>
     <span class="lbl" style="margin-left:8px">Эпик</span>
     ${S.epics.map(e=>`<button class="chip" data-chipepic="${e.id}" aria-pressed="${S.chips.epic===e.id}">${e.id}</button>`).join('')}
-    <span class="lbl" style="margin-left:12px">Фильтры</span>
+    <span class="lbl" style="margin-left:12px">Сохранённые</span>
     ${(S.savedFilters||[]).map(f=>`<button class="chip" data-applyfilter="${f.id}" title="применить сохранённый фильтр">★ ${esc(f.name)}</button>`).join('')}
     <button class="chip" id="saveFilter" title="сохранить текущие фильтры">＋ сохранить</button>
   </div>`;
