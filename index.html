@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.60 «Иерархия ролей» — рабочий MVP</title>
+﻿<title>Эллинг v1.61 «RBAC-меню» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -890,6 +890,20 @@ const ACC = {
   'закупки':       ['—','○','✓','—','—','—','—','—'],
   'логист':        ['—','✓','○','—','—','—','—','—'],
 };
+/* доступные экраны по роли (реальное скрытие модулей в навигации) */
+const ALL_VIEWS = ['today','deals','radar','estimates','flow','supply','portal','board','kb','notices','plan','reports','bench','settings'];
+const ROLE_VIEWS = {
+  'директор': ALL_VIEWS, 'зам. директора': ALL_VIEWS,
+  'рук. ИЦ':        ['today','board','kb','notices','plan','estimates','flow','reports','bench','settings'],
+  'рук. продаж':    ['today','deals','radar','estimates','portal','flow','reports','bench','settings'],
+  'рук. закупок':   ['today','supply','flow','portal','reports','settings'],
+  'рук. логистики': ['today','flow','supply','portal','reports','settings'],
+  'инженер':        ['today','board','kb','notices','plan','estimates','flow','settings'],
+  'продажи':        ['today','deals','radar','estimates','portal','flow','settings'],
+  'закупки':        ['today','supply','flow','portal','settings'],
+  'логист':         ['today','flow','supply','portal','settings'],
+};
+function canView(v){ const role=(PEOPLE[S.currentUser]||{}).role; const a=ROLE_VIEWS[role]||ALL_VIEWS; return (v==='order'?a.indexOf('flow'):a.indexOf(v))>=0; }
 function directReports(uid){ return Object.keys(PEOPLE).filter(k=>PEOPLE[k].mgr===uid); }
 function subordinates(uid){ const out=[]; directReports(uid).forEach(d=>{ out.push(d); out.push.apply(out,subordinates(d)); }); return out; }
 function orgTree(){
@@ -1973,7 +1987,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.60';
+const APP_VER = '1.61';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2836,10 +2850,12 @@ function groupOfView(v){
 function buildNav(){
   const nav=$('nav'); if(!nav) return;
   nav.innerHTML = NAVGROUPS.map(g=>{
-    if(g.solo) return `<button class="navsolo" data-nav="${g.view}"><svg class="ic"><use href="#${g.icon}"/></svg> ${g.label}${g.badge?` <span class="n" id="${g.badge}"></span>`:''}</button>`;
+    if(g.solo) return canView(g.view)?`<button class="navsolo" data-nav="${g.view}"><svg class="ic"><use href="#${g.icon}"/></svg> ${g.label}${g.badge?` <span class="n" id="${g.badge}"></span>`:''}</button>`:'';
+    const items=g.items.filter(i=>canView(i.view));
+    if(!items.length) return '';
     return `<div class="navgroup" data-group="${g.id}">`
       + `<button class="navhead" data-navgroup="${g.id}" aria-expanded="false"><svg class="ic"><use href="#${g.icon}"/></svg> <span class="gl">${g.label}</span><svg class="ic chev"><use href="#i-chev"/></svg></button>`
-      + `<div class="navbody">${g.items.map(i=>`<button data-nav="${i.view}"><svg class="ic"><use href="#${i.icon}"/></svg> ${i.label}${i.badge?` <span class="n" id="${i.badge}"></span>`:''}</button>`).join('')}</div>`
+      + `<div class="navbody">${items.map(i=>`<button data-nav="${i.view}"><svg class="ic"><use href="#${i.icon}"/></svg> ${i.label}${i.badge?` <span class="n" id="${i.badge}"></span>`:''}</button>`).join('')}</div>`
       + `</div>`;
   }).join('');
 }
@@ -2860,7 +2876,7 @@ const ROLE_TILES = {
   'рук. ИЦ':[['board','i-board','Доска ИЦ'],['estimates','i-est','Очередь просчёта'],['team','i-deals','Моя команда'],['plan','i-plan','Планирование']],
   'продажи':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['estimates','i-est','Просчёт ТКП'],['portal','i-portal','Портал заказчика']],
   'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика'],['migrate','i-supply','Мастер миграции']],
-  'логист':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика'],['reports','i-reports','Отчёты']],
+  'логист':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика']],
   'директор':[['reports','i-reports','Отчёты'],['team','i-deals','Моя команда'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа']],
   'зам. директора':[['reports','i-reports','Отчёты'],['team','i-deals','Моя команда'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа']],
   'рук. продаж':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['team','i-deals','Моя команда'],['reports','i-reports','Отчёты']],
@@ -2973,6 +2989,7 @@ function vBench(){
     <div class="bm-grid">${list.map(card).join('')||emptyBox('i-bench','Нет данных','По этому сегменту пока нет эталонов.','Показать все','data-benchf=\"all\"')}</div>`;
 }
 function render(){
+  if(S._navRole!==S.currentUser){ buildNav(); S._navRole=S.currentUser; }
   syncNavOpen();
   document.querySelectorAll('#nav [data-nav]').forEach(b=>b.setAttribute('aria-current', b.dataset.nav===S.view));
   const myWork = S.tasks.filter(t=>t.who===S.currentUser&&t.col!=='done').length;
@@ -3464,7 +3481,7 @@ document.addEventListener('change', e=>{
     rd.readAsText(f,'utf-8'); } return; }
   const im=e.target.closest('[data-impmap]');
   if(im){ S.imp.map[im.dataset.impmap]=e.target.value; return; }
-  if(e.target.id==='userSel'){ S.currentUser=e.target.value; S.navOpen=navOpenForRole(S.currentUser); render(); return; }
+  if(e.target.id==='userSel'){ S.currentUser=e.target.value; S.navOpen=navOpenForRole(S.currentUser); if(!canView(S.view)) S.view='today'; render(); return; }
   if(e.target.id==='benchDealSel'){ const id=e.target.value; S.benchDeal=id||null;
     if(id){ const m=dealMatchBench(dealById(id)); S.benchCmp=m?m.b.id:null; } else { S.benchCmp=null; }
     render(); return; }
