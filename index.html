@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.61 «RBAC-меню» — рабочий MVP</title>
+﻿<title>Эллинг v1.62 «Финансы по ролям» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -904,6 +904,8 @@ const ROLE_VIEWS = {
   'логист':         ['today','flow','supply','portal','settings'],
 };
 function canView(v){ const role=(PEOPLE[S.currentUser]||{}).role; const a=ROLE_VIEWS[role]||ALL_VIEWS; return (v==='order'?a.indexOf('flow'):a.indexOf(v))>=0; }
+/* финансовая видимость (маржа, суммы, ТКП): дирекция + продажи; остальным скрыто */
+function canFin(){ const r=(PEOPLE[S.currentUser]||{}).role; return r==='директор'||r==='зам. директора'||r==='рук. продаж'||r==='продажи'; }
 function directReports(uid){ return Object.keys(PEOPLE).filter(k=>PEOPLE[k].mgr===uid); }
 function subordinates(uid){ const out=[]; directReports(uid).forEach(d=>{ out.push(d); out.push.apply(out,subordinates(d)); }); return out; }
 function orgTree(){
@@ -1858,7 +1860,7 @@ function vEstimates(){
       <div style="font-size:13px;color:var(--ink2);margin:10px 0">${esc(e.note)}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:10px;border-top:1px solid var(--line2)">
         ${ackChip}${dueChip}
-        ${e.status==='done'?`<span class="stchip" style="color:var(--good);border:1px solid var(--good)">${e.resHours} н/ч · ТКП ${fmtSum(e.resSum)}</span>${e.dealId?`<button class="chip" data-deal="${e.dealId}" style="margin-left:auto">↗ Сделка ${esc(e.dealId)}</button>`:''}`:''}
+        ${e.status==='done'?`<span class="stchip" style="color:var(--good);border:1px solid var(--good)">${e.resHours} н/ч · ТКП ${canFin()?fmtSum(e.resSum):'•••'}</span>${e.dealId?`<button class="chip" data-deal="${e.dealId}" style="margin-left:auto">↗ Сделка ${esc(e.dealId)}</button>`:''}`:''}
         ${e.status==='new'?`<button class="btn" style="padding:5px 12px;font-size:12px;margin-left:auto" data-esttake="${e.id}">Взять в работу</button><button class="btn ghost" style="padding:5px 12px;font-size:12px" data-estdecline="${e.id}">Не наша компетенция</button>`:''}
         ${e.status==='wip'?`<button class="btn" style="padding:5px 12px;font-size:12px;margin-left:auto" data-estdone="${e.id}">Отметить просчитанным →</button>`:''}
       </div></div>`; }).join('')||emptyBox('i-est','Нет заявок под этот фильтр','Переключите фильтр выше на «Все», чтобы увидеть весь просчёт. Заявки приходят сюда из сделок при запросе оценки ТЗ в ИЦ.')}`;
@@ -1926,7 +1928,7 @@ function moveDeal(d, stage){
   save();
 }
 function vDeals(){
-  const me=PEOPLE[S.currentUser]; const canMoney = me.role==='директор'||me.role==='продажи';
+  const me=PEOPLE[S.currentUser]; const canMoney = canFin();
   const active=(S.deals||[]).filter(d=>d.stage!=='lost');
   const forecast=active.reduce((a,d)=>a+d.sum*(d.prob/100),0);
   const total=active.reduce((a,d)=>a+d.sum,0);
@@ -1959,7 +1961,7 @@ function vDeals(){
 }
 function openDeal(id){
   const d=dealById(id); if(!d) return;
-  const me=PEOPLE[S.currentUser]; const canMoney = me.role==='директор'||me.role==='продажи';
+  const me=PEOPLE[S.currentUser]; const canMoney = canFin();
   $('drawer').innerHTML=`
     <button class="close" id="dClose">закрыть ✕</button>
     <span class="key">${d.id} · ${DST[d.stage]?DST[d.stage][1]:'проиграно'} · вероятность ${d.prob}%</span>
@@ -1987,7 +1989,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.61';
+const APP_VER = '1.62';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2349,7 +2351,7 @@ function vToday(){
       <div class="stat"><div class="v" style="${cc('var(--good)')}">${cOk}</div><div class="l">в графике</div></div>
       <div class="stat"><div class="v" style="${cc('var(--warn)')}">${cWarn}</div><div class="l">риск срока</div></div>
       <div class="stat"><div class="v" style="${cc('var(--risk)')}">${cRisk}</div><div class="l">срыв — вмешаться</div></div>
-      <div class="stat"><div class="v" style="${cc('var(--accent)')}">${fmtSum(forecast)}</div><div class="l">прогноз воронки</div></div>
+      <div class="stat"><div class="v" style="${cc('var(--accent)')}">${canFin()?fmtSum(forecast):'•••'}</div><div class="l">прогноз воронки</div></div>
       <div class="stat"><div class="v" style="${cc(slaPct>=80?'var(--good)':'var(--warn)')}">${slaPct}%</div><div class="l">просчёт в SLA (4 ч)</div></div>
     </div>
     ${attn.length?`<div class="tsec" style="margin-bottom:18px"><h3>Требует внимания сейчас <span class="cnt">${attn.length}</span></h3>
@@ -2460,8 +2462,7 @@ function vPlan(){
 }
 
 function money(s){
-  const me = PEOPLE[S.currentUser];
-  return (me.role==='директор'||me.role==='продажи') ? esc(s) : '<span style="filter:blur(4px)">≈≈≈≈</span>';
+  return canFin() ? esc(s) : '<span style="filter:blur(4px)">≈≈≈≈</span>';
 }
 function vOrder(oid){
   const o = S.orders.find(x=>x.id===oid); if(!o) return '<div class="empty">заказ не найден</div>';
@@ -2697,11 +2698,11 @@ function chartDealFunnel(){
       <span style="flex:1;background:var(--panel2);border-radius:6px;height:22px;position:relative;overflow:hidden">
         <i style="position:absolute;left:0;top:0;bottom:0;width:${Math.round(r.n/maxN*100)}%;background:${r.sc};opacity:.85;border-radius:6px"></i></span>
       <span style="width:36px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--ink)">${r.n}</span>
-      <span style="width:84px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">${r.sum?fmtSum(r.sum):'—'}</span>
+      <span style="width:84px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">${r.sum?(canFin()?fmtSum(r.sum):'•••'):'—'}</span>
     </div>`).join('')}
     <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--ink2)">
-      <span>Сумма воронки: <b style="color:var(--ink)">${fmtSum(total)}</b></span>
-      <span>Взвешенный прогноз: <b style="color:var(--accent)">${fmtSum(forecast)}</b></span>
+      <span>Сумма воронки: <b style="color:var(--ink)">${canFin()?fmtSum(total):'•••'}</b></span>
+      <span>Взвешенный прогноз: <b style="color:var(--accent)">${canFin()?fmtSum(forecast):'•••'}</b></span>
       ${lost?`<span>Проиграно: <b style="color:var(--risk)">${lost}</b></span>`:''}
     </div>
     <p class="ch-note">Прогноз считается из стадий и вероятностей, а не из оптимизма менеджера — системное смещение ручных прогнозов на этом рынке доходит до −35%.</p>`;
@@ -2750,7 +2751,7 @@ function vReports(){
       <div class="stat"><div class="v">${cnt('wip')}</div><div class="l">задач в работе (WIP 6)</div></div>
       <div class="stat"><div class="v" style="color:var(--good);-webkit-text-fill-color:var(--good)">${savedCalls}</div><div class="l">событий вместо звонков</div></div>
       <div class="stat"><div class="v" style="color:${slaPct>=80?'var(--good)':'var(--warn)'};-webkit-text-fill-color:${slaPct>=80?'var(--good)':'var(--warn)'}">${slaPct}<span style="font-size:15px">%</span></div><div class="l">просчётов в SLA отклика</div></div>
-      <div class="stat"><div class="v" style="color:var(--accent);-webkit-text-fill-color:var(--accent)">${fmtSum(dForecast)}</div><div class="l">взвешенный прогноз воронки</div></div>
+      <div class="stat"><div class="v" style="color:var(--accent);-webkit-text-fill-color:var(--accent)">${canFin()?fmtSum(dForecast):'•••'}</div><div class="l">взвешенный прогноз воронки</div></div>
     </div>
     <div class="panel">${chartDealFunnel()}</div>
     <div class="panel" style="margin-top:14px">${chartEstFunnel()}</div>
@@ -3178,7 +3179,7 @@ document.addEventListener('click', e=>{
       if(en.dealId){ const d=dealById(en.dealId); if(d){ d.next=`Оценка ИЦ готова: ${h} н/ч · ТКП ${fmtSum(sv)} — отправить ТКП`;
         d.acts=d.acts||[]; d.acts.push(['сейчас',`Оценка ИЦ: ${h} н/ч, ТКП ${fmtSum(sv)}`]);
         notify(['sokolova'],`оценка ИЦ готова: ${en.title.slice(0,40)} (${h} н/ч)`,null); } }
-      save(); render(); toast(`Просчитано: ${h} н/ч · ТКП ${fmtSum(sv)}`,'ok');
+      save(); render(); toast(`Просчитано: ${h} н/ч${canFin()?` · ТКП ${fmtSum(sv)}`:''}`,'ok');
     } return;
   }
   const edc = e.target.closest('[data-estdecline]');
