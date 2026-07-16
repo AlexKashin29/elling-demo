@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.41 «Бенчмарки» — рабочий MVP</title>
+﻿<title>Эллинг v1.42 «Морской-2» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -131,6 +131,15 @@
   .bm-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:2px;padding-top:10px;border-top:1px solid var(--line2)}
   .bm-src{font-size:11px;color:var(--muted)}
   .bm-foot .btn.ghost{padding:5px 12px;font-size:12px}
+  .bm-sko .stchip{font-size:11.5px}
+  .stchip.sko-ok{color:var(--good)}
+  .stchip.sko-gap{color:var(--accent);border:1px dashed color-mix(in srgb,var(--accent) 55%,transparent);background:transparent}
+  .bm-gap{font-size:12.3px;color:var(--ink2);background:var(--panel2);border-radius:9px;padding:7px 11px}
+  .bm-gap b{color:var(--good)}
+  .gap-op{color:var(--accent);font-weight:600}
+  .bm-legend{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin:-4px 0 14px;flex-wrap:wrap}
+  .bm-legend span{display:inline-flex;align-items:center;gap:6px}
+  .bm-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none}
   .wl-ship{display:block;width:min(300px,72%);height:auto;stroke:var(--accent);fill:none;stroke-width:1.5;opacity:.92;margin:10px 0 2px;stroke-linecap:round;stroke-linejoin:round}
   aside .create{margin:16px 4px 6px}
   aside .create button{width:100%;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 88%,#fff),var(--accent) 70%);color:#fff;border:none;border-radius:12px;padding:12px;font-weight:600;font-size:14px;cursor:pointer;
@@ -625,7 +634,7 @@
   <symbol id="i-ship-hero" viewBox="0 0 240 90"><path d="M20 58 H168 L152 77 H40 a10 10 0 0 1 -9 -6 Z"/><path d="M55 58 V40 H97 V58"/><path d="M69 40 V29 H90 V40"/><path d="M104 40 V32 H114 V40"/><path d="M120 58 V47 H150 L156 58"/><path d="M78 29 V16"/><path d="M78 18 H98"/><path d="M6 71 q11 -6 22 0 t22 0 t22 0 t22 0 t22 0 t22 0 t22 0 t22 0 t22 0 t22 0"/></symbol>
 </svg>
 <aside>
-  <div class="logo"><span class="dot"></span> Эллинг <small>ОС заказа</small></div>
+  <div class="logo"><span class="dot"></span> Эллинг <small id="verTag">ОС заказа</small></div>
   <nav id="nav"><!-- строится buildNav() под роль --></nav>
   <div class="create"><button id="createBtn" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg class="ic" style="stroke-width:2.2"><use href="#i-plus"/></svg>Создать задачу</button></div>
   <div class="bottom"><span id="srvState">локальный режим</span><br><button id="resetBtn" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;padding:0;font:inherit">сбросить демо</button></div>
@@ -1742,6 +1751,8 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
+const APP_VER = '1.42';
+try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
   if(v) document.documentElement.dataset.theme = v;
@@ -2594,31 +2605,39 @@ function vBench(){
   const f = S.benchFilter||'all';
   const list = f==='all'?bm:bm.filter(b=>b.type===f);
   const avgLocal = bm.length?Math.round(bm.reduce((a,b)=>a+b.local,0)/bm.length):0;
-  const bestLocal = bm.length?Math.max.apply(null,bm.map(b=>b.local)):0;
-  const card = b=>`<div class="bm-card">
+  const OUR_KEYS = ['двигатель','дгу','дг ','дг комплект','рефустанов','рефа','насос','гидравлик','автоматизац','асу','кран','живой воды','грунтов'];
+  const cov = s=>{ const x=(' '+s.toLowerCase()+' '); return OUR_KEYS.some(k=>x.indexOf(k)>=0); };
+  const covRatio = b=>b.sko.length?b.sko.filter(cov).length/b.sko.length:0;
+  const avgCov = bm.length?Math.round(bm.reduce((a,b)=>a+covRatio(b),0)/bm.length*100):0;
+  const card = b=>{
+    const gaps = b.sko.filter(s=>!cov(s)); const nCov = b.sko.length-gaps.length;
+    return `<div class="bm-card">
     <div class="bm-top"><div><div class="bm-name">${esc(b.name)}</div><div class="bm-cls">${esc(b.cls)} · ${esc(b.yard)}</div></div>
       <span class="bm-series">серия ${b.series}</span></div>
     <div class="bm-metrics">
       <div><b>${b.local}%</b><span>локализация</span></div>
       <div><b>${b.months} мес</b><span>цикл</span></div>
-      <div><b>${b.sko.length}</b><span>узлов СКО</span></div>
+      <div><b>${Math.round(covRatio(b)*100)}%</b><span>наш охват СКО</span></div>
     </div>
-    <div class="bm-sko">${b.sko.map(s=>`<span class="stchip">${esc(s)}</span>`).join('')}</div>
+    <div class="bm-sko">${b.sko.map(s=>`<span class="stchip ${cov(s)?'sko-ok':'sko-gap'}">${esc(s)}</span>`).join('')}</div>
+    <div class="bm-gap"><b>${nCov}/${b.sko.length}</b> узлов закрываем нашим профилем${gaps.length?` · <span class="gap-op">возможность: ${gaps.slice(0,3).map(esc).join(', ')}${gaps.length>3?'…':''}</span>`:' — полное покрытие'}</div>
     <div class="bm-ins"><span class="bm-tag good">почему выиграл</span> ${esc(b.won)}</div>
     <div class="bm-ins"><span class="bm-tag acc">на что равняться</span> ${esc(b.lesson)}</div>
     <div class="bm-foot"><span class="bm-src">источник: ${esc(b.src)}</span>
       <button class="btn ghost" data-benchdo="${b.id}">Взять в проработку →</button></div>
   </div>`;
+  };
   return `<div class="hello hello-ship">Бенчмарки флота<small>успешные серии: состав СКО, локализация ПП719 и сроки — на что равняться и что подсмотреть</small>
       <svg class="hello-ship-art" viewBox="0 0 240 90" aria-hidden="true"><use href="#i-ship-hero"/></svg></div>
     <div class="ai-strip"><svg class="ic"><use href="#i-bench"/></svg>
-      <div><b>ИИ-помощник по бенчмаркам.</b> Собрано из открытых источников — реестр судов РМРС, ЕИС, пресс-релизы верфей. Сравнивай состав СКО и локализацию своих проектов с эталонными сериями: где ты отстаёшь и какой узел стоит добавить.</div></div>
-    <div class="stats" style="margin:8px 0 16px">
+      <div><b>ИИ-помощник по бенчмаркам.</b> Собрано из открытых источников — реестр судов РМРС, ЕИС, пресс-релизы верфей. Каждый эталон сверяется с <b>нашим профилем поставок</b>: <span style="color:var(--good)">зелёным</span> — узлы, что закрываем; <span style="color:var(--accent)">пунктиром</span> — пробел = точка роста и локализации.</div></div>
+    <div class="stats" style="margin:8px 0 14px">
       <div class="stat"><div class="v">${bm.length}</div><div class="l">эталонных серий</div></div>
       <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--accent);color:var(--accent)">${avgLocal}%</div><div class="l">средняя локализация</div></div>
+      <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--good);color:var(--good)">${avgCov}%</div><div class="l">наш охват их СКО</div></div>
       <div class="stat"><div class="v">${types.length}</div><div class="l">сегментов флота</div></div>
-      <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--good);color:var(--good)">${bestLocal}%</div><div class="l">лучший по локализации</div></div>
     </div>
+    <div class="bm-legend"><span><i style="background:var(--good)"></i> закрываем нашим профилем</span><span><i style="border:1px dashed var(--accent)"></i> пробел = возможность локализации</span></div>
     <div class="bm-filters"><button class="chip ${f==='all'?'on':''}" data-benchf="all">Все сегменты</button>
       ${types.map(t=>`<button class="chip ${f===t?'on':''}" data-benchf="${esc(t)}">${esc(t)}</button>`).join('')}</div>
     <div class="bm-grid">${list.map(card).join('')||emptyBox('i-bench','Нет данных','По этому сегменту пока нет эталонов.','Показать все','data-benchf=\"all\"')}</div>`;
@@ -2942,10 +2961,13 @@ document.addEventListener('click', e=>{
   const bdo = e.target.closest('[data-benchdo]');
   if(bdo){ const b=(S.benchmarks||[]).find(x=>x.id===bdo.dataset.benchdo);
     if(b){ S.seq=(S.seq||2470)+1;
+      const _OK=['двигатель','дгу','дг ','дг комплект','рефустанов','рефа','насос','гидравлик','автоматизац','асу','кран','живой воды','грунтов'];
+      const _cov=s=>{const x=(' '+s.toLowerCase()+' ');return _OK.some(k=>x.indexOf(k)>=0);};
+      const _gaps=b.sko.filter(s=>!_cov(s));
       S.tasks.unshift({key:'СТ-'+S.seq, ttl:`Проработать бенчмарк: ${b.name}`, epic:'E2',
         who:(S.currentUser==='orlov'||S.currentUser==='sokolova')?'maksimov':S.currentUser, col:'open', prio:'md', est:null, sla:null, due:null,
-        desc:`Эталон: <b>${esc(b.name)}</b> (${esc(b.cls)}, ${esc(b.yard)}). Локализация ${b.local}%, цикл ${b.months} мес, серия ${b.series}. Состав СКО: ${b.sko.join(', ')}.<br><b>На что равняться:</b> ${esc(b.lesson)}<br>Сверить наш портфель с этим составом СКО — чего не хватает и где отстаём по локализации ПП719.`,
-        subs:[{t:'Сверить состав СКО с нашим предложением',done:false},{t:'Оценить разрыв по локализации ПП719',done:false},{t:'Наметить узел, который добавить/локализовать',done:false}],
+        desc:`Эталон: <b>${esc(b.name)}</b> (${esc(b.cls)}, ${esc(b.yard)}). Локализация ${b.local}%, цикл ${b.months} мес, серия ${b.series}. Состав СКО: ${b.sko.join(', ')}.<br><b>Наш охват:</b> ${b.sko.length-_gaps.length}/${b.sko.length} узлов.${_gaps.length?` <b>Пробелы (возможность):</b> ${esc(_gaps.join(', '))}.`:' Полное покрытие.'}<br><b>На что равняться:</b> ${esc(b.lesson)}`,
+        subs:[{t:'Сверить состав СКО с нашим предложением',done:false},{t:'Оценить разрыв по локализации ПП719',done:false},...(_gaps.length?[{t:'Проработать узел-пробел: '+_gaps[0],done:false}]:[]),{t:'Наметить узел, который добавить/локализовать',done:false}],
         comments:[], links:[], watchers:[], log:['создана из бенчмарка '+b.id]});
       ACTS.push('бенчмарк в проработке: '+b.name.slice(0,40)); S.view='board'; save(); render(); toast('Бенчмарк взят в проработку — задача создана','ok');
     } return;
