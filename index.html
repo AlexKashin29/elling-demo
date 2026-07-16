@@ -1,18 +1,18 @@
-﻿<title>Эллинг v1.38 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.39 «Морской» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   /* Палитра «грунт и сталь» · акцент — сурик (красно-рыжий грунт корпуса на стапеле); циан-сталь — только для данных */
   :root{
-    --bg:#F4F4F6; --panel:#FFFFFF; --panel2:#F4F5F7; --side:#0E1620; --side-ink:#93A7BC; --side-act:#FF7A33;
+    --bg:#F4F4F6; --panel:#FFFFFF; --panel2:#F4F5F7; --side:#0E1620; --side-ink:#93A7BC; --side-act:#37AECF;
     --ink:#111A24; --ink2:#48586A; --muted:#7C8C9C;
     --line:#E3E7EC; --line2:#ECEFF3; --sh:0 1px 2px rgba(16,24,40,.05),0 4px 14px -3px rgba(16,24,40,.09);--sh-lg:0 14px 34px -10px rgba(16,24,40,.18),0 5px 12px -6px rgba(16,24,40,.12);
-    --accent:#E24A0C; --accent-soft:#FDE7DA; --steel:#0E7C93;
+    --accent:#0C6B8F; --accent-soft:#DCEBF1; --steel:#0E7C93;
     --navy:#1F3A50; --navy-soft:#E4EBF3;
     --good:#1E7D46; --good-soft:#E1F1E7; --warn:#A9660A; --warn-soft:#F8EEDA; --risk:#C0362E; --risk-soft:#F9E4E1;
     
-    --glow:0 0 0 1px rgba(194,67,9,.16), 0 8px 30px -8px rgba(30,50,70,.18);
+    --glow:0 0 0 1px rgba(12,107,143,.18), 0 8px 30px -8px rgba(30,50,70,.18);
     --shadow:0 10px 34px -14px rgba(20,35,55,.28);
     --aura:none;
     --mono:"Cascadia Mono",Consolas,"Roboto Mono",ui-monospace,monospace;
@@ -21,28 +21,28 @@
   @media (prefers-color-scheme: dark){
     :root{--bg:#080C12;--panel:#111A24;--panel2:#17222F;--side:#060A0F;--side-ink:#8195A9;
       --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#26343F;--line2:#1E2A36;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px -4px rgba(0,0,0,.55);--sh-lg:0 18px 42px -10px rgba(0,0,0,.75),0 6px 14px -6px rgba(0,0,0,.5);
-      --accent:#FF7A33;--accent-soft:#37220F;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;
+      --accent:#37AECF;--accent-soft:#0D2A36;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;
       --good:#5FD08B;--good-soft:#122A1B;--warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
       
-      --glow:0 0 0 1px rgba(255,122,51,.18), 0 10px 40px -10px rgba(0,0,0,.6);
+      --glow:0 0 0 1px rgba(55,174,207,.20), 0 10px 40px -10px rgba(0,0,0,.6);
       --shadow:0 16px 50px -18px rgba(0,0,0,.7);
-      --aura:radial-gradient(1150px 680px at 80% -10%, rgba(255,122,51,.07), transparent 58%), radial-gradient(950px 640px at 8% 112%, rgba(58,175,201,.055), transparent 55%);}
+      --aura:radial-gradient(1150px 680px at 80% -10%, rgba(55,174,207,.09), transparent 58%), radial-gradient(950px 640px at 8% 112%, rgba(46,110,142,.06), transparent 55%);}
   }
   :root[data-theme="light"]{--bg:#F4F4F6;--panel:#FFFFFF;--panel2:#F4F5F7;--side:#0E1620;--side-ink:#93A7BC;
-    --ink:#111A24;--ink2:#48586A;--muted:#7C8C9C;--line:#E3E7EC;--line2:#ECEFF3;--sh:0 1px 2px rgba(16,24,40,.05),0 4px 14px -3px rgba(16,24,40,.09);--sh-lg:0 14px 34px -10px rgba(16,24,40,.18),0 5px 12px -6px rgba(16,24,40,.12);--accent:#E24A0C;
-    --accent-soft:#FDE7DA;--steel:#0E7C93;--navy:#1F3A50;--navy-soft:#E4EBF3;--good:#1E7D46;--good-soft:#E1F1E7;
+    --ink:#111A24;--ink2:#48586A;--muted:#7C8C9C;--line:#E3E7EC;--line2:#ECEFF3;--sh:0 1px 2px rgba(16,24,40,.05),0 4px 14px -3px rgba(16,24,40,.09);--sh-lg:0 14px 34px -10px rgba(16,24,40,.18),0 5px 12px -6px rgba(16,24,40,.12);--accent:#0C6B8F;
+    --accent-soft:#DCEBF1;--steel:#0E7C93;--navy:#1F3A50;--navy-soft:#E4EBF3;--good:#1E7D46;--good-soft:#E1F1E7;
     --warn:#A9660A;--warn-soft:#F8EEDA;--risk:#C0362E;--risk-soft:#F9E4E1;
     
-    --glow:0 0 0 1px rgba(194,67,9,.16), 0 8px 30px -8px rgba(30,50,70,.18);
+    --glow:0 0 0 1px rgba(12,107,143,.18), 0 8px 30px -8px rgba(30,50,70,.18);
     --shadow:0 10px 34px -14px rgba(20,35,55,.28);--aura:none;}
   :root[data-theme="dark"]{--bg:#080C12;--panel:#111A24;--panel2:#17222F;--side:#060A0F;--side-ink:#8195A9;
-    --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#26343F;--line2:#1E2A36;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px -4px rgba(0,0,0,.55);--sh-lg:0 18px 42px -10px rgba(0,0,0,.75),0 6px 14px -6px rgba(0,0,0,.5);--accent:#FF7A33;
-    --accent-soft:#37220F;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;--good:#5FD08B;--good-soft:#122A1B;
+    --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#26343F;--line2:#1E2A36;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px -4px rgba(0,0,0,.55);--sh-lg:0 18px 42px -10px rgba(0,0,0,.75),0 6px 14px -6px rgba(0,0,0,.5);--accent:#37AECF;
+    --accent-soft:#0D2A36;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;--good:#5FD08B;--good-soft:#122A1B;
     --warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
     
-    --glow:0 0 0 1px rgba(255,122,51,.18), 0 10px 40px -10px rgba(0,0,0,.6);
+    --glow:0 0 0 1px rgba(55,174,207,.20), 0 10px 40px -10px rgba(0,0,0,.6);
     --shadow:0 16px 50px -18px rgba(0,0,0,.7);
-    --aura:radial-gradient(1150px 680px at 80% -10%, rgba(255,122,51,.07), transparent 58%), radial-gradient(950px 640px at 8% 112%, rgba(58,175,201,.055), transparent 55%);}
+    --aura:radial-gradient(1150px 680px at 80% -10%, rgba(55,174,207,.09), transparent 58%), radial-gradient(950px 640px at 8% 112%, rgba(46,110,142,.06), transparent 55%);}
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;display:flex;min-height:100vh;
@@ -69,7 +69,7 @@
     font-size:14px;font-weight:600;padding:11px 13px;border-radius:10px;cursor:pointer;text-align:left;width:100%;
     position:relative;transition:background .15s,color .15s;letter-spacing:-.01em}
   aside nav button:hover{background:rgba(255,255,255,.06);color:#fff}
-  aside nav button[aria-current="true"]{background:rgba(255,122,51,.16);color:#fff;font-weight:650}
+  aside nav button[aria-current="true"]{background:color-mix(in srgb,var(--accent) 22%,transparent);color:#fff;font-weight:650}
   aside nav button[aria-current="true"]::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
   svg.ic{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
   aside nav button svg.ic{opacity:.85}
