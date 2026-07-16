@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.25 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.26 «Пульт» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -451,6 +451,11 @@
   .nt-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:520px){.nt-row{grid-template-columns:1fr}}
   .empty{color:var(--muted);font-size:13px;padding:14px 4px}
+  .empty-box{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;padding:34px 20px}
+  .empty-box .eb-ic{width:32px;height:32px;color:var(--line);stroke-width:1.5;margin-bottom:6px}
+  .empty-box .eb-t{font-size:14.5px;font-weight:650;color:var(--ink2)}
+  .empty-box .eb-h{font-size:12.5px;color:var(--muted);max-width:34ch;line-height:1.5}
+  .empty-box .btn{margin-top:12px}
   .hamburger{display:none}
   .nav-backdrop{display:none}
   @media(max-width:860px){
@@ -1029,6 +1034,14 @@ async function loadAudit(){
 /* ================= helpers ================= */
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+function emptyBox(icon,title,hint,actionLabel,actionAttr){
+  return `<div class="empty-box">
+    ${icon?`<svg class="eb-ic ic"><use href="#${icon}"/></svg>`:''}
+    <div class="eb-t">${esc(title)}</div>
+    ${hint?`<div class="eb-h">${esc(hint)}</div>`:''}
+    ${actionLabel?`<button class="btn ghost" ${actionAttr||''}>${esc(actionLabel)}</button>`:''}
+  </div>`;
+}
 /* безопасный рендер синхронизируемых полей: экранируем всё, возвращаем только <b> (ревью v0.5: XSS) */
 const safe = s => esc(s).replace(/&lt;(\/?b)&gt;/g,'<$1>');
 
@@ -1251,7 +1264,7 @@ function vPortal(){
       ${q.a?`<div style="font-size:13px;color:var(--ink2);margin-top:8px;background:var(--good-soft);border-radius:8px;padding:8px 12px"><b style="color:var(--good)">${esc(mgr)}:</b> ${esc(q.a)}</div>`
         :`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="stchip" style="color:var(--warn);border:1px solid var(--warn)">ожидает ответа менеджера</span></div>
           <div class="addline" style="margin-top:8px"><input id="pa_${q.id}" placeholder="Ответ менеджера заказчику"><button class="btn" data-portalanswer="${q.id}">Ответить</button></div>`}
-    </div>`).join(''):'<div class="empty">вопросов пока нет</div>'}
+    </div>`).join(''):emptyBox('i-portal','Вопросов пока нет','Здесь появятся вопросы заказчика по этому заказу — и ваши ответы. Это заменяет статусные звонки: клиент спрашивает в портале, вы отвечаете, всё в истории.')}
     <div class="addline" style="margin-top:12px"><input id="portalAsk" placeholder="Задать вопрос от лица заказчика"><button class="btn ghost" id="portalAskBtn">Задать вопрос</button></div>
     ${pre?`<p style="font-size:12px;color:var(--muted);margin-top:14px">Ещё ${pre} заказ(а) в проработке до контракта — заказчику в портале пока не видны.</p>`:''}`;
 }
@@ -1310,7 +1323,7 @@ function vEstimates(){
         ${e.status==='done'?`<span class="stchip" style="color:var(--good);border:1px solid var(--good)">${e.resHours} н/ч · ТКП ${fmtSum(e.resSum)}</span>${e.dealId?`<button class="chip" data-deal="${e.dealId}" style="margin-left:auto">↗ Сделка ${esc(e.dealId)}</button>`:''}`:''}
         ${e.status==='new'?`<button class="btn" style="padding:5px 12px;font-size:12px;margin-left:auto" data-esttake="${e.id}">Взять в работу</button><button class="btn ghost" style="padding:5px 12px;font-size:12px" data-estdecline="${e.id}">Не наша компетенция</button>`:''}
         ${e.status==='wip'?`<button class="btn" style="padding:5px 12px;font-size:12px;margin-left:auto" data-estdone="${e.id}">Отметить просчитанным →</button>`:''}
-      </div></div>`; }).join('')||'<div class="empty">нет заявок по фильтру</div>'}`;
+      </div></div>`; }).join('')||emptyBox('i-est','Нет заявок под этот фильтр','Переключите фильтр выше на «Все», чтобы увидеть весь просчёт. Заявки приходят сюда из сделок при запросе оценки ТЗ в ИЦ.')}`;
 }
 
 /* ---- Извещения об изменении (ГОСТ 2.503): реестр изменений КД + контроль соответствия модели архиву ---- */
@@ -1357,7 +1370,7 @@ function vNotices(){
           return `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;${bt}"><span style="font-size:12px;color:var(--good)">✓ Электронная модель сведена с бумажным архивом</span><button class="btn ghost" style="padding:5px 12px;font-size:12px;margin-left:auto" data-notadv="${n.id}">→ В архив</button></div>`;
         return `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;${bt}"><span style="font-size:12px;color:var(--risk);font-weight:600">⚠ Модель не приведена в соответствие с архивом</span><button class="chip" data-notsync="${n.id}" style="margin-left:auto">Модель сведена ✓</button><button class="btn" style="padding:5px 12px;font-size:12px" data-nottask="${n.id}">→ Задача инженеру</button></div>`;
       })()}
-      </div>`; }).join('')||'<div class="empty">нет извещений по фильтру</div>'}`;
+      </div>`; }).join('')||emptyBox('i-notices','Нет извещений под этот фильтр','Переключите фильтр на «Все». Извещения об изменении (ГОСТ 2.503) заводятся к чертежу и контролируют, сведена ли модель с архивом.')}`;
 }
 
 /* ---- CRM: воронка проектных продаж ---- */
@@ -1893,7 +1906,7 @@ function vKB(){
       </div>
       ${S.kbMsg?`<div class="ai-box">${esc(S.kbMsg)}</div>`:''}
       ${docs.length?docs.map(d=>`<div class="doc"><span class="tp">${esc(d.tp)}</span><span class="nm">${esc(d.nm)}</span><span class="vv">${esc(d.vv)}</span></div>`).join('')
-        :'<div class="empty">Пока ничего не загружено. Нажмите «Загрузить документ».</div>'}`;
+        :emptyBox('i-kb','База знаний пока пуста','Загрузите ТЗ, чертежи и спецификации — или импортируйте их из КОМПАС/ЛОЦМАН в «Настройках → Эллинг Агент». Дальше ИИ найдёт аналоги по любому новому ТЗ.','Импортировать из ЛОЦМАН','data-nav2="settings"')}`;
   }
   // catalog
   const q=(S.kbq||'').toLowerCase();
@@ -1908,7 +1921,7 @@ function vKB(){
         <div class="ana-meta">Заказ №${esc(p.order)} · ${esc(p.customer)}</div>
         <div class="kbcard-foot"><span>⏱ ${p.hours} н/ч</span><span>${p.docs.length} документов</span></div>
         <div class="ana-docs" style="margin-top:8px">${docChips(p)}</div>
-      </div>`).join(''):'<div class="empty">ничего не найдено</div>'}
+      </div>`).join(''):emptyBox('i-kb','Ничего не нашлось','Попробуйте иначе: по шифру изделия (ЦВС‑400), параметру («40 бар», «бронза») или № заказа. Поиск понимает и смысл, и точное обозначение.')}
     </div>`;
 }
 function vKbProject(id){
