@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.54 «Мастер миграции» — рабочий MVP</title>
+﻿<title>Эллинг v1.55 «Скролл» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -285,7 +285,11 @@
     border:1px solid var(--line);border-radius:8px;padding:4px 10px;color:var(--ink2);cursor:pointer;margin:0 6px 6px 0}
   .lnk:hover{border-color:var(--accent);color:var(--accent)}
   .lnk.block{border-color:var(--risk);color:var(--risk)}
-  .content{padding:26px 30px 64px;overflow-x:hidden;max-width:1440px}
+  .content{padding:26px 30px 64px;overflow-x:hidden;scrollbar-width:auto;scrollbar-color:color-mix(in srgb,var(--muted) 60%,transparent) transparent}
+  .content::-webkit-scrollbar{width:13px}
+  .content::-webkit-scrollbar-track{background:transparent}
+  .content::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--muted) 55%,transparent);border-radius:8px;border:3px solid transparent;background-clip:padding-box}
+  .content::-webkit-scrollbar-thumb:hover{background:var(--muted)}
   /* живой переход между экранами + мягкое появление карточек */
   @keyframes viewIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
   @keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
@@ -1869,7 +1873,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.54';
+const APP_VER = '1.55';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
