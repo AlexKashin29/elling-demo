@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.16 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.17 «Пульт» — рабочий MVP</title>
 <style>
   /* Палитра «грунт и сталь» · акцент — сурик (красно-рыжий грунт корпуса на стапеле); циан-сталь — только для данных */
   :root{
@@ -145,7 +145,7 @@
   .tsec h3 .cnt{background:var(--accent);color:#fff;border-radius:99px;font-size:10px;padding:1px 8px}
   .wcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;cursor:pointer}
   .wcard:hover{border-color:var(--accent)}
-  .wcard.urgent{border-left:4px solid var(--risk)}
+  .wcard.urgent{border-color:var(--risk);background:var(--risk-soft,var(--panel2))}
   .wcard .body{flex:1;min-width:220px}
   .wcard .k{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
   .wcard .t{font-size:15px;font-weight:660;color:var(--ink);line-height:1.35;margin:2px 0 4px}
@@ -276,7 +276,7 @@
   .ana-meta{font-size:12px;color:var(--muted);margin-top:3px}
   .ana-pct{text-align:center;flex:none}
   .ana-pct b{font-family:var(--mono);font-size:25px;font-weight:800;display:block;line-height:1;
-    background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    color:var(--accent)}
   .ana-pct span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
   .ana-why{font-size:12.5px;color:var(--ink2);margin:12px 0 10px}
   .ana-why b{color:var(--accent);font-weight:600}
@@ -339,7 +339,7 @@
     -webkit-mask-composite:xor;mask-composite:exclude;opacity:.4}
   .wl .eye{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
   .wl h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
-  .wl h2 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .wl h2 .g{color:var(--accent)}
   .wl .sub{font-size:14.5px;color:var(--ink2);margin:0 0 20px}
   .wl .sub b{color:var(--ink)}
   .wl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}
@@ -371,7 +371,7 @@
   .ch-note{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6;max-width:60em}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
   .stat .v{font-size:28px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
-    background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    color:var(--accent)}
   .stat .l{font-size:12px;color:var(--muted);margin-top:3px}
   .loadrow{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;color:var(--ink2)}
   .loadrow .nm{width:170px;flex:none}
@@ -398,7 +398,7 @@
   .sub.done span{text-decoration:line-through;color:var(--muted)}
   .addline{display:flex;gap:8px;margin-top:8px}
   .addline input{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 11px;color:var(--ink);font-size:13px;font-family:var(--sans)}
-  .comment{border-left:3px solid var(--line);padding:6px 12px;margin-bottom:8px;font-size:13px;color:var(--ink2)}
+  .comment{background:var(--panel2);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:13px;color:var(--ink2)}
   .comment .a{font-weight:700;color:var(--ink);font-size:12px}
   .logline{font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:3px 0}
   .drawer .close{float:right;background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);cursor:pointer;font-size:12px;padding:5px 11px}
@@ -407,16 +407,29 @@
 
   .overlay{position:fixed;inset:0;background:rgba(10,16,22,.55);display:none;place-items:center;z-index:60;padding:20px}
   .overlay.open{display:grid}
-  .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:480px;width:100%;padding:22px 24px}
-  .modal h2{font-size:16px;margin:0 0 14px;font-weight:700}
-  .modal .fields{grid-template-columns:100px 1fr}
-  .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:540px;width:100%;padding:24px 26px;max-height:90vh;overflow-y:auto}
+  .modal h2{font-size:18px;margin:0 0 4px;font-weight:700;letter-spacing:-.01em}
+  .modal .sub{font-size:13px;color:var(--muted);margin:0 0 18px}
+  .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+  /* форма создания задачи — читаемые подписи, состояния, подсказки (impeccable · product register) */
+  .nt-form{display:flex;flex-direction:column;gap:14px}
+  .nt-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .nt-field > label{font-size:12.5px;font-weight:600;color:var(--ink2);letter-spacing:0;text-transform:none}
+  .nt-field input,.nt-field select,.nt-field textarea{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:9px 11px;color:var(--ink);font-size:14px;font-family:var(--sans);width:100%;transition:border-color .15s,box-shadow .15s}
+  .nt-field input:hover,.nt-field select:hover,.nt-field textarea:hover{border-color:var(--muted)}
+  .nt-field input:focus,.nt-field select:focus,.nt-field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .nt-field textarea{resize:vertical;min-height:66px;line-height:1.5}
+  .nt-field .nt-hint{font-size:11.5px;color:var(--muted)}
+  .nt-title-input{font-weight:600}
+  .nt-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:520px){.nt-row{grid-template-columns:1fr}}
   .empty{color:var(--muted);font-size:13px;padding:14px 4px}
   @media(max-width:760px){ aside{display:none} }
 </style>
 
 <aside>
-  <div class="logo"><span class="dot"></span> Эллинг <small>v1.16 · Пульт</small></div>
+  <div class="logo"><span class="dot"></span> Эллинг <small>v1.17 · Пульт</small></div>
   <nav id="nav">
     <button data-nav="today"><span class="ic">☀</span> Сегодня <span class="n" id="todayN"></span></button>
     <button data-nav="deals"><span class="ic">₽</span> Сделки</button>
@@ -458,18 +471,35 @@
 <div class="wl-bg" id="welcome"><div class="wl" role="dialog" aria-modal="true"></div></div>
 
 <div class="overlay" id="createOverlay">
-  <div class="modal" role="dialog" aria-modal="true">
-    <h2>Новая задача</h2>
-    <div class="fields">
-      <label>Название</label><input id="nt_title" placeholder="Что нужно сделать">
-      <label>Эпик</label><select id="nt_epic"></select>
-      <label>Исполнитель</label><select id="nt_who"></select>
-      <label>Приоритет</label><select id="nt_prio"><option value="hi">Высокий</option><option value="md" selected>Средний</option><option value="lo">Низкий</option></select>
-      <label>Оценка</label><input id="nt_est" placeholder="напр. 8 н/ч">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nt_h">
+    <h2 id="nt_h">Новая задача</h2>
+    <p class="sub">Заполните название — остальное по необходимости. Задача попадёт исполнителю и в ленту заказа.</p>
+    <div class="nt-form">
+      <div class="nt-field">
+        <label for="nt_title">Название</label>
+        <input id="nt_title" class="nt-title-input" placeholder="Например: согласовать замену подшипника (изв. ИИ-2417-014)">
+        <span class="nt-hint">Коротко и действием — что нужно сделать</span>
+      </div>
+      <div class="nt-field">
+        <label for="nt_desc">Описание</label>
+        <textarea id="nt_desc" placeholder="Контекст для исполнителя: зачем, что учесть, к какому чертежу или заказу относится"></textarea>
+      </div>
+      <div class="nt-row">
+        <div class="nt-field"><label for="nt_who">Исполнитель</label><select id="nt_who"></select></div>
+        <div class="nt-field"><label for="nt_prio">Приоритет</label><select id="nt_prio"><option value="hi">Высокий</option><option value="md" selected>Средний</option><option value="lo">Низкий</option></select></div>
+      </div>
+      <div class="nt-row">
+        <div class="nt-field"><label for="nt_epic">Заказ / направление</label><select id="nt_epic"></select></div>
+        <div class="nt-field"><label for="nt_col">Статус</label><select id="nt_col"><option value="open" selected>Очередь</option><option value="wip">В работе</option><option value="rev">Согласование</option><option value="done">Готово</option></select></div>
+      </div>
+      <div class="nt-row">
+        <div class="nt-field"><label for="nt_due">Срок</label><input id="nt_due" type="date"></div>
+        <div class="nt-field"><label for="nt_est">Трудоёмкость</label><input id="nt_est" placeholder="напр. 8 н/ч"><span class="nt-hint">нормо-часы или ориентир по срокам</span></div>
+      </div>
     </div>
     <div class="actions">
       <button class="btn ghost" id="nt_cancel">Отмена</button>
-      <button class="btn" id="nt_save">Создать</button>
+      <button class="btn" id="nt_save">Создать задачу</button>
     </div>
   </div>
 </div>
@@ -1157,7 +1187,7 @@ function vPortal(){
     <h4 style="margin:18px 0 10px;font-size:13px;color:var(--muted);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase">Вопросы и ответы — вместо звонков</h4>
     ${qa.length?qa.map(q=>`<div class="anacard" style="cursor:default;padding:14px 18px">
       <div style="font-size:13px;color:var(--ink)"><b>${esc(q.from)}:</b> ${esc(q.m)} <span style="color:var(--muted);font-size:11px">· ${esc(q.ts)}</span></div>
-      ${q.a?`<div style="font-size:13px;color:var(--ink2);margin-top:8px;padding-left:12px;border-left:2px solid var(--good)"><b style="color:var(--good)">${esc(mgr)}:</b> ${esc(q.a)}</div>`
+      ${q.a?`<div style="font-size:13px;color:var(--ink2);margin-top:8px;background:var(--good-soft);border-radius:8px;padding:8px 12px"><b style="color:var(--good)">${esc(mgr)}:</b> ${esc(q.a)}</div>`
         :`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="stchip" style="color:var(--warn);border:1px solid var(--warn)">ожидает ответа менеджера</span></div>
           <div class="addline" style="margin-top:8px"><input id="pa_${q.id}" placeholder="Ответ менеджера заказчику"><button class="btn" data-portalanswer="${q.id}">Ответить</button></div>`}
     </div>`).join(''):'<div class="empty">вопросов пока нет</div>'}
@@ -1557,7 +1587,7 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
     <div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
-        Версия: Эллинг v1.16 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
+        Версия: Эллинг v1.17 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
         <button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>
       </div>
     </div>`;
@@ -2005,7 +2035,7 @@ function openTask(key){
       <label>Оценка</label><input id="f_est" value="${esc(t.est||'')}">
       <label>Срок</label><input id="f_due" type="date" value="${esc(t.due||'')}">
     </div>
-    ${blockersOf(t).length?`<div style="border-left:3px solid var(--risk);background:var(--risk-soft, var(--panel2));border-radius:0 8px 8px 0;padding:9px 13px;margin-bottom:14px;font-size:13px">
+    ${blockersOf(t).length?`<div style="border:1px solid var(--risk);background:var(--risk-soft, var(--panel2));border-radius:8px;padding:9px 13px;margin-bottom:14px;font-size:13px">
       ⛔ <b>Заблокирована:</b> ${blockersOf(t).map(b=>`<span class="lnk block" data-task="${b.key}">${b.key}</span>`).join('')} — сначала закрываются они</div>`:''}
     <h4>Связи</h4>
     <div>${(t.links||[]).map((l,i)=>`<span class="lnk ${l.type==='блокирует'?'block':''}" data-task="${esc(l.to)}">${esc(l.type)} → ${esc(l.to)}</span>`).join('')||'<span style="font-size:12.5px;color:var(--muted)">нет</span>'}</div>
@@ -2497,14 +2527,16 @@ document.addEventListener('pointercancel', ()=>{ dwgPan=null; });
 function openCreate(epicId){
   $('nt_epic').innerHTML = S.epics.map(x=>`<option value="${x.id}" ${epicId===x.id?'selected':''}>${x.name}</option>`).join('');
   $('nt_who').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${p===S.currentUser?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
-  $('nt_title').value=''; $('nt_est').value='';
+  $('nt_title').value=''; $('nt_est').value=''; $('nt_desc').value=''; $('nt_due').value='';
+  $('nt_prio').value='md'; $('nt_col').value='open';
   $('createOverlay').classList.add('open'); $('nt_title').focus();
 }
 function createTask(){
   const ttl = $('nt_title').value.trim(); if(!ttl) return;
   S.seq++;
-  S.tasks.unshift({key:'СТ-'+S.seq, ttl, epic:$('nt_epic').value, who:$('nt_who').value, col:'open',
-    prio:$('nt_prio').value, est:$('nt_est').value||null, sla:null, desc:'', subs:[], comments:[],
+  S.tasks.unshift({key:'СТ-'+S.seq, ttl, epic:$('nt_epic').value, who:$('nt_who').value, col:$('nt_col').value,
+    prio:$('nt_prio').value, est:$('nt_est').value||null, sla:null, due:$('nt_due').value||null,
+    desc:$('nt_desc').value.trim(), subs:[], comments:[], links:[], watchers:[],
     log:[`создана ${PEOPLE[S.currentUser].full} · назначена: ${PEOPLE[$('nt_who').value].full}`]});
   ACTS.push(`создана задача СТ-${S.seq}: ${ttl.slice(0,60)}`);
   $('createOverlay').classList.remove('open'); render();
