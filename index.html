@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.46 «Сделка↔Эталон» — рабочий MVP</title>
+﻿<title>Эллинг v1.47 «Полировка» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1517,7 +1517,11 @@ function moveTask(t,to,how){
 }
 
 /* ================= views ================= */
-const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Заказы',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',bench:'Бенчмарки флота',settings:'Настройки',order:'Заказ'};
+const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Ось заказа',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',bench:'Бенчмарки флота',settings:'Настройки',order:'Заказ'};
+const CRUMBS = {today:'ваш рабочий день', flow:'весь портфель одним взглядом', deals:'воронка проектных продаж', radar:'закладки в проектах судов: П → РКД → тендер',
+  estimates:'очередь оценки ТЗ в ИЦ · SLA 4 ч / 3 дн', board:'инженерный центр · спринт 14', plan:'загрузка ИЦ и вехи', kb:'поиск по архиву: шифр + смысл',
+  supply:'снабжение и реестровость ПП 719', notices:'изменения КД по ГОСТ 2.503', portal:'внешний вид заказа для верфи и ВП', reports:'воронка, конверсия, поток',
+  bench:'эталонные серии флота: на что равняться', settings:'импорт, автоматизации, коннекторы', order:'карточка заказа'};
 
 /* ---- Снабжение: память о поставщиках + ПП 719 + сертификаты РМРС ---- */
 const REG_ST = {ok:['var(--good)','в реестре ПП 719'],warn:['var(--warn)','под угрозой (нет отчёта ГИСП)'],expired:['var(--risk)','аннулирована']};
@@ -1808,7 +1812,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.46';
+const APP_VER = '1.47';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2753,9 +2757,7 @@ function render(){
   $('pageTitle').textContent = S.view==='order' ? 'Заказ' : TITLES[S.view];
   const radarAlerts = (S.projects||[]).flatMap(p=>p.positions).filter(x=>x.st!=='ok').length;
   const rn = $('radarN'); if(rn){ rn.textContent = radarAlerts||''; rn.style.display = radarAlerts?'':'none'; }
-  $('crumb').textContent = S.view==='flow'?'весь портфель одним взглядом': S.view==='today'?'ваш рабочий день':
-    S.view==='radar'?'закладки в проектах судов: П → РКД → тендер':
-    S.view==='board'?'инженерный центр · спринт 14': S.view==='kb'?'поиск по архиву: шифр + смысл':'';
+  $('crumb').textContent = CRUMBS[S.view] || '';
   const sa=supplyAlerts(); const sn=$('supplyN'); if(sn){ sn.textContent=sa||''; sn.style.display=sa?'':'none'; }
   const na=noticesAlerts(); const nn=$('noticesN'); if(nn){ nn.textContent=na||''; nn.style.display=na?'':'none'; }
   const ea=estAlerts(); const en=$('estN'); if(en){ en.textContent=ea||''; en.style.display=ea?'':'none'; }
