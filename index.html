@@ -1,0 +1,2109 @@
+﻿<title>Эллинг v1.8 «Пульт» — рабочий MVP</title>
+<style>
+  /* Футуристичная сталь-палитра · акцент «искра над водой» (оранжевый→циан) */
+  :root{
+    --bg:#EBEEF3; --panel:#FFFFFF; --panel2:#F4F6FA; --side:#0E1620; --side-ink:#93A7BC; --side-act:#FF7A33;
+    --ink:#111A24; --ink2:#48586A; --muted:#7C8C9C;
+    --line:#DCE2EB; --line2:#E9EDF3;
+    --accent:#D8541A; --accent-soft:#FCE7DA; --steel:#0E97BC;
+    --navy:#1F3A50; --navy-soft:#E4EBF3;
+    --good:#1E7D46; --good-soft:#E1F1E7; --warn:#A9660A; --warn-soft:#F8EEDA; --risk:#C0362E; --risk-soft:#F9E4E1;
+    --grad:linear-gradient(120deg,#FF7A33 0%,#38C6E8 100%);
+    --glow:0 0 0 1px rgba(216,84,26,.14), 0 8px 30px -8px rgba(30,50,70,.18);
+    --shadow:0 10px 34px -14px rgba(20,35,55,.28);
+    --mono:"Cascadia Mono",Consolas,"Roboto Mono",ui-monospace,monospace;
+    --sans:"Segoe UI",-apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#080C12;--panel:#111A24;--panel2:#17222F;--side:#060A0F;--side-ink:#8195A9;
+      --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#22303E;--line2:#1A2734;
+      --accent:#FF7A33;--accent-soft:#37220F;--steel:#38C6E8;--navy:#8FB4D1;--navy-soft:#16283A;
+      --good:#5FD08B;--good-soft:#122A1B;--warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
+      --grad:linear-gradient(120deg,#FF7A33 0%,#38C6E8 100%);
+      --glow:0 0 0 1px rgba(255,122,51,.18), 0 10px 40px -10px rgba(0,0,0,.6);
+      --shadow:0 16px 50px -18px rgba(0,0,0,.7);}
+  }
+  :root[data-theme="light"]{--bg:#EBEEF3;--panel:#FFFFFF;--panel2:#F4F6FA;--side:#0E1620;--side-ink:#93A7BC;
+    --ink:#111A24;--ink2:#48586A;--muted:#7C8C9C;--line:#DCE2EB;--line2:#E9EDF3;--accent:#D8541A;
+    --accent-soft:#FCE7DA;--steel:#0E97BC;--navy:#1F3A50;--navy-soft:#E4EBF3;--good:#1E7D46;--good-soft:#E1F1E7;
+    --warn:#A9660A;--warn-soft:#F8EEDA;--risk:#C0362E;--risk-soft:#F9E4E1;
+    --grad:linear-gradient(120deg,#FF7A33 0%,#38C6E8 100%);
+    --glow:0 0 0 1px rgba(216,84,26,.14), 0 8px 30px -8px rgba(30,50,70,.18);
+    --shadow:0 10px 34px -14px rgba(20,35,55,.28);}
+  :root[data-theme="dark"]{--bg:#080C12;--panel:#111A24;--panel2:#17222F;--side:#060A0F;--side-ink:#8195A9;
+    --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#22303E;--line2:#1A2734;--accent:#FF7A33;
+    --accent-soft:#37220F;--steel:#38C6E8;--navy:#8FB4D1;--navy-soft:#16283A;--good:#5FD08B;--good-soft:#122A1B;
+    --warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
+    --grad:linear-gradient(120deg,#FF7A33 0%,#38C6E8 100%);
+    --glow:0 0 0 1px rgba(255,122,51,.18), 0 10px 40px -10px rgba(0,0,0,.6);
+    --shadow:0 16px 50px -18px rgba(0,0,0,.7);}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;display:flex;min-height:100vh;
+    -webkit-font-smoothing:antialiased;letter-spacing:-.005em;position:relative}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(60vw 50vh at 78% -8%, rgba(255,122,51,.09), transparent 60%),
+               radial-gradient(50vw 40vh at 8% 108%, rgba(56,198,232,.07), transparent 60%)}
+  body>*{position:relative;z-index:1}
+  button{font-family:var(--sans)}
+  ::selection{background:var(--accent);color:#fff}
+  button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--steel);outline-offset:2px}
+
+  /* ===== sidebar ===== */
+  aside{width:216px;flex:none;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;
+    padding:16px 12px;gap:2px;position:sticky;top:0;height:100vh;border-right:1px solid rgba(255,255,255,.05)}
+  aside .logo{display:flex;align-items:center;gap:11px;font-weight:750;color:#fff;font-size:17px;padding:6px 8px 18px;letter-spacing:-.02em}
+  aside .logo .dot{width:26px;height:26px;border-radius:8px;background:var(--grad);flex:none;position:relative;box-shadow:0 4px 16px rgba(255,122,51,.4)}
+  aside .logo .dot::after{content:"";position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,transparent 52%,var(--side) 52%,var(--side) 68%,transparent 68%)}
+  aside .logo small{font-family:var(--mono);font-size:8.5px;color:var(--side-ink);font-weight:400;margin-left:auto;letter-spacing:0;opacity:.7}
+  aside nav button{display:flex;align-items:center;gap:11px;background:none;border:none;color:var(--side-ink);
+    font-size:14px;font-weight:600;padding:11px 13px;border-radius:10px;cursor:pointer;text-align:left;width:100%;
+    position:relative;transition:background .15s,color .15s;letter-spacing:-.01em}
+  aside nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+  aside nav button[aria-current="true"]{background:linear-gradient(90deg,rgba(255,122,51,.18),rgba(56,198,232,.06));color:#fff}
+  aside nav button[aria-current="true"]::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--grad)}
+  aside nav button .ic{width:20px;text-align:center;opacity:.9}
+  aside nav button .n{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--grad);color:#fff;border-radius:99px;padding:1px 7px;font-weight:700}
+  aside .create{margin:16px 4px 6px}
+  aside .create button{width:100%;background:var(--grad);color:#fff;border:none;border-radius:11px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;
+    box-shadow:0 6px 22px -6px rgba(255,122,51,.5);transition:transform .12s,box-shadow .15s;letter-spacing:-.01em}
+  aside .create button:hover{transform:translateY(-1px);box-shadow:0 10px 28px -6px rgba(56,198,232,.5)}
+  aside .bottom{margin-top:auto;padding:10px 12px;font-family:var(--mono);font-size:10px;line-height:1.6;color:var(--side-ink);opacity:.6}
+
+  /* ===== main ===== */
+  main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;gap:12px;padding:13px 24px;background:color-mix(in srgb,var(--panel) 82%, transparent);
+    backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
+    border-bottom:1px solid var(--line);flex-wrap:wrap;position:sticky;top:0;z-index:30}
+  .topbar h1{font-size:19px;margin:0;font-weight:750;letter-spacing:-.02em}
+  .topbar .crumb{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.02em}
+  .topbar .spacer{flex:1}
+  .search{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13.5px;color:var(--ink);width:220px;font-family:var(--sans)}
+  .userbox{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
+  .userbox select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;color:var(--ink);font-size:13px;font-family:var(--sans)}
+  .icobtn{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);
+    color:var(--ink2);display:grid;place-items:center;font-size:15px;cursor:pointer;flex:none}
+  .icobtn:hover{border-color:var(--accent);color:var(--accent)}
+  .bell-wrap{position:relative}
+  .bell-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:99px;
+    background:var(--grad);color:#fff;font-size:9px;font-weight:700;display:none;place-items:center;padding:0 4px;font-family:var(--mono);box-shadow:0 2px 8px -2px rgba(255,122,51,.6)}
+  .bell-badge.on{display:grid}
+  .bell-drop{position:absolute;top:44px;right:0;width:340px;max-height:420px;overflow-y:auto;z-index:70;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(10,20,30,.25);
+    padding:8px;display:none}
+  .bell-drop.open{display:block}
+  .bell-drop h5{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    padding:8px 10px;margin:0;display:flex;justify-content:space-between;align-items:center}
+  .bell-drop h5 button{font-family:var(--sans);font-size:11px;color:var(--accent);cursor:pointer;background:none;border:none}
+  .note{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px}
+  .note:hover{background:var(--panel2)}
+  .note.unread{background:var(--accent-soft)}
+  .note .dot2{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;margin-top:5px}
+  .note .dot2.read{background:transparent}
+  .note .k{font-family:var(--mono);font-size:10px;color:var(--muted);display:block}
+  .due{font-family:var(--mono);font-size:9.5px;color:var(--muted);border:1px solid var(--line);
+    border-radius:99px;padding:1px 7px;white-space:nowrap}
+  .due.over{color:var(--risk);border-color:var(--risk);font-weight:700}
+  .lnk{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:10.5px;
+    border:1px solid var(--line);border-radius:8px;padding:4px 10px;color:var(--ink2);cursor:pointer;margin:0 6px 6px 0}
+  .lnk:hover{border-color:var(--accent);color:var(--accent)}
+  .lnk.block{border-color:var(--risk);color:var(--risk)}
+  .content{padding:20px 22px 60px;overflow-x:hidden}
+
+  .av{width:27px;height:27px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:11px;font-weight:700;flex:none;vertical-align:middle}
+  .btn{background:var(--grad);color:#fff;border:none;border-radius:10px;padding:9px 17px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;
+    box-shadow:0 5px 18px -6px rgba(255,122,51,.45);transition:transform .12s,box-shadow .15s,filter .15s;letter-spacing:-.01em}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 9px 24px -6px rgba(56,198,232,.45)}
+  .btn:hover{filter:brightness(1.07)}
+  .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  .btn.ghost:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:none}
+  .btn.big{padding:11px 22px;font-size:14px}
+  .chip{font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer;transition:.14s}
+  .chip:hover{border-color:var(--muted);color:var(--ink)}
+  .chip[aria-pressed="true"]{border-color:transparent;color:#fff;background:var(--grad);box-shadow:0 3px 12px -4px rgba(255,122,51,.5)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;align-items:center}
+  .chips .lbl{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-right:2px}
+
+  /* === футуристичная полировка: глубина, подъём, градиентные акценты === */
+  .wcard,.kbcard,.anacard,.ocard,.mod,.role,.pain{box-shadow:var(--shadow);transition:transform .16s cubic-bezier(.16,1,.3,1),border-color .16s,box-shadow .16s}
+  .wcard:hover,.kbcard:hover,.anacard:hover,.ocard:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:var(--glow)}
+  .panel,.evfeed,.card,.stat,.flow-wrap{box-shadow:var(--shadow)}
+  .tsec h3 .cnt{background:var(--grad);color:#fff;font-weight:700}
+  .step.current .node{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft),0 0 16px -2px var(--accent)}
+  .content{scroll-behavior:smooth}
+
+  /* ===== TODAY ===== */
+  .hello{font-size:22px;font-weight:750;letter-spacing:-.01em;margin:2px 0 4px}
+  .hello small{display:block;font-size:13.5px;color:var(--muted);font-weight:400;margin-top:2px}
+  .today{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start;margin-top:16px}
+  @media(max-width:920px){.today{grid-template-columns:1fr}}
+  .tsec h3{font-size:13px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:600;display:flex;gap:8px;align-items:center}
+  .tsec h3 .cnt{background:var(--accent);color:#fff;border-radius:99px;font-size:10px;padding:1px 8px}
+  .wcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;cursor:pointer}
+  .wcard:hover{border-color:var(--accent)}
+  .wcard.urgent{border-left:4px solid var(--risk)}
+  .wcard .body{flex:1;min-width:220px}
+  .wcard .k{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+  .wcard .t{font-size:15px;font-weight:660;color:var(--ink);line-height:1.35;margin:2px 0 4px}
+  .wcard .why{font-size:12.5px;color:var(--ink2)}
+  .wcard .why b{color:var(--accent)}
+  .wcard .sla{font-family:var(--mono);font-size:10px;color:var(--risk);border:1px solid var(--risk);border-radius:99px;padding:2px 8px;white-space:nowrap}
+  .zero{background:var(--good-soft);border-radius:14px;padding:18px;color:var(--good);font-weight:650;font-size:14px}
+  .evfeed{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .evfeed .ev{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:13px;color:var(--ink2)}
+  .evfeed .ev:last-child{border-bottom:none}
+  .evfeed .t{font-family:var(--mono);font-size:10px;color:var(--muted);width:46px;flex:none;padding-top:2px}
+  .evfeed b{color:var(--ink)}
+  .nocall{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--good);border:1px solid var(--good);border-radius:99px;padding:0 6px;margin-left:5px}
+
+  /* ===== FLOW MAP (Поток заказов) ===== */
+  .legend{display:flex;gap:16px;align-items:center;margin:0 0 12px;font-size:12.5px;color:var(--ink2);flex-wrap:wrap}
+  .ldot{width:10px;height:10px;border-radius:50%;display:inline-block;vertical-align:-1px;margin-right:5px}
+  .flow-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+  table.flow{border-collapse:collapse;min-width:1080px;width:100%}
+  .flow th{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+    padding:12px 4px;border-bottom:1px solid var(--line);font-weight:600;text-align:center;background:var(--panel2)}
+  .flow th:first-child{text-align:left;padding-left:16px;position:sticky;left:0;background:var(--panel2);z-index:2;min-width:230px}
+  .flow th.goz{color:var(--accent)}
+  .flow td{border-bottom:1px solid var(--line2);padding:0;height:64px;position:relative;text-align:center}
+  .flow tr:last-child td{border-bottom:none}
+  .flow td.oc{position:sticky;left:0;background:var(--panel);z-index:1;text-align:left;padding:10px 14px;cursor:pointer;min-width:230px}
+  .flow tr:hover td.oc{background:var(--panel2)}
+  .flow .onum{font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .flow .onm{font-size:13.5px;font-weight:680;line-height:1.3}
+  .flow .ocust{font-size:11px;color:var(--muted)}
+  .track{position:absolute;top:50%;left:0;right:0;height:4px;transform:translateY(-50%);background:var(--line2)}
+  .track.fill{background:var(--good)}
+  .track.half-l{right:50%}
+  .track.half-r{left:50%}
+  .puck{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1;
+    min-width:34px;height:26px;border-radius:99px;display:grid;place-items:center;
+    color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;padding:0 8px;cursor:pointer;
+    box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .dotdone{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:var(--good)}
+  .flow-hint{font-size:12.5px;color:var(--muted);margin-top:10px;max-width:60em}
+
+  /* board */
+  .board-wrap{overflow-x:auto;padding-bottom:10px}
+  .board{display:grid;grid-template-columns:repeat(4,minmax(235px,1fr));gap:12px;align-items:start;min-width:960px}
+  .col{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px;min-height:120px}
+  .col.dragover{border-color:var(--accent);background:var(--accent-soft)}
+  .col h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    margin:2px 4px 9px;display:flex;justify-content:space-between;font-weight:600}
+  .col h3 .wip{color:var(--warn)}
+  .tcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+  .tcard:hover{border-color:var(--accent)}
+  .tcard.dragging{opacity:.4}
+  .tcard .top{display:flex;gap:8px;align-items:center;margin-bottom:3px}
+  .tcard .key{font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .prio{font-weight:800;font-size:12px}
+  .prio.hi{color:var(--accent)} .prio.md{color:var(--warn)} .prio.lo{color:var(--muted)}
+  .tcard .sla{font-family:var(--mono);font-size:9px;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 6px;margin-left:auto}
+  .tcard .ttl{font-size:13.5px;font-weight:620;color:var(--ink);line-height:1.35;margin-bottom:8px}
+  .tcard .meta{display:flex;align-items:center;gap:7px}
+  .etag{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:99px;white-space:nowrap;max-width:135px;overflow:hidden;text-overflow:ellipsis}
+  .tcard .est{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-left:auto}
+  .tcard.hidden{display:none}
+
+  /* planning (ex-backlog) */
+  .bl-epic{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+  .bl-epic>header{display:flex;gap:10px;align-items:center;padding:12px 16px;flex-wrap:wrap}
+  .bl-epic .ename{font-weight:700;font-size:14px}
+  .bl-epic .ecount{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-left:auto}
+  .bl-epic .bar{height:5px;border-radius:99px;background:var(--line2);width:110px;overflow:hidden}
+  .bl-epic .bar i{display:block;height:100%;background:var(--good)}
+  .bl-row{display:flex;gap:10px;align-items:center;padding:8px 16px;border-top:1px solid var(--line2);cursor:pointer;flex-wrap:wrap}
+  .bl-row:hover{background:var(--panel2)}
+  .bl-row .key{font-family:var(--mono);font-size:10px;color:var(--muted);width:56px;flex:none}
+  .bl-row .ttl{font-size:13.5px;color:var(--ink);flex:1;min-width:180px}
+  .stchip{font-family:var(--mono);font-size:9.5px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+  .st-open{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .st-wip{background:var(--navy-soft);color:var(--navy);border:1px solid var(--navy)}
+  .st-rev{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn)}
+  .st-done{background:var(--good-soft);color:var(--good);border:1px solid var(--good)}
+  .bl-add{padding:9px 16px;border-top:1px solid var(--line2)}
+  .bl-add button{background:none;border:none;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;padding:2px 0}
+
+  /* order detail */
+  .stepper-wrap{overflow-x:auto;padding:4px 0 8px}
+  .stepper{display:flex;min-width:860px}
+  .step{flex:1;position:relative;padding:8px 4px;border:none;background:none;text-align:center;color:var(--ink2)}
+  .step::before{content:"";position:absolute;top:16px;left:0;right:0;height:2px;background:var(--line)}
+  .step:first-child::before{left:50%}
+  .step:last-child::before{right:50%}
+  .step .node{position:relative;z-index:1;width:15px;height:15px;border-radius:50%;margin:0 auto 6px;background:var(--bg);border:2px solid var(--muted)}
+  .step.done .node{background:var(--good);border-color:var(--good)}
+  .step.done::before{background:var(--good)}
+  .step.current .node{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+  .step .nm{font-size:10px;line-height:1.2;display:block;font-weight:600}
+  .step.goz .nm{color:var(--accent)}
+  .ordgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;align-items:start;margin-top:10px}
+  @media(max-width:900px){.ordgrid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .panel h3{font-size:14.5px;margin:0 0 10px;font-weight:700}
+  .gozpill{display:inline-block;font-family:var(--mono);font-size:9px;padding:1px 7px;border-radius:99px;border:1px solid var(--accent);color:var(--accent);margin-left:6px;vertical-align:1px}
+
+  /* KB */
+  .kb-tools{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .kb-tools input{flex:1;min-width:220px}
+  .doc{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin-bottom:8px;flex-wrap:wrap}
+  .doc .tp{font-family:var(--mono);font-size:9.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--navy);color:var(--navy);white-space:nowrap}
+  .doc .nm{font-size:13.5px;font-weight:620;color:var(--ink);flex:1;min-width:200px}
+  .doc .vv{font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
+  .ai-box{background:var(--navy-soft);border-radius:12px;padding:14px 18px;margin:14px 0;font-size:13.5px;color:var(--ink2)}
+  .ai-box b{color:var(--ink)}
+  .ai-box .hit{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-top:8px;font-size:13px}
+  .ai-box .pct{font-family:var(--mono);color:var(--accent);font-weight:700}
+  /* v1.0 База знаний 2.0 */
+  .kb-hero{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px}
+  .kb-hero-t{font-size:18px;font-weight:720;letter-spacing:-.01em;margin-bottom:8px}
+  .kb-hero-s{font-size:13.5px;color:var(--ink2);max-width:60em;line-height:1.6}
+  .kb-hero-s b{color:var(--ink)}
+  .kb-input{width:100%;margin:14px 0 12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    padding:11px 13px;color:var(--ink);font-family:var(--sans);font-size:14px;resize:vertical;line-height:1.5}
+  .kb-input:focus{outline:none;border-color:var(--accent)}
+  .kb-hero-act{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .anacard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:12px;
+    cursor:pointer;transition:border-color .15s}
+  .anacard:hover{border-color:var(--accent)}
+  .ana-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .ana-name{font-size:16px;font-weight:700;letter-spacing:-.01em}
+  .ana-code{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 7px;margin-left:6px;font-weight:400}
+  .ana-meta{font-size:12px;color:var(--muted);margin-top:3px}
+  .ana-pct{text-align:center;flex:none}
+  .ana-pct b{font-family:var(--mono);font-size:25px;font-weight:800;display:block;line-height:1;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .ana-pct span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .ana-why{font-size:12.5px;color:var(--ink2);margin:12px 0 10px}
+  .ana-why b{color:var(--accent);font-weight:600}
+  .ana-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+    padding-top:12px;border-top:1px solid var(--line2)}
+  .ana-hours{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap}
+  .ana-hours span{font-size:10.5px;font-weight:400;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-left:4px}
+  .ana-docs{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .kbdoc{font-size:11.5px;color:var(--ink2);background:var(--panel2);border:1px solid var(--line);border-radius:99px;
+    padding:3px 10px;white-space:nowrap;cursor:pointer}
+  .kbdoc:hover{border-color:var(--accent);color:var(--accent)}
+  .ana-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .kb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .kbcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;transition:border-color .15s}
+  .kbcard:hover{border-color:var(--accent)}
+  .kbcard-h{display:flex;justify-content:space-between;align-items:center}
+  .kbcard-year{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .kbcard-name{font-size:15.5px;font-weight:700;margin:8px 0 2px;letter-spacing:-.01em}
+  .kbcard-foot{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin-top:12px;
+    padding-top:10px;border-top:1px solid var(--line2)}
+  .kb-facts{display:flex;gap:20px;flex-wrap:wrap;margin:12px 0 6px;padding:12px 0;border-block:1px solid var(--line2)}
+  .kb-facts div{font-size:13px;color:var(--ink)}
+  .kb-facts span{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+  .kbdoc-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2)}
+  .kbdoc-row:last-child{border-bottom:none}
+  /* v1.1 вьюер чертежей */
+  .dwg-viewer{position:fixed;inset:0;z-index:80;background:var(--bg);display:none;grid-template-rows:auto 1fr;grid-template-columns:1fr 300px;grid-template-areas:"bar bar" "stage side"}
+  .dwg-viewer.open{display:grid}
+  @media(max-width:760px){.dwg-viewer{grid-template-columns:1fr;grid-template-areas:"bar" "stage"}.dwg-side{display:none}}
+  .dwg-bar{grid-area:bar;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .dwg-bar b{font-family:var(--mono);font-size:13px}
+  .dwg-bar>span{font-size:13px;color:var(--muted)}
+  .dwg-sp{flex:1}
+  .dwg-lb{font-size:12px;font-weight:600;color:var(--ink2);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 11px;cursor:pointer}
+  .dwg-lb.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .dwg-zb{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:16px;cursor:pointer}
+  .dwg-zb:hover{border-color:var(--accent)}
+  .dwg-stage{grid-area:stage;overflow:hidden;background:var(--panel2);position:relative;cursor:grab;touch-action:none}
+  .dwg-stage.annot{cursor:crosshair}
+  .dwg-stage:active{cursor:grabbing}
+  .dwg-stage svg{width:100%;height:100%;display:block}
+  .dwg-pin{cursor:pointer}
+  .dwg-side{grid-area:side;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:16px 18px}
+  .dwg-side h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .dwg-note{display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:12.5px;color:var(--ink2);cursor:pointer}
+  .dwg-note:hover{color:var(--ink)}
+  .dwg-note b{color:var(--ink)}
+  .dwg-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+
+  /* reports */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+  /* v1.6 приветствие / тур */
+  .wl-bg{position:fixed;inset:0;z-index:90;background:rgba(6,10,15,.72);backdrop-filter:blur(6px);
+    display:none;place-items:center;padding:20px}
+  .wl-bg.open{display:grid}
+  .wl{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:640px;width:100%;
+    max-height:88vh;overflow-y:auto;padding:32px 34px;box-shadow:var(--shadow);position:relative}
+  .wl::before{content:"";position:absolute;inset:0;border-radius:20px;padding:1px;pointer-events:none;
+    background:var(--grad);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;opacity:.4}
+  .wl .eye{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
+  .wl h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
+  .wl h2 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .wl .sub{font-size:14.5px;color:var(--ink2);margin:0 0 20px}
+  .wl .sub b{color:var(--ink)}
+  .wl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}
+  @media(max-width:520px){.wl-grid{grid-template-columns:1fr}}
+  .wl-mod{display:flex;gap:10px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);
+    border-radius:12px;padding:11px 13px;cursor:pointer;transition:border-color .14s,transform .14s}
+  .wl-mod:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .wl-mod .mi{font-size:16px;flex:none;margin-top:1px}
+  .wl-mod b{font-size:13.5px;display:block}
+  .wl-mod span{font-size:11.5px;color:var(--muted);line-height:1.4}
+  .wl h3{font-size:13px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .wl-step{display:flex;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line2);cursor:pointer;font-size:13.5px;color:var(--ink)}
+  .wl-step:hover{color:var(--accent)}
+  .wl-step .num{width:22px;height:22px;border-radius:50%;background:var(--grad);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+  .wl-act{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
+  /* v1.3 графики */
+  .chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .ch-sub{font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:400;letter-spacing:.02em}
+  .legend2{display:flex;gap:14px;flex-wrap:wrap}
+  .legend2 .lg{font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .legend2 .lg i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .chart-box{position:relative;width:100%}
+  .chart-box svg{width:100%;height:auto;display:block;overflow:visible}
+  .chart-tip{position:absolute;pointer-events:none;background:var(--side);color:#fff;border-radius:9px;padding:9px 12px;
+    font-size:12px;line-height:1.6;box-shadow:var(--shadow);opacity:0;transition:opacity .1s;z-index:5;white-space:nowrap}
+  .chart-tip .tr{display:flex;align-items:center;gap:7px;justify-content:space-between}
+  .chart-tip .tr i{width:9px;height:9px;border-radius:2px}
+  .chart-tip b{font-family:var(--mono)}
+  .ch-note{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6;max-width:60em}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .stat .v{font-size:28px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:3px}
+  .loadrow{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;color:var(--ink2)}
+  .loadrow .nm{width:170px;flex:none}
+  .loadrow .bar{flex:1;height:9px;background:var(--line2);border-radius:99px;overflow:hidden}
+  .loadrow .bar i{display:block;height:100%;background:var(--navy)}
+  .loadrow .n{font-family:var(--mono);font-size:11px;color:var(--muted);width:30px;text-align:right}
+
+  /* drawer */
+  .drawer-bg{position:fixed;inset:0;background:rgba(10,16,22,.45);display:none;z-index:40}
+  .drawer-bg.open{display:block}
+  .drawer{position:fixed;top:0;right:-580px;width:min(580px,94vw);height:100vh;background:var(--panel);
+    border-left:1px solid var(--line);z-index:50;transition:right .18s ease;overflow-y:auto;padding:20px 24px}
+  .drawer.open{right:0}
+  .drawer .key{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .drawer h2{font-size:18px;margin:4px 0 10px;font-weight:720;line-height:1.3}
+  .primact{display:flex;gap:10px;align-items:center;margin:0 0 16px;flex-wrap:wrap}
+  .primact .st{font-size:12.5px;color:var(--muted)}
+  .fields{display:grid;grid-template-columns:110px 1fr;gap:9px 12px;align-items:center;margin-bottom:16px}
+  .fields label{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .fields select,.fields input{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--ink);font-size:13px;font-family:var(--sans);width:100%}
+  .drawer h4{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px;font-weight:600}
+  .sub{display:flex;gap:9px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line2);font-size:13.5px;color:var(--ink)}
+  .sub input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+  .sub.done span{text-decoration:line-through;color:var(--muted)}
+  .addline{display:flex;gap:8px;margin-top:8px}
+  .addline input{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 11px;color:var(--ink);font-size:13px;font-family:var(--sans)}
+  .comment{border-left:3px solid var(--line);padding:6px 12px;margin-bottom:8px;font-size:13px;color:var(--ink2)}
+  .comment .a{font-weight:700;color:var(--ink);font-size:12px}
+  .logline{font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:3px 0}
+  .drawer .close{float:right;background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);cursor:pointer;font-size:12px;padding:5px 11px}
+  .desc{font-size:13.5px;color:var(--ink2);margin-bottom:8px}
+  .desc b{color:var(--ink)}
+
+  .overlay{position:fixed;inset:0;background:rgba(10,16,22,.55);display:none;place-items:center;z-index:60;padding:20px}
+  .overlay.open{display:grid}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:480px;width:100%;padding:22px 24px}
+  .modal h2{font-size:16px;margin:0 0 14px;font-weight:700}
+  .modal .fields{grid-template-columns:100px 1fr}
+  .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+  .empty{color:var(--muted);font-size:13px;padding:14px 4px}
+  @media(max-width:760px){ aside{display:none} }
+</style>
+
+<aside>
+  <div class="logo"><span class="dot"></span> Эллинг <small>v1.8 · Пульт</small></div>
+  <nav id="nav">
+    <button data-nav="today"><span class="ic">☀</span> Сегодня <span class="n" id="todayN"></span></button>
+    <button data-nav="deals"><span class="ic">₽</span> Сделки</button>
+    <button data-nav="flow"><span class="ic">⚓</span> Заказы</button>
+    <button data-nav="radar"><span class="ic">◎</span> Радар закладок <span class="n" id="radarN"></span></button>
+    <button data-nav="board"><span class="ic">▦</span> Доска ИЦ</button>
+    <button data-nav="plan"><span class="ic">☰</span> Планирование</button>
+    <button data-nav="kb"><span class="ic">🕮</span> База знаний</button>
+    <button data-nav="supply"><span class="ic">◈</span> Снабжение <span class="n" id="supplyN"></span></button>
+    <button data-nav="reports"><span class="ic">◔</span> Отчёты</button>
+    <button data-nav="settings"><span class="ic">⚙</span> Настройки</button>
+  </nav>
+  <div class="create"><button id="createBtn">+ Создать задачу</button></div>
+  <div class="bottom"><span id="srvState">локальный режим</span><br><button id="resetBtn" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;padding:0;font:inherit">сбросить демо</button></div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <h1 id="pageTitle">Сегодня</h1>
+    <span class="crumb" id="crumb"></span>
+    <span class="spacer"></span>
+    <input class="search" id="q" placeholder="Поиск по задачам…" aria-label="Поиск">
+    <div class="bell-wrap"><button class="icobtn" id="bellBtn" title="Уведомления">🔔<span class="bell-badge" id="bellN"></span></button>
+      <div class="bell-drop" id="bellDrop"></div></div>
+    <button class="icobtn" id="helpBtn" title="О продукте и тур">?</button>
+    <button class="icobtn" id="themeBtn" title="Тема: авто → тёмная → светлая">◐</button>
+    <div class="userbox">Вы: <select id="userSel"></select></div>
+  </div>
+  <div class="content" id="content"></div>
+</main>
+
+<div class="dwg-viewer" id="dwgViewer" role="dialog" aria-modal="true"></div>
+<div class="drawer-bg" id="drawerBg"></div>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true"></div>
+
+<div class="wl-bg" id="welcome"><div class="wl" role="dialog" aria-modal="true"></div></div>
+
+<div class="overlay" id="createOverlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>Новая задача</h2>
+    <div class="fields">
+      <label>Название</label><input id="nt_title" placeholder="Что нужно сделать">
+      <label>Эпик</label><select id="nt_epic"></select>
+      <label>Исполнитель</label><select id="nt_who"></select>
+      <label>Приоритет</label><select id="nt_prio"><option value="hi">Высокий</option><option value="md" selected>Средний</option><option value="lo">Низкий</option></select>
+      <label>Оценка</label><input id="nt_est" placeholder="напр. 8 н/ч">
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="nt_cancel">Отмена</button>
+      <button class="btn" id="nt_save">Создать</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= data ================= */
+const LSKEY = 'stapel_v03';
+const PEOPLE = {
+  petrov:{n:'Пт',full:'Петров',role:'инженер',c:'#2E6E8E'},
+  ivanov:{n:'Ив',full:'Иванов',role:'инженер',c:'#5B7A2E'},
+  smirnov:{n:'См',full:'Смирнов',role:'инженер',c:'#7A4E8E'},
+  maksimov:{n:'Мк',full:'Максимов',role:'рук. ИЦ',c:'#1F3A50'},
+  sokolova:{n:'Ск',full:'Соколова',role:'продажи',c:'#B3541E'},
+  kuznetsova:{n:'Кз',full:'Кузнецова',role:'закупки',c:'#8E2E4E'},
+  loginov:{n:'Лг',full:'Логинов',role:'логист',c:'#3E6E5E'},
+  orlov:{n:'Ор',full:'Орлов',role:'директор',c:'#6E5E2E'},
+};
+const STAGE_NAMES = [
+  ['Лид',0],['Оценка ТЗ',0],['КП',0],['Цена ВП',1],['Контракт',0],['КД / ОКР',0],
+  ['Производство',0],['Приёмка',1],['Отгрузка',0],['ПНР',0],['Гарантия',0]];
+const COLS = [ {id:'open',name:'Очередь'},{id:'wip',name:'В работе',wip:6},{id:'rev',name:'Согласование'},{id:'done',name:'Готово'} ];
+const STNAME = {open:'Очередь',wip:'В работе',rev:'Согласование',done:'Готово'};
+const RISK = {ok:['var(--good)','в графике'],warn:['var(--warn)','риск срока'],risk:['var(--risk)','срыв срока'],done:['var(--muted)','закрыт']};
+
+function seed(){
+  function t(key,ttl,epic,who,col,prio,est,sla,desc,subs,comments){
+    return {key,ttl,epic,who,col,prio,est,sla,desc,
+      subs:subs.map(([s,d])=>({t:s,done:!!d})),
+      comments:comments.map(([a,m])=>({a,m})),
+      log:[`создана · назначена: ${PEOPLE[who].full}`]};
+  }
+  return {
+    currentUser:'petrov', view:'today', chips:{mine:false,hi:false,epic:null}, q:'', kbq:'', kbAI:null,
+    orders:[
+      {id:'O1',num:'2417',title:'Электронасос ЦВС-400/40',customer:'Адмиралтейские верфи',vessel:'зав. №02471 · пр. 23550',goz:1,due:'15.03.2027',sum:'18,4 млн ₽',stage:5,risk:'warn',
+       feed:[['09:14','<b>Тендер загружен из ЕИС автоматически</b> — фильтр «проект 23550»',1],
+             ['16:25','<b>Оценка ТЗ готова: 340 н/ч</b> — продажник получил уведомление',1],
+             ['17:44','<b>ВП согласовало ориентировочную цену</b>',1],
+             ['10:20','<b>ИГК привязан</b>, обмен с 1С подтверждён',0],
+             ['13:15','<b>Замечание верфи к СБ-02 — прямо во вьюере</b>, ни одного письма',1]]},
+      {id:'O2',num:'2389',title:'Теплообменник ТВГ-12',customer:'Северная верфь',vessel:'пр. 22350 · зав. №924',goz:0,due:'20.08.2027',sum:'7,2 млн ₽',stage:1,risk:'ok',
+       feed:[['11:02','<b>Запрос ТЗ получен почтовым шлюзом</b> — письмо легло в ленту заказа',1],
+             ['11:40','<b>ИИ-поиск: аналог 87%</b> — заказ №1893 (2022)',1]]},
+      {id:'O4',num:'2431',title:'Арматура высокого давления',customer:'Выборгский ССЗ',vessel:'пр. KMT01 · зав. №940',goz:1,due:'30.11.2026',sum:'11,6 млн ₽',stage:7,risk:'risk',
+       feed:[['08:12','<b>Замечание ВП при приёмке</b> — превращено в задачу, дедлайн под контролем',1],
+             ['09:40','<b>Автосводка: риск срыва отгрузки</b> — директор уведомлён первым, а не последним',1]]},
+      {id:'O3',num:'2204',title:'Комплект арматуры ДУ-50',customer:'Окская судоверфь',vessel:'пр. RSD59 · зав. №312',goz:0,due:'сдан 02.2026',sum:'4,1 млн ₽',stage:10,risk:'done',
+       feed:[['17:00','<b>Заказ закрыт.</b> Цикл 11 мес, вся история в системе',0],
+             ['17:01','<b>ИИ проиндексировал документы</b> — заказ стал аналогом для будущих ТЗ',1]]},
+    ],
+    epics:[
+      {id:'E1',name:'Заказ №2417 · КД/ОКР',c:'#C94F08',orderId:'O1'},
+      {id:'E2',name:'Заказ №2389 · Оценка ТЗ',c:'#2E6E8E',orderId:'O2'},
+      {id:'E5',name:'Заказ №2431 · Приёмка',c:'#8E2E4E',orderId:'O4'},
+      {id:'E3',name:'ОКР · Импортозамещение ВРК',c:'#5B7A2E',orderId:null},
+      {id:'E4',name:'Сертификация РМРС',c:'#7A4E8E',orderId:null},
+      {id:'E6',name:'Радар · пресейл',c:'#B3541E',orderId:null},
+    ],
+    projects:[
+      {id:'P1',name:'Проект 23550 · арктический траулер',bureau:'ЦКБ «Восток»',stage:2,vessels:'2 судна · Адмиралтейские верфи',
+       positions:[
+        {nm:'Электронасос ЦВС-400/40',st:'ok',note:'заложено в ИТТ проектанта · связано с заказом №2417'},
+        {nm:'Насос резервного контура',st:'warn',note:'проектант запросил альтернативы у двух конкурентов — сигнал от 05.07'}]},
+      {id:'P2',name:'Проект KMT01 · краболов',bureau:'Морское Инженерное Бюро',stage:1,vessels:'серия 4 судна · Выборгский ССЗ',
+       positions:[
+        {nm:'Арматура высокого давления',st:'lost',note:'в РКД заложен конкурент — обнаружено в извещении РКД от 08.07, без радара узнали бы на тендере'},
+        {nm:'Палубная арматура ДУ-50',st:'ok',note:'заложено · тендер верфи ожидается Q4 2026'}]},
+      {id:'P3',name:'Проект 00380 · буксир-спасатель',bureau:'Форсс Технологии',stage:0,vessels:'серия до 6 · верфь не определена',
+       positions:[
+        {nm:'Комплект насосов охлаждения',st:'ok',note:'ранняя закладка на стадии техпроекта — держим контакт с ГИПом'}]},
+    ],
+    seq:2470,
+    tasks:[
+      Object.assign(t('СТ-2456','Оценка ТЗ: система охлаждения для зав. №02471','E2','petrov','open','hi','32 н/ч','SLA 3 дн',
+        'Запрос из сделки №2389. <b>ИИ уже подобрал аналог</b> — заказ №1893 (2022), совпадение 87%.',
+        [['Разобрать ТЗ по разделам',0],['Сверить с библиотекой узлов',0],['Утвердить у Максимова',0]],
+        [['Соколова','Верфь ждёт ТКП, таймер SLA тикает.']]), {due:'2026-07-16', watchers:['maksimov','sokolova']}),
+      Object.assign(t('СТ-2465','Устранить замечание ВП: маркировка корпуса','E5','smirnov','open','hi','4 н/ч','SLA 2 дн',
+        'Замечание военной приёмки по заказу №2431. От него зависит разблокировка отгрузки.',[],[]), {due:'2026-07-10'}),
+      t('СТ-2457','Проверить реестровую запись РРПП поз. 4.2 (ПП 719)','E1','kuznetsova','open','md','2 н/ч',null,
+        'Автопроверка: у поставщика позиции 4.2 <b>не подан отчёт в ГИСП</b> — запись могут аннулировать.',
+        [['Запросить статус у поставщика',0],['Подобрать 2 запасных из памяти закупок',0]],[]),
+      t('СТ-2460','Собрать пакет РКМ по запросу ВП','E1','sokolova','open','md','8 н/ч',null,
+        'Калькуляция подтянется из 1С файловым обменом, формы — печатные шаблоны.',[],[]),
+      Object.assign(t('СТ-2441','Извещение об изменении №2 (ГОСТ 2.503) на СБ-02','E1','petrov','wip','hi','6 н/ч',null,
+        'Извещение <b>сформировано из diff версий v1.1 → v1.2</b>. Проверить формулировки и провести по маршруту.',
+        [['Проверить черновик извещения',1],['Маршрут: Максимов → нормоконтроль → архив',0]],
+        [['Петров','Раньше на такое уходил день.']]), {due:'2026-07-18', links:[{to:'СТ-2431',type:'блокирует'}]}),
+      t('СТ-2438','Согласовать замену подшипника SKF 6310 → ГПЗ-10','E1','kuznetsova','wip','hi','4 н/ч',null,
+        'SKF недоступен, найден реестровый аналог. Решение останется в памяти закупок.',
+        [['ТТХ-сравнение приложить',1],['Вердикт КБ (Иванов)',0]],
+        [['Кузнецова','Иванов, посмотри посадку — по ТТХ проходит.'],['Иванов','Проходит. Пишу заключение в карточку.']]),
+      t('СТ-2444','Черновая компоновка: вариант Б (черновой контур)','E3','ivanov','wip','lo','16 н/ч',null,
+        'Ранний ОКР: версии фиксируются легко, без обязательных атрибутов.',[],[]),
+      t('СТ-2431','Чертёж СБ-02: снять замечание верфи','E1','petrov','rev','hi','3 н/ч',null,
+        'Замечание оставлено <b>аннотацией во вьюере</b>. Исправлено в v1.2, ждём подтверждения гостя-верфи.',
+        [['Исправить фланец',1],['Подтверждение верфи',0]],
+        [['Гость (верфь)','Уточните присоединительный размер.'],['Петров','Исправлено в v1.2.']]),
+      Object.assign(t('СТ-2429','ТКП для тендера Северной верфи','E2','sokolova','rev','hi','6 н/ч','SLA 4 ч',
+        'ТКП собрано из оценки ИЦ, на согласовании у директора.',[],
+        [['Орлов','Маржу согласовал, отправляй.']]), {due:'2026-07-14', links:[{to:'СТ-2456',type:'зависит от'}]}),
+      t('СТ-2418','ИИ-подбор аналогов по ТЗ (совпадение 87%)','E2','petrov','done','md','0,5 н/ч',null,
+        'Гибридный поиск нашёл 3 исполненных аналога.',[],[]),
+      t('СТ-2415','Пропуск на верфь: данные водителя и ТС','E1','loginov','done','md','1 н/ч',null,
+        'Режимный объект: данные поданы за 3 дня — шаг воркфлоу отгрузки.',[],[]),
+      t('СТ-2410','Продлить сертификат РМРС (истекает 11.2026)','E4','smirnov','done','hi','12 н/ч',null,
+        'Система напомнила за 6 месяцев.',[],[]),
+    ],
+    docs:[
+      {tp:'ТЗ',nm:'ТЗ на систему охлаждения · зав. №02471 (скан, OCR)',vv:'v1 · действует',tags:'насос охлаждение 23550'},
+      {tp:'КД',nm:'СБ-02 Сборочный чертёж насоса ЦВС-400/40',vv:'v1.2 · действует',tags:'насос чертёж 2417'},
+      {tp:'Извещение',nm:'ИИ-2 к СБ-02 (автогенерация из diff)',vv:'на согласовании',tags:'извещение 2417'},
+      {tp:'Протокол',nm:'ПСИ давлением · линейка ЦВС',vv:'v1 · действует',tags:'испытания насос'},
+      {tp:'Сертификат',nm:'РМРС №23.00123.120 · насосы ЦВС',vv:'до 11.2028',tags:'рмрс насос'},
+      {tp:'ТЗ',nm:'ТЗ теплообменник ТВГ-12 · пр. 22350',vv:'v2 · действует',tags:'теплообменник 2389'},
+      {tp:'КД',nm:'Архив заказа №1893 · насос ЦН-380 (аналог)',vv:'архив · 2022',tags:'насос аналог 1893'},
+      {tp:'Протокол',nm:'Уроки заказа №2204 · арматура ДУ-50',vv:'v1',tags:'уроки арматура 2204'},
+    ],
+    drawings:{
+      'СБ-1893-02':{title:'Насос ЦН-380 · Сборочный чертёж', annotations:[
+        {id:'A1', x:640, y:250, text:'Уточнить присоединительный размер по фланцу — расходится с ТЗ.', author:'Гость (верфь)'}]},
+      'СБ-1204-05':{title:'Насос ЦВ-300 · Сборочный чертёж', annotations:[]},
+      'СБ-1740-01':{title:'Охладитель ОВ-8 · Сборочный чертёж', annotations:[]},
+      'СБ-2204-03':{title:'Клапан запорный ДУ-50', annotations:[]},
+      'ГЧ-1893-01':{title:'Насос ЦН-380 · Габаритный чертёж', annotations:[]},
+    },
+    suppliers:[
+      {id:'SP1',position:'Подшипник качения SKF 6310',order:'2417',reg:'ok',
+       sources:[{name:'ГПЗ-10 (Самара)',rel:'ok',note:'реестр РРПП №48-2213 · согласован КБ как замена SKF'},
+                {name:'ЕПК (Волжский)',rel:'ok',note:'резерв, сроки стабильны'}],
+       fails:'SKF недоступен (санкции); ГПЗ — 0 срывов за 3 заказа',repl:'SKF 6310 → ГПЗ-10 (согласовано, заказ №2204)'},
+      {id:'SP2',position:'Электронасос ЦВС корпус (бронза БрА9Ж3Л)',order:'2417',reg:'warn',
+       sources:[{name:'Литейный завод «Металл»',rel:'warn',note:'⚠ отчёт в ГИСП не подан до 1 апреля — запись под угрозой аннулирования'},
+                {name:'ПО «Бронза» (запас)',rel:'ok',note:'реестр действует, чуть дороже'}],
+       fails:'основной поставщик 1 срыв за 2 заказа (14 дней)',repl:'—'},
+      {id:'SP3',position:'Датчик давления (КИП)',order:'2389',reg:'ok',
+       sources:[{name:'Валком',rel:'ok',note:'реестр РРПП, местный, шефмонтаж включён'}],
+       fails:'без срывов',repl:'—'},
+      {id:'SP4',position:'Уплотнение вала (импорт)',order:'2431',reg:'expired',
+       sources:[{name:'ТД «Уплотнение»',rel:'warn',note:'✕ реестровая запись аннулирована 05.2025 — в заявку по 44/223-ФЗ нельзя'},
+                {name:'Реверс-инжиниринг (НИИ)',rel:'warn',note:'ОКР, срок 4 мес'}],
+       fails:'импорт ушёл, аналог в разработке',repl:'ищем реестровый аналог'},
+    ],
+    certs:[
+      {id:'C1',name:'РМРС №23.00123.120 · насосы ЦВС',izdelie:'Насос ЦВС-400/40',until:'2028-11-01'},
+      {id:'C2',name:'РМРС №19.00442.118 · насос ЦВ-300',izdelie:'Насос ЦВ-300',until:'2024-06-01'},
+      {id:'C3',name:'РМРС №21.00677.204 · охладитель ОВ-8',izdelie:'Теплообменник ОВ-8',until:'2026-08-15'},
+      {id:'C4',name:'РКО №26.00123.045 · арматура ДУ-50',izdelie:'Арматура ДУ-50',until:'2026-07-25'},
+    ],
+    deals:[
+      {id:'D1',title:'Электронасосы для серии пр. 23550',company:'Адмиралтейские верфи',vessel:'пр. 23550 · 2 судна',
+       stage:'contract',sum:18400000,prob:100,who:'sokolova',goz:1,next:'Контракт подписан → заказ №2417',orderNum:'2417',orderId:'O1',
+       acts:[['14.02','Заведён из тендера ЕИС'],['02.04','ВП согласовало цену'],['20.05','Контракт подписан']]},
+      {id:'D2',title:'Теплообменник ТВГ-12',company:'Северная верфь',vessel:'пр. 22350',
+       stage:'kp',sum:7200000,prob:60,who:'sokolova',goz:0,next:'Отправить ТКП (ждём оценку ИЦ)',orderNum:null,
+       acts:[['11.06','ТЗ получено почтовым шлюзом'],['12.06','Запрошена оценка в ИЦ']]},
+      {id:'D3',title:'Комплект арматуры ДУ-80',company:'Выборгский ССЗ',vessel:'пр. KMT01',
+       stage:'assess',stage2:1,sum:5100000,prob:40,who:'sokolova',goz:1,next:'Дождаться оценки ТЗ от ИЦ (SLA 3 дн)',orderNum:null,
+       acts:[['08.07','Квалифицирован лид с НЕВА']]},
+      {id:'D4',title:'Насосы охлаждения для буксира',company:'Окская судоверфь',vessel:'пр. RSD59',
+       stage:'lead',sum:4300000,prob:20,who:'sokolova',goz:0,next:'Первый контакт с ГИПом проектанта',orderNum:null,
+       acts:[['12.07','Замечен в проекте на стадии РКД (радар)']]},
+      {id:'D5',title:'Редуктор РП-450',company:'Ак Барс',vessel:'пр. 22800',
+       stage:'nego',sum:9600000,prob:75,who:'sokolova',goz:1,next:'Согласование фиксированной цены с ВП',orderNum:null,
+       acts:[['20.06','КП отправлено'],['05.07','Переговоры по цене']]},
+      {id:'D6',title:'Датчики уровня (проиграно)',company:'Красное Сормово',vessel:'пр. RST27',
+       stage:'lost',sum:2100000,prob:0,who:'sokolova',goz:0,next:'Проиграно: демпинг конкурента',orderNum:null,
+       acts:[['15.05','КП'],['01.07','Проигрыш по цене']]},
+    ],
+    kbProjects:[
+      {id:'PR1', izdelie:'Насос ЦН-380', code:'ЦН-380', order:'1893', year:2022, hours:340,
+        customer:'Балтийский завод', vessel:'пр. 22350', status:'исполнен',
+        tz:'Центробежный насос системы охлаждения. Подача 380 м³/ч, напор 40 м, рабочее давление 40 бар, температура среды до 60 °C. Материал корпуса — бронза БрА9Ж3Л. Привод — электродвигатель 55 кВт. Сертификация РМРС.',
+        tags:'насос охлаждение центробежный бронза 40 бар подача электропривод рмрс',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на насос ЦН-380', ver:'v2 · действует', where:'Заказ №1893 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-1893-02 · Сборочный чертёж насоса', ver:'v1.3', code:'СБ-1893-02', where:'DWG · вьюер'},
+          {type:'Чертёж', name:'ГЧ-1893-01 · Габаритный чертёж', ver:'v1.0', code:'ГЧ-1893-01', where:'DWG · вьюер'},
+          {type:'Извещение', name:'ИИ-1 · замена подшипника SKF → ГПЗ', ver:'проведено 2022', where:'привязано к СБ-1893-02'},
+          {type:'Протокол', name:'ПСИ давлением 60 бар', ver:'пройдено', where:'Заказ №1893 · Приёмка'},
+          {type:'Сертификат', name:'РМРС №22.00891.301', ver:'до 2027', where:'реестр сертификатов'},
+        ]},
+      {id:'PR2', izdelie:'Насос ЦВ-300', code:'ЦВ-300', order:'1204', year:2019, hours:295,
+        customer:'Адмиралтейские верфи', vessel:'пр. 20385', status:'исполнен',
+        tz:'Центробежный вертикальный насос забортной воды. Подача 300 м³/ч, напор 32 м, давление 30 бар. Корпус — бронза. Электропривод 45 кВт. Класс РМРС.',
+        tags:'насос забортная вода центробежный вертикальный бронза электропривод',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на насос ЦВ-300', ver:'v1 · архив', where:'Заказ №1204 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-1204-05 · Сборочный чертёж', ver:'v2.1', code:'СБ-1204-05', where:'DWG · вьюер'},
+          {type:'Извещение', name:'ИИ-2 · изменение уплотнения вала', ver:'проведено', where:'привязано к СБ-1204-05'},
+          {type:'Протокол', name:'ПСИ + вибродиагностика', ver:'пройдено', where:'Заказ №1204 · Приёмка'},
+          {type:'Сертификат', name:'РМРС №19.00442.118', ver:'истёк 2024', where:'реестр сертификатов'},
+        ]},
+      {id:'PR3', izdelie:'Теплообменник ОВ-8', code:'ОВ-8', order:'1740', year:2021, hours:210,
+        customer:'Северная верфь', vessel:'пр. 22350', status:'исполнен',
+        tz:'Пластинчатый охладитель воды. Тепловая мощность 800 кВт, рабочее давление 16 бар, среда — пресная/забортная вода. Титановые пластины. Сертификация РМРС.',
+        tags:'теплообменник охладитель пластинчатый вода титан 16 бар мощность',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на охладитель ОВ-8', ver:'v1 · действует', where:'Заказ №1740 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-1740-01 · Сборочный чертёж', ver:'v1.1', code:'СБ-1740-01', where:'DWG · вьюер'},
+          {type:'Протокол', name:'Гидравлические испытания', ver:'пройдено', where:'Заказ №1740 · Приёмка'},
+          {type:'Сертификат', name:'РМРС №21.00677.204', ver:'до 2026', where:'реестр сертификатов'},
+        ]},
+      {id:'PR4', izdelie:'Арматура ДУ-50', code:'ДУ-50', order:'2204', year:2026, hours:120,
+        customer:'Окская судоверфь', vessel:'пр. RSD59', status:'исполнен',
+        tz:'Комплект судовой трубопроводной арматуры ДУ-50, PN 25. Клапаны запорные, обратные. Материал — сталь 20. Сертификация РМРС.',
+        tags:'арматура клапан запорный обратный ду-50 сталь трубопровод',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на арматуру ДУ-50', ver:'v1 · действует', where:'Заказ №2204 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-2204-03 · Клапан запорный', ver:'v1.0', code:'СБ-2204-03', where:'DWG · вьюер'},
+          {type:'Протокол', name:'Уроки заказа №2204', ver:'v1', where:'Заказ №2204 · БЗ'},
+          {type:'Сертификат', name:'РМРС №26.00123.045', ver:'действует', where:'реестр сертификатов'},
+        ]},
+    ],
+    rules:[
+      {id:'R1',name:'Просрочка → комментарий + уведомить наблюдателей и исполнителя',trigger:'overdue',act:{comment:1,notify:1,prio:0},enabled:1},
+      {id:'R2',name:'Задача «на согласовании» → уведомить руководителя ИЦ',trigger:'to_rev',act:{comment:0,notify:1,prio:0},enabled:1},
+      {id:'R3',name:'Просрочка задачи с SLA → поднять приоритет до высокого',trigger:'overdue',act:{comment:0,notify:0,prio:1},enabled:0},
+    ],
+    notes:[], fired:[], savedFilters:[],
+  };
+}
+let S;
+try{ S = JSON.parse(localStorage.getItem(LSKEY)) || seed(); }catch(e){ S = seed(); }
+function save(){ try{ localStorage.setItem(LSKEY, JSON.stringify(S)); }catch(e){} queuePush(); }
+
+/* ---- серверная синхронизация (v0.5): SSE-пуш, журнал аудита, подпись действий ---- */
+const SRV = { on:false, rev:0, es:null };
+const TOK = () => (window.__ELLING_TOKEN || '');   // токен инъектируется сервером в same-origin index.html
+const AH = extra => Object.assign({'X-API-Token': TOK()}, extra||{});
+let ACTS = [];            // накопитель описаний действий (ревью v0.5: не терять при дебаунсе)
+let SYNCING = false;      // рендер по данным с сервера не должен порождать обратный пуш (эхо-цикл)
+const SHARED = ['orders','epics','seq','tasks','deals','suppliers','certs','docs','projects','kbProjects','drawings','rules','notes','savedFilters'];
+// S.fired — клиент-локальный (не синкается): каждая вкладка хранит, что уже отработала,
+// чтобы таймер не повторял; повтор демо после сброса работает, дубли между клиентами гасит дедуп notify()
+function sharedData(){ const o={}; SHARED.forEach(k=>o[k]=S[k]); return o; }
+function adoptShared(d){ if(!d) return; SHARED.forEach(k=>{ if(d[k]!==undefined) S[k]=d[k]; }); }
+function setSrv(on){ SRV.on = on; const el = $('srvState');
+  if(el) el.textContent = on ? `сервер: live · rev ${SRV.rev}` : 'локальный режим (без сервера)'; }
+let pushT = null;
+let kbReqSeq = 0;
+function queuePush(){ if(!SRV.on || SYNCING) return; clearTimeout(pushT); pushT = setTimeout(pushState, 700); }
+async function pushState(){
+  clearTimeout(pushT); pushT = null;
+  const acts = ACTS; ACTS = [];
+  try{
+    const r = await fetch('/api/state', {method:'PUT', headers:AH({'Content-Type':'application/json'}),
+      body: JSON.stringify({rev:SRV.rev, data:sharedData(),
+        user: PEOPLE[S.currentUser].full + ' · ' + PEOPLE[S.currentUser].role,
+        action: acts.join('; ') || 'изменение данных'})});
+    if(r.status===409){ const j = await r.json();
+      // наш push отклонён (устаревший rev) — НЕ теряем локальные правки (напр. аннотацию):
+      // обновляем rev и повторяем отправку, сервер сольёт наши правки по сущностям (ревью v1.1)
+      SRV.rev = j.rev; ACTS = acts.concat(ACTS); setSrv(true); queuePush(); return; }
+    if(r.ok){ const j = await r.json(); SRV.rev = j.rev; setSrv(true); }
+    else ACTS = acts.concat(ACTS);
+  }catch(e){ ACTS = acts.concat(ACTS); setSrv(false); }
+}
+async function pullState(){
+  if(pushT){ await pushState(); }  // сначала доставляем свои несохранённые правки, потом принимаем чужие
+  try{
+    const s = await (await fetch('/api/state', {cache:'no-store', headers:AH()})).json();
+    if(s.rev > SRV.rev){
+      SYNCING = true; adoptShared(s.data); SRV.rev = s.rev; renderBg(); SYNCING = false;
+    }
+    setSrv(true);
+  }catch(e){ setSrv(false); }
+}
+function startStream(){
+  if(!window.EventSource){ setInterval(pullState, 8000); return; }
+  try{
+    SRV.es = new EventSource('/api/stream?token='+encodeURIComponent(TOK()));
+    SRV.es.onmessage = e=>{
+      try{ const j = JSON.parse(e.data); if(j.rev > SRV.rev) pullState(); else setSrv(true); }catch(x){}
+    };
+    SRV.es.onerror = ()=>{
+      setSrv(false);
+      try{ SRV.es.close(); }catch(x){}
+      setTimeout(()=>{ pullState(); startStream(); }, 5000);
+    };
+  }catch(e){ setInterval(pullState, 8000); }
+}
+async function bootstrapSrv(){
+  if(!/^https?:$/.test(location.protocol)) return;
+  try{
+    const r = await fetch('/api/state', {cache:'no-store', headers:AH()});
+    if(!r.ok) return;
+    const j = await r.json();
+    SRV.rev = j.rev || 0;
+    if(j.data){ SYNCING = true; adoptShared(j.data); SYNCING = false; }
+    else { SRV.on = true; ACTS.push('первичная загрузка демо-данных'); await pushState(); }
+    setSrv(true); render();
+    startStream();
+    setInterval(pullState, 30000); // страховочный редкий поллинг
+  }catch(e){ setSrv(false); }
+}
+/* ============ v1.1: вьюер чертежей (зум/панорама/слои/замечания) ============ */
+let DWG = { code:null, s:1, tx:0, ty:0, mode:'view', layers:{contour:1,dims:1,title:1,notes:1} };
+function dwgSVG(code){
+  // Представительный сборочный чертёж (в проде: DWG→SVG через ODA-конвейер).
+  const d = (S.drawings||{})[code] || {title:code, annotations:[]};
+  const pins = (d.annotations||[]).map((a,i)=>`
+    <g class="dwg-pin" data-pin="${esc(a.id)}" transform="translate(${a.x},${a.y})">
+      <circle r="15" style="fill:var(--accent);stroke:#fff;stroke-width:2"/>
+      <text y="5" text-anchor="middle" style="fill:#fff;font-size:15px;font-weight:700">${i+1}</text></g>`).join('');
+  const MUT='style="stroke:var(--muted)"';
+  return `<svg id="dwgSvg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet">
+    <g id="dwgRoot" transform="translate(${DWG.tx},${DWG.ty}) scale(${DWG.s})">
+      <rect x="8" y="8" width="984" height="684" style="fill:none;stroke:var(--ink);stroke-width:2"/>
+      <rect x="18" y="18" width="964" height="664" style="fill:none;stroke:var(--muted);stroke-width:1"/>
+      <g class="dlayer" data-layer="contour" style="display:${DWG.layers.contour?'inline':'none'};fill:none;stroke:var(--ink);stroke-width:2.5">
+        <line x1="120" y1="360" x2="820" y2="360" style="stroke:var(--accent);stroke-width:1;stroke-dasharray:18 6 3 6"/>
+        <circle cx="470" cy="360" r="150"/><circle cx="470" cy="360" r="120"/>
+        <path d="M470 210 Q650 210 660 360 Q650 480 560 500"/>
+        <rect x="150" y="320" width="90" height="80"/>
+        <circle cx="175" cy="342" r="6"/><circle cx="215" cy="342" r="6"/><circle cx="175" cy="378" r="6"/><circle cx="215" cy="378" r="6"/>
+        <rect x="640" y="180" width="80" height="70"/>
+        <circle cx="662" cy="200" r="5"/><circle cx="698" cy="200" r="5"/><circle cx="662" cy="230" r="5"/><circle cx="698" cy="230" r="5"/>
+        <line x1="240" y1="360" x2="320" y2="360" style="stroke:var(--ink);stroke-width:10"/>
+        <circle cx="470" cy="360" r="26" style="fill:var(--panel2);stroke:var(--ink);stroke-width:2.5"/>
+      </g>
+      <g class="dlayer" data-layer="dims" style="display:${DWG.layers.dims?'inline':'none'};stroke:var(--navy);stroke-width:1;fill:var(--navy);font-family:var(--mono);font-size:15px">
+        <line x1="320" y1="560" x2="620" y2="560"/><path d="M320 555 l0 10 M620 555 l0 10"/>
+        <text x="455" y="580" text-anchor="middle" style="stroke:none;fill:var(--navy)">Ø300</text>
+        <line x1="820" y1="210" x2="820" y2="510"/><path d="M815 210 l10 0 M815 510 l10 0"/>
+        <text x="835" y="365" style="stroke:none;fill:var(--navy)" writing-mode="tb">380</text>
+      </g>
+      <g class="dlayer" data-layer="title" style="display:${DWG.layers.title?'inline':'none'}">
+        <rect x="602" y="560" width="380" height="112" style="fill:var(--panel);stroke:var(--ink);stroke-width:1.5"/>
+        <line x1="602" y1="588" x2="982" y2="588" ${MUT}/><line x1="602" y1="616" x2="982" y2="616" ${MUT}/>
+        <line x1="602" y1="644" x2="982" y2="644" ${MUT}/><line x1="822" y1="560" x2="822" y2="672" ${MUT}/>
+        <text x="612" y="580" style="font-size:16px;font-weight:700;fill:var(--ink)">${esc(d.title)}</text>
+        <text x="612" y="608" style="font-size:13px;fill:var(--ink2)">Обозн.: ${esc(code)}</text>
+        <text x="612" y="636" style="font-size:13px;fill:var(--ink2)">Масштаб 1:5 · Литера О</text>
+        <text x="612" y="664" style="font-size:13px;fill:var(--ink2)">Разраб. Петров · Пров. Максимов</text>
+        <text x="832" y="608" style="font-size:12px;fill:var(--muted)">Лист 1</text>
+        <text x="832" y="636" style="font-size:12px;fill:var(--muted)">Листов 1</text>
+        <text x="832" y="664" style="font-size:12px;fill:var(--muted)">Эллинг</text>
+      </g>
+      <g class="dlayer" data-layer="notes" style="display:${DWG.layers.notes?'inline':'none'}">${pins}</g>
+    </g></svg>`;
+}
+function openDwg(code){
+  if(!(S.drawings||{})[code]){ S.drawings=S.drawings||{}; S.drawings[code]={title:code,annotations:[]}; }
+  DWG = { code, s:1, tx:0, ty:0, mode:'view', layers:{contour:1,dims:1,title:1,notes:1} };
+  renderDwg();
+}
+function renderDwg(){
+  const d = S.drawings[DWG.code];
+  const L = DWG.layers;
+  $('dwgViewer').innerHTML = `
+    <div class="dwg-bar">
+      <b>${esc(DWG.code)}</b> <span>${esc(d.title)}</span>
+      <span class="dwg-sp"></span>
+      ${[['contour','Контур'],['dims','Размеры'],['title','Штамп'],['notes','Замечания']].map(([k,l])=>
+        `<button class="dwg-lb ${L[k]?'on':''}" data-dlayer="${k}">${l}</button>`).join('')}
+      <button class="dwg-lb ${DWG.mode==='annotate'?'on':''}" id="dwgAnn" title="кликните по чертежу, чтобы оставить замечание">✎ Замечание</button>
+      <button class="dwg-zb" data-dzoom="out">−</button><button class="dwg-zb" data-dzoom="fit">↺</button><button class="dwg-zb" data-dzoom="in">＋</button>
+      <button class="dwg-zb" id="dwgClose">✕</button>
+    </div>
+    <div class="dwg-stage ${DWG.mode==='annotate'?'annot':''}" id="dwgStage">${dwgSVG(DWG.code)}</div>
+    <div class="dwg-side">
+      <h4>Замечания · ${d.annotations.length}</h4>
+      ${d.annotations.length? d.annotations.map((a,i)=>`<div class="dwg-note" data-gopin="${esc(a.id)}">
+        <span class="dwg-num">${i+1}</span><div><b>${esc(a.author)}</b><br>${esc(a.text)}</div></div>`).join('')
+        : '<div class="empty" style="padding:10px 2px">Замечаний нет. Нажмите «✎ Замечание» и кликните по чертежу — как это делает верфь при согласовании.</div>'}
+      ${DWG.mode==='annotate'?'<div class="ai-box" style="margin-top:10px;font-size:12.5px">Режим замечаний: кликните по месту на чертеже.</div>':''}
+    </div>`;
+  $('dwgViewer').classList.add('open');
+}
+function closeDwg(){ $('dwgViewer').classList.remove('open'); DWG.code=null; }
+function dwgToLocal(clientX, clientY){
+  const root = document.getElementById('dwgRoot');
+  const svg = document.getElementById('dwgSvg');
+  const pt = svg.createSVGPoint(); pt.x=clientX; pt.y=clientY;
+  return pt.matrixTransform(root.getScreenCTM().inverse());
+}
+function dwgZoom(factor, cx, cy){
+  const stage = $('dwgStage').getBoundingClientRect();
+  const px = (cx==null? stage.left+stage.width/2 : cx), py = (cy==null? stage.top+stage.height/2 : cy);
+  const before = dwgToLocal(px, py);
+  DWG.s = Math.max(0.4, Math.min(8, DWG.s*factor));
+  applyDwgTransform();
+  const after = dwgToLocal(px, py);
+  DWG.tx += (after.x-before.x)*DWG.s; DWG.ty += (after.y-before.y)*DWG.s;
+  applyDwgTransform();
+}
+function applyDwgTransform(){
+  const root=document.getElementById('dwgRoot');
+  if(root) root.setAttribute('transform',`translate(${DWG.tx},${DWG.ty}) scale(${DWG.s})`);
+}
+
+function searchFiles(){
+  S.kbFiles = null;
+  if(SRV.on && (S.kbq||'').trim()){
+    const rid = ++kbReqSeq;
+    fetch('/api/search?q='+encodeURIComponent(S.kbq), {headers:AH()}).then(r=>r.json())
+      .then(j=>{ if(rid!==kbReqSeq) return; S.kbFiles = j.hits||[]; if(S.view==='kb') render(); }).catch(()=>{});
+  }
+}
+async function loadAudit(){
+  const box = $('auditBox'); if(!box || !SRV.on) return;
+  try{
+    const j = await (await fetch('/api/audit', {cache:'no-store', headers:AH()})).json();
+    box.innerHTML = j.items.length ? j.items.slice(0,25).map(a=>
+      `<div class="loadrow" style="margin-bottom:4px"><span class="nm" style="width:200px;font-family:var(--mono);font-size:10.5px;color:var(--muted)">${esc(a.ts.replace('T',' ').replace('+00:00',''))} · rev ${a.rev}</span>
+       <span style="font-size:12.5px"><b>${esc(a.user)}</b> — ${esc(a.action)}</span></div>`).join('')
+      : '<div class="empty">журнал пуст</div>';
+  }catch(e){ box.innerHTML = '<div class="empty">журнал недоступен</div>'; }
+}
+
+/* ================= helpers ================= */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+/* безопасный рендер синхронизируемых полей: экранируем всё, возвращаем только <b> (ревью v0.5: XSS) */
+const safe = s => esc(s).replace(/&lt;(\/?b)&gt;/g,'<$1>');
+
+/* v0.6: настоящий гибридный поиск по БЗ — точные слова, префиксы, шифры, покрытие запроса */
+/* v1.0: поиск аналогов по исполненным ПРОЕКТАМ (не по плоским документам).
+   Возвращает проект + %, совпавшие термины и его документы — чтобы сразу видеть,
+   где чертежи, извещения, протоколы и сколько часов ушло. */
+const DOC_ICON = {'ТЗ':'📄','Чертёж':'📐','Извещение':'📢','Протокол':'🧪','Сертификат':'📜'};
+function docIcon(t){ return DOC_ICON[t] || '📎'; }
+function kbSearchProjects(q){
+  const tokens = (q||'').toLowerCase().split(/[^a-zа-яё0-9-]+/).filter(t=>t.length>1);
+  if(!tokens.length) return [];
+  const codeRe = /^[а-яёa-z]{1,4}[-–]?\d/i;
+  return (S.kbProjects||[]).map(p=>{
+    const text = (p.izdelie+' '+p.tz+' '+p.tags+' '+p.code).toLowerCase();
+    const words = text.split(/[^a-zа-яё0-9-]+/);
+    let score=0; const matched=[];
+    tokens.forEach(t=>{
+      let s=0;
+      if(words.includes(t)) s=3; else if(words.some(w=>w.startsWith(t))) s=2; else if(text.includes(t)) s=1.2;
+      if(s && codeRe.test(t)) s*=1.8;
+      if(s){ score+=s; matched.push(t); }
+    });
+    const coverage = matched.length/tokens.length;
+    const pct = Math.min(98, Math.round(score*coverage/(tokens.length*3)*100));
+    return { p, pct, matched:[...new Set(matched)] };
+  }).filter(x=>x.pct>0).sort((a,b)=>b.pct-a.pct);
+}
+function kbProject(id){ return (S.kbProjects||[]).find(p=>p.id===id); }
+function av(pid){ const p=PEOPLE[pid]; return `<span class="av" style="background:${p.c}" title="${p.full} · ${p.role}">${p.n}</span>`; }
+function epic(id){ return S.epics.find(e=>e.id===id); }
+function task(key){ return S.tasks.find(t=>t.key===key); }
+function orderOfTask(t){ const e=epic(t.epic); return e&&e.orderId ? S.orders.find(o=>o.id===e.orderId) : null; }
+function visible(t){
+  if(S.chips.mine && t.who!==S.currentUser) return false;
+  if(S.chips.hi && t.prio!=='hi') return false;
+  if(S.chips.epic && t.epic!==S.chips.epic) return false;
+  if(S.q && !(t.ttl+' '+t.key).toLowerCase().includes(S.q.toLowerCase())) return false;
+  return true;
+}
+function dueInfo(t){
+  if(!t.due) return null;
+  const days = Math.ceil((new Date(t.due+'T23:59:59') - new Date()) / 86400000);
+  const [y,m,d] = t.due.split('-');
+  return { over: days < 0 && t.col!=='done', txt: `${d}.${m}`, days };
+}
+function dueBadge(t){
+  const di = dueInfo(t); if(!di) return '';
+  return `<span class="due ${di.over?'over':''}">${di.over?'⚠ просрочено ':''}${di.txt}</span>`;
+}
+function blockersOf(t){
+  return S.tasks.filter(x=>x.col!=='done' && (x.links||[]).some(l=>l.to===t.key && l.type==='блокирует'));
+}
+
+/* ---- v0.9: уведомления + движок автоматизаций ---- */
+function notify(userIds, text, taskKey){
+  S.notes = S.notes || [];
+  const ids = [...new Set(userIds.filter(u=>PEOPLE[u]))];
+  ids.forEach(u=>{
+    // дедуп по содержимому: два клиента на своих таймерах не создадут дубль (ревью v0.9)
+    if(S.notes.some(n=>n.to===u && n.text===text && n.taskKey===taskKey && !n.read)) return;
+    S.notes.unshift({id:'N'+(S.seq=(S.seq||2470)+1)+'-'+u, to:u, text, taskKey, read:0});
+  });
+  if(S.notes.length>200) S.notes.length = 200;
+}
+function myNotes(){ return (S.notes||[]).filter(n=>n.to===S.currentUser); }
+/* Движок: срабатывает при изменениях и по таймеру. Идемпотентен — каждое правило
+   для задачи срабатывает один раз (ключ в S.fired), чтобы не спамить и не зациклиться. */
+function runAutomations(trigger, task){
+  S.rules = S.rules || []; S.fired = S.fired || [];
+  let changed = false;
+  const fire = (rule, t, key) => {
+    if(S.fired.includes(key)) return;
+    S.fired.push(key); changed = true;
+    const recips = [t.who, ...(t.watchers||[])];
+    if(rule.act.comment){
+      t.comments = t.comments||[]; t.comments.push({a:'⚙ Автоматизация', m:`Задача просрочена (срок ${t.due}). Требуется внимание.`});
+    }
+    if(rule.act.prio && t.prio!=='hi'){ t.prio='hi'; t.log.push('автоматизация: приоритет поднят до высокого'); }
+    if(rule.act.notify){
+      // текст по триггеру ПРАВИЛА, а не по аргументу вызова (ревью v0.9)
+      const txt = rule.trigger==='overdue' ? `просрочена: ${t.ttl.slice(0,50)}`
+        : rule.trigger==='to_rev' ? `ждёт согласования: ${t.ttl.slice(0,50)}` : `изменилась: ${t.ttl.slice(0,50)}`;
+      notify(rule.trigger==='to_rev' ? ['maksimov', ...recips] : recips, txt, t.key);
+    }
+    t.log.push(`автоматизация «${rule.name.slice(0,40)}»`);
+    ACTS.push(`автоматизация: ${rule.name.slice(0,30)} → ${t.key}`);
+  };
+  S.rules.filter(r=>r.enabled).forEach(rule=>{
+    if(rule.trigger==='overdue'){
+      S.tasks.forEach(t=>{ const di=dueInfo(t);
+        if(di && di.over && !(rule.id==='R3' && !t.sla)) fire(rule, t, rule.id+':'+t.key+':'+t.due); });
+    } else if(rule.trigger==='to_rev' && trigger==='to_rev' && task && task.col==='rev'){
+      fire(rule, task, rule.id+':'+task.key+':rev:'+(task.log.length));
+    }
+  });
+  if(changed) save();
+  return changed;
+}
+function primAction(t){
+  if(t.col==='open') return ['wip','Взять в работу'];
+  if(t.col==='wip')  return ['rev','Отдать на согласование'];
+  if(t.col==='rev')  return ['done','Подтвердить: готово'];
+  return null;
+}
+function moveTask(t,to,how){
+  const old=t.col; t.col=to;
+  t.log.push(`статус: ${STNAME[old]} → ${STNAME[to]} (${how||PEOPLE[S.currentUser].full})`);
+  ACTS.push(`${t.key}: ${STNAME[old]} → ${STNAME[to]}`);
+  const o = orderOfTask(t);
+  if(o) o.feed.push(['сейчас',`<b>${t.key}</b>: ${STNAME[old]} → ${STNAME[to]} (${PEOPLE[t.who].full}) — видно всем без звонка`,1]);
+  if(to==='rev') runAutomations('to_rev', t);
+}
+
+/* ================= views ================= */
+const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Заказы',radar:'Радар закладок',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',reports:'Отчёты',settings:'Настройки',order:'Заказ'};
+
+/* ---- Снабжение: память о поставщиках + ПП 719 + сертификаты РМРС ---- */
+const REG_ST = {ok:['var(--good)','в реестре ПП 719'],warn:['var(--warn)','под угрозой (нет отчёта ГИСП)'],expired:['var(--risk)','аннулирована']};
+const REL_ST = {ok:['var(--good)','надёжен'],warn:['var(--warn)','риск']};
+function certDays(c){ return Math.ceil((new Date(c.until+'T23:59:59') - new Date())/86400000); }
+function supplyAlerts(){
+  const reg=(S.suppliers||[]).filter(s=>s.reg!=='ok').length;
+  const cert=(S.certs||[]).filter(c=>certDays(c)<180).length;
+  return reg+cert;
+}
+function vSupply(){
+  const tab=S.supTab||'sup';
+  const head=`<div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="chip" data-suptab="sup" aria-pressed="${tab==='sup'}">◈ Поставщики и ПП 719</button>
+      <button class="chip" data-suptab="cert" aria-pressed="${tab==='cert'}">📜 Сертификаты РМРС</button>
+    </div>`;
+  if(tab==='cert'){
+    const certs=(S.certs||[]).slice().sort((a,b)=>certDays(a)-certDays(b));
+    return head+`<p style="font-size:12.5px;color:var(--muted);margin:0 0 14px">Просрочка = продукцию не примут при освидетельствовании судна; повторная сертификация «под ключ» от ~400 тыс. ₽. Система напоминает за 6 месяцев.</p>
+      ${certs.map(c=>{ const d=certDays(c); const st=d<0?['var(--risk)','просрочен '+(-d)+' дн']:d<180?['var(--warn)','истекает через '+d+' дн']:['var(--good)','действует'];
+        const [y,m,dd]=c.until.split('-');
+        return `<div class="doc"><span class="tp" style="border-color:${st[0]};color:${st[0]}">${d<0?'✕':d<180?'⚠':'✓'}</span>
+          <span class="nm">${esc(c.name)}<br><span style="font-size:11px;color:var(--muted);font-weight:400">${esc(c.izdelie)} · до ${dd}.${m}.${y}</span></span>
+          <span class="vv" style="color:${st[0]}">${st[1]}</span></div>`; }).join('')}`;
+  }
+  const alerts=(S.suppliers||[]).filter(s=>s.reg!=='ok');
+  return head+`<div class="stats" style="margin-bottom:16px">
+      <div class="stat"><div class="v">${(S.suppliers||[]).length}</div><div class="l">позиций под контролем снабжения</div></div>
+      <div class="stat"><div class="v" style="-webkit-text-fill-color:${alerts.length?'var(--risk)':'var(--good)'};color:${alerts.length?'var(--risk)':'var(--good)'}">${alerts.length}</div><div class="l">проблем с реестровостью ПП 719</div></div>
+      <div class="stat"><div class="v">${(S.suppliers||[]).filter(s=>s.repl&&s.repl!=='—').length}</div><div class="l">согласованных замен в памяти</div></div>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin:0 0 14px">Память строится вокруг пары «позиция ↔ проверенные источники + согласованные замены + история срывов». Реестровость РРПП/ЕРПТ проверяется автоматически — запись может быть аннулирована без уведомления.</p>
+    ${(S.suppliers||[]).map(s=>`<div class="anacard" style="cursor:default">
+      <div class="ana-top">
+        <div><div class="ana-name">${esc(s.position)}</div>
+          <div class="ana-meta">заказ №${esc(s.order)}</div></div>
+        <span class="stchip" style="color:${REG_ST[s.reg][0]};border:1px solid ${REG_ST[s.reg][0]}">ПП 719: ${REG_ST[s.reg][1]}</span>
+      </div>
+      <div style="margin:12px 0 8px">${s.sources.map(src=>`<div class="kbdoc-row">
+        <div><div style="font-weight:600;color:var(--ink);font-size:13px">${esc(src.name)} <span class="stchip" style="color:${REL_ST[src.rel][0]};border:1px solid ${REL_ST[src.rel][0]};font-size:9px">${REL_ST[src.rel][1]}</span></div>
+          <div style="font-size:11.5px;color:var(--ink2)">${esc(src.note)}</div></div></div>`).join('')}</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:var(--ink2);padding-top:10px;border-top:1px solid var(--line2)">
+        <span>История: ${esc(s.fails)}</span>${s.repl&&s.repl!=='—'?`<span style="color:var(--accent)">↺ Замена: ${esc(s.repl)}</span>`:''}
+        ${s.reg!=='ok'?`<button class="btn" style="padding:5px 12px;font-size:12px;margin-left:auto" data-supalert="${s.id}">→ Задача закупщику</button>`:''}
+      </div></div>`).join('')}`;
+}
+
+/* ---- CRM: воронка проектных продаж ---- */
+const DEAL_STAGES = [['lead','Лид','var(--muted)'],['assess','Оценка ТЗ','var(--steel)'],['kp','КП','var(--navy)'],
+  ['nego','Переговоры / ВП','var(--warn)'],['contract','Контракт','var(--good)']];
+const DST = Object.fromEntries(DEAL_STAGES.map(s=>[s[0],s]));
+function fmtSum(v){ return v>=1e6 ? (v/1e6).toFixed(1).replace('.0','')+' млн ₽' : Math.round(v/1e3)+' тыс ₽'; }
+function dealById(id){ return (S.deals||[]).find(d=>d.id===id); }
+const DEAL_PROB = {lead:20,assess:40,kp:60,nego:75,contract:100,lost:0};
+function moveDeal(d, stage){
+  const from=d.stage; d.stage=stage; d.prob=DEAL_PROB[stage]!=null?DEAL_PROB[stage]:d.prob;
+  const sn=s=>DST[s]?DST[s][1]:(s==='lost'?'Проиграно':s);
+  d.acts=d.acts||[]; d.acts.push(['сейчас',`${sn(from)} → ${sn(stage)}`]);
+  ACTS.push(`сделка ${d.id}: ${sn(from)} → ${sn(stage)}`);
+  save();
+}
+function vDeals(){
+  const me=PEOPLE[S.currentUser]; const canMoney = me.role==='директор'||me.role==='продажи';
+  const active=(S.deals||[]).filter(d=>d.stage!=='lost');
+  const forecast=active.reduce((a,d)=>a+d.sum*(d.prob/100),0);
+  const total=active.reduce((a,d)=>a+d.sum,0);
+  const won=(S.deals||[]).filter(d=>d.stage==='contract').reduce((a,d)=>a+d.sum,0);
+  return `<div class="stats" style="margin-bottom:16px">
+      <div class="stat"><div class="v">${active.length}</div><div class="l">активных сделок в воронке</div></div>
+      <div class="stat"><div class="v">${canMoney?fmtSum(total):'≈≈≈'}</div><div class="l">сумма воронки</div></div>
+      <div class="stat"><div class="v">${canMoney?fmtSum(forecast):'≈≈≈'}</div><div class="l">честный прогноз (взвешен по стадиям)</div></div>
+      <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--good);color:var(--good)">${canMoney?fmtSum(won):'≈≈≈'}</div><div class="l">в контракте</div></div>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">Прогноз считается из стадий и вероятностей, а не из ручного ввода менеджера. Перетащите карточку между стадиями. Клик — открыть сделку.</p>
+    <div class="board-wrap"><div class="board" style="grid-template-columns:repeat(5,minmax(210px,1fr));min-width:1080px">
+    ${DEAL_STAGES.map(([sk,sn,sc])=>{
+      const ds=active.filter(d=>d.stage===sk);
+      const sum=ds.reduce((a,d)=>a+d.sum,0);
+      return `<div class="col" data-dealcol="${sk}"><h3>${sn} · ${ds.length}${canMoney&&sum?` <span style="color:${sc}">${fmtSum(sum)}</span>`:''}</h3>
+        ${ds.map(d=>`<div class="tcard" draggable="true" data-deal="${d.id}">
+          <div class="top"><span class="key">${d.id}</span>${d.goz?'<span class="gozpill" style="margin:0">ГОЗ</span>':''}
+            <span class="est" style="margin-left:auto">${d.prob}%</span></div>
+          <div class="ttl">${esc(d.title)}</div>
+          <div style="font-size:12px;color:var(--ink2);margin-bottom:8px">${esc(d.company)}</div>
+          <div class="meta"><span style="font-weight:700;color:var(--ink);font-size:13px">${canMoney?fmtSum(d.sum):'≈≈≈'}</span>
+            <span class="est" style="margin-left:auto">${av(d.who)}</span></div>
+          ${d.next?`<div style="font-size:11px;color:var(--accent);margin-top:6px">→ ${esc(d.next)}</div>`:''}
+        </div>`).join('')||'<div class="empty">пусто</div>'}
+      </div>`;
+    }).join('')}
+    </div></div>
+    ${(S.deals||[]).some(d=>d.stage==='lost')?`<div style="margin-top:12px;font-size:12.5px;color:var(--muted)">Проиграно: ${(S.deals||[]).filter(d=>d.stage==='lost').map(d=>esc(d.title)+' ('+esc(d.company)+')').join(' · ')}</div>`:''}`;
+}
+function openDeal(id){
+  const d=dealById(id); if(!d) return;
+  const me=PEOPLE[S.currentUser]; const canMoney = me.role==='директор'||me.role==='продажи';
+  $('drawer').innerHTML=`
+    <button class="close" id="dClose">закрыть ✕</button>
+    <span class="key">${d.id} · ${DST[d.stage]?DST[d.stage][1]:'проиграно'} · вероятность ${d.prob}%</span>
+    <h2>${esc(d.title)}</h2>
+    <div class="kb-facts">
+      <div><span>Заказчик</span>${esc(d.company)}</div>
+      <div><span>Проект</span>${esc(d.vessel||'—')}</div>
+      <div><span>Сумма</span><b>${canMoney?fmtSum(d.sum):'скрыто ролью'}</b></div>
+    </div>
+    ${d.goz?'<div style="margin:6px 0"><span class="gozpill">ГОЗ · 275-ФЗ</span></div>':''}
+    <div style="font-size:13px;color:var(--accent);margin:10px 0">→ Следующий шаг: ${esc(d.next||'—')}</div>
+    <div class="primact">
+      <select id="dealStage" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:13px;padding:8px 10px">
+        ${DEAL_STAGES.map(([sk,sn])=>`<option value="${sk}" ${d.stage===sk?'selected':''}>${sn}</option>`).join('')}
+        <option value="lost" ${d.stage==='lost'?'selected':''}>Проиграно</option></select>
+      ${d.stage!=='assess'?`<button class="btn" data-dealassess="${d.id}">Запросить оценку в ИЦ</button>`:''}
+      ${d.stage==='contract'&&!d.orderNum?`<button class="btn" data-dealwin="${d.id}">Создать заказ →</button>`:''}
+      ${d.orderNum&&d.orderId?`<button class="chip" data-order="${esc(d.orderId)}">⚓ Заказ №${esc(d.orderNum)}</button>`:''}
+    </div>
+    <h4>Активности</h4>
+    ${(d.acts||[]).slice().reverse().map(a=>`<div class="logline">${esc(a[0])} · ${esc(a[1])}</div>`).join('')||'<div class="empty">нет</div>'}
+    <div class="addline"><input id="dealNote" placeholder="Добавить активность"><button class="btn" id="dealNoteAdd">+</button></div>`;
+  $('drawer').dataset.task=''; $('drawer').dataset.deal=id;
+  $('drawer').classList.add('open'); $('drawerBg').classList.add('open');
+}
+
+/* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
+const THEME_KEY = 'elling_theme';
+function applyTheme(v){
+  if(v) document.documentElement.dataset.theme = v;
+  else delete document.documentElement.dataset.theme;
+  const b = $('themeBtn'); if(b) b.textContent = v==='dark'?'☾':v==='light'?'☀':'◐';
+}
+function cycleTheme(){
+  const cur = localStorage.getItem(THEME_KEY);
+  const next = !cur ? 'dark' : cur==='dark' ? 'light' : null;
+  if(next) localStorage.setItem(THEME_KEY, next); else localStorage.removeItem(THEME_KEY);
+  applyTheme(next);
+}
+
+/* ---- v1.5: онбординг — импорт реестра заказов (CSV/Excel) ---- */
+function parseCSV(text){
+  text = String(text).replace(/\r\n?/g,'\n').replace(/\n+$/,'');
+  if(!text.trim()) return {headers:[], rows:[]};
+  const first = text.split('\n')[0];
+  const delim = (first.match(/;/g)||[]).length > (first.match(/,/g)||[]).length ? ';'
+    : (first.includes('\t') ? '\t' : ',');
+  const parseLine = line => {
+    const out=[]; let cur='', q=false;
+    for(let i=0;i<line.length;i++){ const c=line[i];
+      if(q){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+      else { if(c==='"') q=true; else if(c===delim){ out.push(cur); cur=''; } else cur+=c; } }
+    out.push(cur); return out.map(s=>s.trim());
+  };
+  const lines = text.split('\n').filter(l=>l.trim());
+  const headers = parseLine(lines[0]);
+  const rows = lines.slice(1).map(parseLine).filter(r=>r.some(c=>c));
+  return {headers, rows};
+}
+const IMPORT_FIELDS = [['num','Номер заказа'],['title','Изделие / наименование'],['customer','Заказчик'],
+  ['vessel','Судно / проект'],['due','Срок'],['sum','Сумма']];
+function autoMap(headers){
+  const m={}; const H=headers.map(h=>h.toLowerCase());
+  const find=(...kw)=>{ const i=H.findIndex(h=>kw.some(k=>h.includes(k))); return i<0?'':String(i); };
+  m.num=find('номер','№','order','заказ'); m.title=find('издел','наимен','продук','товар','позиц');
+  m.customer=find('заказчик','клиент','верф','покупател','контрагент'); m.vessel=find('судно','проект','объект');
+  m.due=find('срок','дата','отгруз','deadline'); m.sum=find('сумм','цена','стоим','amount');
+  return m;
+}
+const PRESET_CSV = {
+  sko:`Номер;Изделие;Заказчик;Проект;Срок;Сумма
+2501;Электронасос ЦВС-320;Адмиралтейские верфи;пр. 23550;15.09.2027;12 400 000
+2502;Теплообменник ТВГ-16;Северная верфь;пр. 22350;20.11.2027;7 800 000
+2503;Комплект арматуры ДУ-80;Выборгский ССЗ;пр. KMT01;30.08.2027;5 100 000
+2504;Редуктор РП-450;Окская судоверфь;пр. RSD59;12.10.2027;9 600 000`,
+  agent:`Судозаход;Судно;Судовладелец;Порт;Дата;Дисбурсмент
+A-118;m/v Nord Star;Sovcomflot;СПб Большой порт;03.08.2027;2 300 000
+A-119;m/v Baltic Wind;Совфрахт;Усть-Луга;07.08.2027;1 850 000
+A-120;m/v Arctica;Росморпорт;Мурманск;12.08.2027;3 100 000`,
+  pkb:`Проект;Изделие;Заказчик;Тип судна;Срок РКД;Трудоёмкость
+P-340;Технический проект;ОСК;траулер;30.10.2027;4200 н/ч
+P-341;РКД корпус;Ак Барс;буксир;15.12.2027;3100 н/ч
+P-342;Модернизация;Росморречфлот;земснаряд;20.09.2027;1800 н/ч`,
+};
+function doImport(){
+  const {rows}=S.imp; const map=S.imp.map;
+  if(!rows.length){ S.imp.msg='Нет строк для импорта.'; return; }
+  const col=k=> map[k]!==''&&map[k]!=null ? +map[k] : -1;
+  let n=0;
+  rows.forEach(r=>{
+    const num=(col('num')>=0?r[col('num')]:'')|| String(2600+n);
+    const title=(col('title')>=0?r[col('title')]:'')||'Заказ '+num;
+    if(!title.trim()) return;
+    S.orders.push({id:'IMP'+(++S.seq), num:String(num), title, customer:(col('customer')>=0?r[col('customer')]:'')||'—',
+      vessel:(col('vessel')>=0?r[col('vessel')]:'')||'—', goz:0, due:(col('due')>=0?r[col('due')]:'')||'—',
+      sum:(col('sum')>=0?r[col('sum')]:'')||'—', stage:0, risk:'ok',
+      feed:[['импорт','<b>Заказ загружен из реестра</b> при онбординге',0]]});
+    n++;
+  });
+  ACTS.push(`импорт реестра: ${n} заказов`);
+  S.imp={text:'',rows:[],headers:[],map:{},msg:`✓ Импортировано ${n} заказов. Откройте «Заказы».`};
+  save();
+}
+
+function vSettings(){
+  const cur = localStorage.getItem(THEME_KEY) || 'auto';
+  const ROLE_MATRIX = [
+    ['Инженер ИЦ','задачи, БЗ, ИИ-поиск, чертежи','финансы сделок, маржа'],
+    ['Рук. ИЦ','дорожки, загрузка, метрики потока','коммерческие условия чужих заказов'],
+    ['Продажи','CRM, радар закладок, статусы производства (чтение)','нормо-часы, себестоимость'],
+    ['Директор','всё насквозь, дашборды, аудит','— (не правит задачи напрямую)'],
+    ['Закупки','спецификации, поставщики, ПП 719','CRM-воронка'],
+    ['Логист','отгрузки, комплектация, пропуска','CRM, инженерная БЗ'],
+  ];
+  return `<div class="panel" style="margin-bottom:14px"><h3>Оформление</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${[['auto','◐ Авто (по системе)'],['dark','☾ Тёмная'],['light','☀ Светлая']].map(([v,l])=>
+          `<button class="chip" data-settheme="${v}" aria-pressed="${cur===v}">${l}</button>`).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Выбор сохраняется в этом браузере и не влияет на других пользователей.</p>
+    </div>
+    ${(()=>{ const imp=S.imp||(S.imp={text:'',rows:[],headers:[],map:{},msg:''});
+      return `<div class="panel" style="margin-bottom:14px"><h3>Онбординг · импорт реестра <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· запуск за день, без внедренца</span></h3>
+      <p style="font-size:13px;color:var(--ink2);margin:0 0 10px">Вставьте свой реестр заказов из Excel (сохраните как CSV или скопируйте ячейки) — Эллинг разберёт колонки и создаст заказы. Пресеты подставят пример под ваш сегмент:</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        ${[['sko','Производитель СКО'],['agent','Судовой агент'],['pkb','ПКБ']].map(([k,l])=>`<button class="chip" data-preset="${k}">${l}</button>`).join('')}
+      </div>
+      <textarea class="kb-input" id="impText" rows="4" placeholder="Номер;Изделие;Заказчик;Срок;Сумма&#10;2501;Насос ЦВС-320;Адмиралтейские верфи;15.09.2027;12 400 000" style="width:100%">${esc(imp.text||'')}</textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
+        <button class="btn" id="impParse">Разобрать</button>
+        <button class="btn ghost" id="impFileBtn">↥ Загрузить CSV</button>
+        <input type="file" id="impFile" accept=".csv,.txt" style="display:none">
+      </div>
+      ${imp.msg?`<div class="ai-box" style="margin-top:10px">${esc(imp.msg)}</div>`:''}
+      ${imp.rows.length?`<div style="margin-top:14px">
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">Найдено строк: <b style="color:var(--ink)">${imp.rows.length}</b>. Сопоставьте колонки:</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
+          ${IMPORT_FIELDS.map(([f,l])=>`<label style="font-size:12px;color:var(--ink2)">${l}
+            <select data-impmap="${f}" style="width:100%;margin-top:3px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:12.5px;padding:6px 8px">
+              <option value="">— не импортировать —</option>
+              ${imp.headers.map((h,i)=>`<option value="${i}" ${String(imp.map[f])===String(i)?'selected':''}>${esc(h||('колонка '+(i+1)))}</option>`).join('')}
+            </select></label>`).join('')}
+        </div>
+        <div style="overflow-x:auto;margin-top:12px"><table style="border-collapse:collapse;font-size:11.5px;min-width:100%">
+          <tr>${imp.headers.map(h=>`<th style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)">${esc(h)}</th>`).join('')}</tr>
+          ${imp.rows.slice(0,4).map(r=>`<tr>${imp.headers.map((_,i)=>`<td style="padding:5px 10px;border-bottom:1px solid var(--line2);color:var(--ink2);white-space:nowrap">${esc(r[i]||'')}</td>`).join('')}</tr>`).join('')}
+        </table>${imp.rows.length>4?`<div style="font-size:11px;color:var(--muted);padding:4px 10px">…ещё ${imp.rows.length-4}</div>`:''}</div>
+        <button class="btn" id="impDo" style="margin-top:12px">Импортировать ${imp.rows.length} заказов →</button>
+      </div>`:''}
+    </div>`; })()}
+    <div class="panel" style="margin-bottom:14px"><h3>Пользователи и роли <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· RBAC · в проде: SSO/OIDC + приглашения</span></h3>
+      ${Object.keys(PEOPLE).map(p=>`<div class="loadrow"><span class="nm">${av(p)} ${PEOPLE[p].full}</span>
+        <span style="font-size:12.5px;color:var(--ink2);flex:1">${PEOPLE[p].role}</span></div>`).join('')}
+    </div>
+    <div class="panel" style="margin-bottom:14px"><h3>Ролевая модель — кто что видит</h3>
+      <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px">
+        <tr>${['Роль','Видит','Скрыто'].map(h=>`<th style="font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)">${h}</th>`).join('')}</tr>
+        ${ROLE_MATRIX.map(r=>`<tr>${r.map((c,i)=>`<td style="padding:7px 10px;border-bottom:1px solid var(--line2);color:${i===0?'var(--ink)':'var(--ink2)'};${i===0?'font-weight:640;white-space:nowrap':''}">${c}</td>`).join('')}</tr>`).join('')}
+      </table></div>
+    </div>
+    <div class="panel" style="margin-bottom:14px"><h3>Автоматизации <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· правила «триггер → действие» · убийца статусных звонков</span></h3>
+      ${(S.rules||[]).map(r=>`<div class="loadrow" style="align-items:flex-start">
+        <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;flex:1">
+          <input type="checkbox" data-rule="${r.id}" ${r.enabled?'checked':''} style="accent-color:var(--accent);margin-top:3px;width:16px;height:16px">
+          <span style="font-size:13px;color:var(--ink)">${esc(r.name)}
+            <span style="display:block;font-family:var(--mono);font-size:10px;color:var(--muted)">триггер: ${r.trigger==='overdue'?'просрочка':r.trigger==='to_rev'?'переход на согласование':r.trigger} · действия: ${[r.act.comment&&'комментарий',r.act.notify&&'уведомление',r.act.prio&&'приоритет'].filter(Boolean).join(', ')||'—'}</span>
+          </span></label></div>`).join('')}
+      <button class="chip" id="runAuto" style="margin-top:8px">▶ Прогнать сейчас</button>
+      ${S.autoMsg?`<div class="ai-box" style="margin-top:8px">${esc(S.autoMsg)}</div>`:''}
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Просрочка проверяется автоматически каждую минуту. В демо есть просроченная задача СТ-2465 — правило уже включено, нажмите «Прогнать» и смотрите колокол 🔔.</p>
+    </div>
+    <div class="panel" style="margin-bottom:14px"><h3>Публичный REST API <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· v1 · встраивание и миграция</span></h3>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.8">
+        База: <code style="font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px">${location.origin}/api/v1</code><br>
+        Токен: <code style="font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px">elling-demo-token</code> <span style="font-size:11px;color:var(--muted)">(демо; в проде — выдача/ротация на пользователя)</span>
+      </div>
+      <div style="overflow-x:auto;margin-top:12px"><table style="border-collapse:collapse;width:100%;font-size:12px;min-width:520px">
+        ${[['GET','/tasks?status=&assignee=&epic=','список задач + фильтры, пагинация'],
+           ['POST','/tasks','создать задачу'],['GET','/tasks/{key}','получить'],['PATCH','/tasks/{key}','изменить поля'],
+           ['GET · POST','/tasks/{key}/transitions','переходы по workflow'],['POST','/tasks/{key}/comments','комментарий'],
+           ['POST','/tasks/{key}/links','связь задач'],['GET','/search?q=','поиск'],['GET','/meta','статусы/эпики/пользователи'],
+           ['GET · POST · DELETE','/webhooks','исходящие события'],['GET','/orders','заказы']].map(r=>
+          `<tr><td style="font-family:var(--mono);font-size:10.5px;color:var(--accent);padding:5px 10px;border-bottom:1px solid var(--line2);white-space:nowrap">${r[0]}</td>
+            <td style="font-family:var(--mono);font-size:11px;color:var(--ink);padding:5px 10px;border-bottom:1px solid var(--line2);white-space:nowrap">${r[1]}</td>
+            <td style="font-size:12px;color:var(--ink2);padding:5px 10px;border-bottom:1px solid var(--line2)">${r[2]}</td></tr>`).join('')}
+      </table></div>
+      <div style="font-family:var(--mono);font-size:11px;background:var(--side);color:#c7d3dd;border-radius:8px;padding:12px 14px;margin-top:12px;overflow-x:auto;white-space:pre">curl -H "Authorization: Bearer elling-demo-token" ${location.origin}/api/v1/tasks
+curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: application/json" \\
+  -d '{"title":"Оценка ТЗ","assignee":"petrov"}' ${location.origin}/api/v1/tasks</div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">${SRV.on?'Сервер запущен — API активен.':'API работает при запущенном сервере (Запустить_сервер.bat).'} Соответствует джентльменскому минимуму трекера из паритет-чека с Jira/Я.Трекером.</p>
+    </div>
+    <div class="panel"><h3>Система</h3>
+      <div style="font-size:13px;color:var(--ink2);line-height:2">
+        Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
+        Версия: Эллинг v1.8 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
+        <button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>
+      </div>
+    </div>`;
+}
+const RSTAGES = ['Техпроект (П)','РКД','Закупка / Тендер','Контракт'];
+const PST = {ok:['var(--good)','заложено'],warn:['var(--warn)','под угрозой'],lost:['var(--risk)','перезаложено']};
+
+function vRadar(){
+  const all = S.projects.flatMap(p=>p.positions);
+  const alerts = all.filter(x=>x.st!=='ok').length;
+  return `<div class="stats" style="margin-bottom:16px">
+      <div class="stat"><div class="v">${S.projects.length}</div><div class="l">проектов судов под наблюдением</div></div>
+      <div class="stat"><div class="v">${all.length}</div><div class="l">наших позиций в закладках</div></div>
+      <div class="stat"><div class="v" style="color:${alerts?'var(--risk)':'var(--good)'}">${alerts}</div><div class="l">требуют действий продаж</div></div>
+    </div>
+    ${S.projects.map(p=>`<div class="panel" style="margin-bottom:12px">
+      <h3 style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline">${esc(p.name)}
+        <span style="font-size:12px;color:var(--muted);font-weight:400">${esc(p.bureau)} · ${esc(p.vessels)}</span></h3>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 10px">
+        ${RSTAGES.map((s,i)=>`<span style="font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:99px;
+          border:1px solid ${i===p.stage?'var(--accent)':'var(--line)'};
+          color:${i===p.stage?'var(--accent)':'var(--muted)'};
+          ${i===p.stage?'background:var(--accent-soft);font-weight:700':''}">${i<p.stage?'✓ ':''}${s}</span>`).join('')}
+      </div>
+      ${p.positions.map(x=>`<div style="display:flex;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line2);flex-wrap:wrap">
+        <span style="font-weight:640;color:var(--ink);font-size:13.5px">${esc(x.nm)}</span>
+        <span class="stchip" style="color:${PST[x.st][0]};border:1px solid ${PST[x.st][0]}">${PST[x.st][1]}</span>
+        ${x.st!=='ok'?`<button class="btn" style="padding:5px 12px;font-size:12px" data-mktask="${esc(p.name)}|${esc(x.nm)}">→ Задача продажам</button>`:''}
+        <span style="flex-basis:100%;font-size:12.5px;color:var(--ink2)">${esc(x.note)}</span>
+      </div>`).join('')}
+    </div>`).join('')}
+    <p class="flow-hint">Радар следит за проектами судов от техпроекта до тендера: позицию, заложенную проектантом, могут тихо заменить на стадии РКД — без пересмотра техпроекта. Сигналы приходят из извещений РКД, тендерных документов и контактов с бюро. Жёлтое и красное — повод для звонка ГИПу сегодня, а не на тендере.</p>`;
+}
+
+function vToday(){
+  const me = S.currentUser, p = PEOPLE[me];
+  const wait = S.tasks.filter(t=>t.col==='rev'&&t.who===me);
+  const od = t => { const di = dueInfo(t); return di && di.over ? 0 : 1; };
+  const queue = S.tasks.filter(t=>(t.col==='open'||t.col==='wip')&&t.who===me)
+    .sort((a,b)=>od(a)-od(b)||(a.sla?0:1)-(b.sla?0:1)||(a.prio==='hi'?0:1)-(b.prio==='hi'?0:1));
+  const events = S.orders.flatMap(o=>o.feed.map(f=>({o,f}))).slice(-6).reverse();
+  const wcard = (t,urgent)=>{
+    const pa = primAction(t); const o = orderOfTask(t);
+    return `<div class="wcard ${urgent?'urgent':''}" data-task="${t.key}">
+      <div class="body"><span class="k">${t.key}${o?` · заказ №${o.num}`:''}</span>
+        <div class="t">${esc(t.ttl)}</div>
+        <div class="why">${t.col==='rev'?'<b>ждёт вашего решения</b> — дальше без вас не двинется':
+          t.col==='wip'?'в работе у вас':'в вашей очереди'}${t.sla?` · <b>${t.sla}</b>`:''} ${dueBadge(t)}</div></div>
+      ${pa?`<button class="btn big" data-move="${t.key}|${pa[0]}">${pa[1]}</button>`:''}</div>`;
+  };
+  return `<div class="hello">${p.role==='директор'?'Портфель под контролем':'Добрый день'}, ${p.full}
+      <small>${p.role} · один экран — всё, что требует вас. Остальное система двигает сама.</small></div>
+    <div class="today">
+      <div>
+        <div class="tsec"><h3>Ждут вашего решения ${wait.length?`<span class="cnt">${wait.length}</span>`:''}</h3>
+          ${wait.map(t=>wcard(t,true)).join('')||'<div class="zero">✓ Никто не заблокирован вами. Так держать.</div>'}</div>
+        <div class="tsec" style="margin-top:18px"><h3>Ваша очередь ${queue.length?`<span class="cnt">${queue.length}</span>`:''}</h3>
+          ${queue.map(t=>wcard(t)).join('')||'<div class="zero">✓ Очередь пуста.</div>'}</div>
+      </div>
+      <div class="tsec"><h3>Пока вы работали</h3>
+        <div class="evfeed">${events.map(({o,f})=>`<div class="ev"><span class="t">${esc(f[0])}</span>
+          <span><b>№${esc(o.num)}</b> · ${safe(f[1])}${f[2]?'<span class="nocall">вместо звонка</span>':''}</span></div>`).join('')}</div>
+      </div>
+    </div>`;
+}
+
+function vFlow(){
+  return `<div class="legend">
+      <span><span class="ldot" style="background:var(--good)"></span>в графике</span>
+      <span><span class="ldot" style="background:var(--warn)"></span>риск срока</span>
+      <span><span class="ldot" style="background:var(--risk)"></span>срыв — нужно вмешаться</span>
+      <span style="margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted)">оранжевые этапы — только для ГОЗ</span></div>
+    <div class="flow-wrap"><table class="flow">
+      <tr><th>Заказ</th>${STAGE_NAMES.map(s=>`<th class="${s[1]?'goz':''}">${s[0]}</th>`).join('')}</tr>
+      ${S.orders.map(o=>{
+        const rc = RISK[o.risk][0];
+        return `<tr><td class="oc" data-order="${o.id}">
+          <span class="onum">№${esc(o.num)}${o.goz?' · ГОЗ':''} · <span style="color:${rc}">●</span> ${RISK[o.risk][1]}</span>
+          <div class="onm">${esc(o.title)}</div>
+          <span class="ocust">${esc(o.customer)} · ${esc(o.due)}</span></td>
+        ${STAGE_NAMES.map((s,i)=>{
+          if(i<o.stage) return `<td><span class="track fill"></span><span class="dotdone"></span></td>`;
+          if(i===o.stage) return `<td><span class="track fill half-l"></span>${i<STAGE_NAMES.length-1?'<span class="track half-r"></span>':''}
+            <button class="puck" style="background:${rc}" data-order="${o.id}" title="${STAGE_NAMES[i][0]}">№${esc(o.num)}</button></td>`;
+          return `<td><span class="track"></span></td>`;
+        }).join('')}</tr>`;
+      }).join('')}
+    </table></div>
+    <p class="flow-hint">Один взгляд — весь портфель: где каждый заказ, что в графике, куда вмешаться. Фишка заказа стоит на текущем этапе; клик открывает ось заказа с задачами и лентой. Директор больше не «узнаёт о срыве последним».</p>`;
+}
+
+function chipsHTML(){
+  return `<div class="chips">
+    <span class="lbl">Фильтры</span>
+    <button class="chip" data-chip="mine" aria-pressed="${S.chips.mine}">Я исполнитель</button>
+    <button class="chip" data-chip="hi" aria-pressed="${S.chips.hi}">Высокий приоритет</button>
+    <span class="lbl" style="margin-left:8px">Эпик</span>
+    ${S.epics.map(e=>`<button class="chip" data-chipepic="${e.id}" aria-pressed="${S.chips.epic===e.id}">${e.id}</button>`).join('')}
+    <span class="lbl" style="margin-left:12px">Фильтры</span>
+    ${(S.savedFilters||[]).map(f=>`<button class="chip" data-applyfilter="${f.id}" title="применить сохранённый фильтр">★ ${esc(f.name)}</button>`).join('')}
+    <button class="chip" id="saveFilter" title="сохранить текущие фильтры">＋ сохранить</button>
+  </div>`;
+}
+function cardHTML(t){
+  const e = epic(t.epic);
+  return `<div class="tcard ${visible(t)?'':'hidden'}" draggable="true" data-task="${t.key}">
+    <div class="top"><span class="key">${t.key}</span>
+      <span class="prio ${t.prio==='hi'?'hi':t.prio==='lo'?'lo':'md'}">${t.prio==='hi'?'↑':t.prio==='lo'?'↓':'→'}</span>
+      ${t.sla?`<span class="sla">${t.sla}</span>`:''}</div>
+    <div class="ttl">${esc(t.ttl)}</div>
+    <div class="meta"><span class="etag" style="color:${e.c};border:1px solid ${e.c}">${e.name}</span>
+      ${dueBadge(t)}${(t.links||[]).length?`<span class="due">⛓${t.links.length}</span>`:''}
+      <span class="est">${t.est||''}</span>${av(t.who)}</div></div>`;
+}
+function vBoard(){
+  return chipsHTML()+`<div class="board-wrap"><div class="board">`+COLS.map(c=>{
+    const ts = S.tasks.filter(t=>t.col===c.id);
+    const over = c.wip && ts.length>c.wip;
+    return `<div class="col" data-col="${c.id}"><h3>${c.name} · ${ts.filter(visible).length}${c.wip?` <span class="wip">${over?'⚠ ':''}WIP ${ts.length}/${c.wip}</span>`:''}</h3>
+      ${ts.map(cardHTML).join('')||'<div class="empty">пусто</div>'}</div>`;
+  }).join('')+`</div></div>
+  <p class="flow-hint" style="margin-top:8px">Доска — инструмент инженерного центра. Остальные роли живут в «Сегодня» и «Заказах» — им канбан не нужен.</p>`;
+}
+
+function vPlan(){
+  return chipsHTML()+S.epics.map(e=>{
+    const ts = S.tasks.filter(t=>t.epic===e.id);
+    const done = ts.filter(t=>t.col==='done').length;
+    const pct = ts.length?Math.round(done/ts.length*100):0;
+    const ord = e.orderId ? S.orders.find(o=>o.id===e.orderId) : null;
+    return `<div class="bl-epic">
+      <header><span class="etag" style="color:${e.c};border:1px solid ${e.c}">${e.id}</span>
+        <span class="ename">${e.name}</span>
+        ${ord?`<button class="chip" data-order="${ord.id}">⚓ заказ №${ord.num}</button>`:''}
+        <span class="ecount">${done}/${ts.length}</span><span class="bar"><i style="width:${pct}%"></i></span></header>
+      ${ts.filter(visible).map(t=>`<div class="bl-row" data-task="${t.key}">
+        <span class="key">${t.key}</span><span class="ttl">${esc(t.ttl)}</span>
+        <span class="prio ${t.prio==='hi'?'hi':t.prio==='lo'?'lo':'md'}">${t.prio==='hi'?'↑':t.prio==='lo'?'↓':'→'}</span>
+        <span class="stchip st-${t.col}">${STNAME[t.col]}</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${t.est||''}</span>${av(t.who)}</div>`).join('')}
+      <div class="bl-add"><button data-addepic="${e.id}">+ задача в эпик</button></div>
+    </div>`;
+  }).join('');
+}
+
+function money(s){
+  const me = PEOPLE[S.currentUser];
+  return (me.role==='директор'||me.role==='продажи') ? esc(s) : '<span style="filter:blur(4px)">≈≈≈≈</span>';
+}
+function vOrder(oid){
+  const o = S.orders.find(x=>x.id===oid); if(!o) return '<div class="empty">заказ не найден</div>';
+  const eps = S.epics.filter(e=>e.orderId===oid).map(e=>e.id);
+  const ts = S.tasks.filter(t=>eps.includes(t.epic));
+  const saved = o.feed.filter(f=>f[2]).length;
+  const rc = RISK[o.risk][0];
+  return `<div style="margin-bottom:10px"><button class="chip" data-nav2="flow">← все заказы</button></div>
+  <div class="panel" style="margin-bottom:12px"><h3 style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline">
+    Заказ №${esc(o.num)} — ${esc(o.title)} ${o.goz?'<span class="gozpill">ГОЗ · 275-ФЗ</span>':''}
+    <span style="font-size:12.5px;color:${rc};font-weight:600">● ${RISK[o.risk][1]}</span>
+    <span style="font-size:12px;color:var(--muted);font-weight:400">${esc(o.customer)} · ${esc(o.vessel)} · срок ${esc(o.due)} · ${money(o.sum)}</span></h3>
+  <div class="stepper-wrap"><div class="stepper">${STAGE_NAMES.map((s,i)=>
+    `<span class="step ${s[1]?'goz':''} ${i<o.stage?'done':''} ${i===o.stage?'current':''}"><span class="node"></span><span class="nm">${s[0]}</span></span>`).join('')}
+  </div></div>
+  ${o.stage<STAGE_NAMES.length-1?`<button class="btn" data-advance="${o.id}">Этап выполнен → ${STAGE_NAMES[o.stage+1][0]}</button>`:'<span class="stchip st-done">заказ закрыт</span>'}
+  </div>
+  <div class="ordgrid">
+    <div class="panel"><h3>Задачи заказа (${ts.length})</h3>
+      ${ts.map(t=>`<div class="bl-row" data-task="${t.key}" style="padding:8px 2px">
+        <span class="key">${t.key}</span><span class="ttl">${esc(t.ttl)}</span>
+        <span class="stchip st-${t.col}">${STNAME[t.col]}</span>${av(t.who)}</div>`).join('')||'<div class="empty">задач нет</div>'}
+    </div>
+    <div class="panel evfeed"><h3>Лента заказа <span style="font-family:var(--mono);font-size:10px;color:var(--good)">· ${saved} событий вместо звонков</span></h3>
+      ${o.feed.slice().reverse().map(f=>`<div class="ev"><span class="t">${esc(f[0])}</span><span>${safe(f[1])}${f[2]?'<span class="nocall">вместо звонка</span>':''}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function docChips(p){
+  const by = {};
+  p.docs.forEach(d=>{ (by[d.type]=by[d.type]||[]).push(d); });
+  const order = ['ТЗ','Чертёж','Извещение','Протокол','Сертификат'];
+  return order.filter(t=>by[t]).map(t=>
+    `<span class="kbdoc" data-kbproj="${p.id}" title="открыть проект и документы">${docIcon(t)} ${t}${by[t].length>1?' ·'+by[t].length:''}</span>`).join('');
+}
+function analogCard(x){
+  const p = x.p;
+  return `<div class="anacard" data-kbproj="${p.id}">
+    <div class="ana-top">
+      <div><div class="ana-name">${esc(p.izdelie)} <span class="ana-code">${esc(p.code)}</span></div>
+        <div class="ana-meta">Заказ №${esc(p.order)} · ${p.year} · ${esc(p.customer)} · ${esc(p.vessel)}</div></div>
+      <div class="ana-pct"><b>${x.pct}%</b><span>совпадение</span></div>
+    </div>
+    <div class="ana-why">Совпало по: ${x.matched.map(m=>`<b>${esc(m)}</b>`).join(', ')}</div>
+    <div class="ana-row">
+      <span class="ana-hours">⏱ ${p.hours} н/ч <span>трудоёмкость аналога</span></span>
+      <span class="ana-docs">${docChips(p)}</span>
+    </div>
+    <div class="ana-act">
+      <button class="btn ghost" data-kbproj="${p.id}">Открыть проект и документы →</button>
+      <button class="btn" data-basis="${p.id}">Взять за основу оценки ТЗ</button>
+    </div></div>`;
+}
+function vKB(){
+  const tab = S.kbTab || 'search';
+  const head = `<div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="chip" data-kbtab="search" aria-pressed="${tab==='search'}">🔍 Поиск аналогов</button>
+      <button class="chip" data-kbtab="catalog" aria-pressed="${tab==='catalog'}">📁 Каталог проектов</button>
+      <button class="chip" data-kbtab="files" aria-pressed="${tab==='files'}">📎 Загруженные файлы${(S.docs||[]).length?' ·'+S.docs.length:''}</button>
+    </div>`;
+  if(tab==='search'){
+    const res = S.kbAI ? kbSearchProjects(S.kbq) : null;
+    return head + `
+    <div class="kb-hero">
+      <div class="kb-hero-t">Пришло новое ТЗ? Найдите, как вы делали похожее</div>
+      <div class="kb-hero-s">Вставьте текст ТЗ или ключевые параметры (изделие, среда, давление, материал, шифр). Система найдёт исполненные проекты-аналоги и покажет по каждому: <b>сколько часов ушло</b>, где лежат <b>чертежи</b>, какие были <b>извещения об изменениях</b>, протоколы и сертификаты.</div>
+      <textarea class="kb-input" id="kbq" rows="2" placeholder="Например: центробежный насос охлаждения, подача 400 м³/ч, 40 бар, бронзовый корпус, РМРС">${esc(S.kbq||'')}</textarea>
+      <div class="kb-hero-act">
+        <button class="btn" id="aiBtn">🔍 Найти аналоги</button>
+        <button class="btn ghost" id="upBtn" title="ТЗ в DOCX/PDF — распознаем и найдём по содержимому">↥ Загрузить файл ТЗ</button>
+        <input type="file" id="upFile" accept=".pdf,.docx,.txt,.md,.csv" style="display:none">
+        <span style="font-size:12px;color:var(--muted)">или попробуйте:</span>
+        ${['насос охлаждения 40 бар','теплообменник титан','арматура ДУ-50 запорная'].map(ex=>`<button class="chip" data-kbex="${esc(ex)}">${esc(ex)}</button>`).join('')}
+      </div>
+    </div>
+    ${S.kbMsg?`<div class="ai-box">${esc(S.kbMsg)}</div>`:''}
+    ${res===null ? `<div class="empty" style="padding:26px 4px">Введите параметры нового ТЗ и нажмите «Найти аналоги» — здесь появятся похожие исполненные проекты с их документами и трудоёмкостью.</div>`
+      : res.length ? `<div style="font-size:13px;color:var(--muted);margin-bottom:10px">Найдено аналогов: <b style="color:var(--ink)">${res.length}</b> · отсортировано по совпадению. Клик по проекту или документу — открыть.</div>
+        ${res.map(analogCard).join('')}
+        ${S.kbFiles&&S.kbFiles.length?`<h3 style="font-size:14px;margin:22px 0 10px">Совпадения в загруженных файлах</h3>
+          ${S.kbFiles.map(h=>`<div class="doc"><span class="tp">${esc(h.ext||'файл')}</span><span class="nm">${esc(h.name)}<br><span style="font-size:11px;color:var(--muted);font-weight:400">${esc(h.snippet)}</span></span><span class="vv">${h.pct}%</span></div>`).join('')}`:''}`
+      : `<div class="empty" style="padding:26px 4px">По запросу «${esc(S.kbq)}» аналогов не найдено. Уточните термины, шифр изделия или загрузите ТЗ файлом.</div>`}`;
+  }
+  if(tab==='files'){
+    const q=(S.kbq||'').toLowerCase();
+    const docs=(S.docs||[]).filter(d=>!q||(d.nm+' '+d.tags).toLowerCase().includes(q));
+    return head + `<div class="kb-hero" style="padding:18px 20px">
+        <div class="kb-hero-s">Загружайте ТЗ, чертежи (DOCX/PDF/TXT) — текст распознаётся и становится искомым. Загруженные файлы также участвуют в поиске аналогов.</div>
+        <div class="kb-hero-act"><button class="btn" id="upBtn">↥ Загрузить документ</button>
+          <input type="file" id="upFile" accept=".pdf,.docx,.txt,.md,.csv" style="display:none">
+          <input class="search" id="kbq" placeholder="фильтр по названию…" value="${esc(S.kbq||'')}" style="flex:1;min-width:180px"></div>
+      </div>
+      ${S.kbMsg?`<div class="ai-box">${esc(S.kbMsg)}</div>`:''}
+      ${docs.length?docs.map(d=>`<div class="doc"><span class="tp">${esc(d.tp)}</span><span class="nm">${esc(d.nm)}</span><span class="vv">${esc(d.vv)}</span></div>`).join('')
+        :'<div class="empty">Пока ничего не загружено. Нажмите «Загрузить документ».</div>'}`;
+  }
+  // catalog
+  const q=(S.kbq||'').toLowerCase();
+  const list=(S.kbProjects||[]).filter(p=>!q||(p.izdelie+' '+p.tags+' '+p.code+' '+p.order).toLowerCase().includes(q));
+  return head + `<div class="kb-hero" style="padding:18px 20px">
+      <div class="kb-hero-s">Все исполненные проекты и изделия. Каждый — с полным комплектом: ТЗ, чертежи, извещения об изменениях, протоколы, сертификаты. Клик по карточке открывает документы.</div>
+      <input class="search" id="kbq" placeholder="фильтр: изделие, шифр, № заказа…" value="${esc(S.kbq||'')}" style="margin-top:10px;width:100%"></div>
+    <div class="kb-grid">
+    ${list.length?list.map(p=>`<div class="kbcard" data-kbproj="${p.id}">
+        <div class="kbcard-h"><span class="ana-code">${esc(p.code)}</span><span class="kbcard-year">${p.year}</span></div>
+        <div class="kbcard-name">${esc(p.izdelie)}</div>
+        <div class="ana-meta">Заказ №${esc(p.order)} · ${esc(p.customer)}</div>
+        <div class="kbcard-foot"><span>⏱ ${p.hours} н/ч</span><span>${p.docs.length} документов</span></div>
+        <div class="ana-docs" style="margin-top:8px">${docChips(p)}</div>
+      </div>`).join(''):'<div class="empty">ничего не найдено</div>'}
+    </div>`;
+}
+function vKbProject(id){
+  const p = kbProject(id); if(!p) return;
+  const by = {}; p.docs.forEach(d=>{ (by[d.type]=by[d.type]||[]).push(d); });
+  const order = ['ТЗ','Чертёж','Извещение','Протокол','Сертификат'];
+  $('drawer').innerHTML = `
+    <button class="close" id="dClose">закрыть ✕</button>
+    <span class="key">${esc(p.code)} · Заказ №${esc(p.order)} · ${p.year} · ${esc(p.status)}</span>
+    <h2>${esc(p.izdelie)}</h2>
+    <div class="kb-facts">
+      <div><span>Заказчик</span>${esc(p.customer)}</div>
+      <div><span>Судно</span>${esc(p.vessel)}</div>
+      <div><span>Трудоёмкость</span><b>${p.hours} н/ч</b></div>
+    </div>
+    <h4>Техническое задание</h4>
+    <div class="desc" style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px">${esc(p.tz)}</div>
+    ${order.filter(t=>by[t]).map(t=>`<h4>${docIcon(t)} ${t==='Чертёж'?'Чертежи':t==='Извещение'?'Извещения об изменениях':t==='Протокол'?'Протоколы':t==='Сертификат'?'Сертификаты':t} · ${by[t].length}</h4>
+      ${by[t].map(d=>`<div class="kbdoc-row">
+        <div><div style="font-weight:600;color:var(--ink);font-size:13px">${esc(d.name)}</div>
+          <div style="font-family:var(--mono);font-size:10.5px;color:var(--muted)">${d.code?esc(d.code)+' · ':''}${esc(d.ver)} · 📍 ${esc(d.where)}</div></div>
+        ${d.type==='Чертёж'?`<button class="btn ghost" style="padding:6px 12px;font-size:12px" data-dwg="${esc(d.code||d.name)}">Открыть чертёж</button>`:''}
+      </div>`).join('')}`).join('')}
+    <div style="margin-top:18px"><button class="btn" data-basis="${p.id}">Взять за основу оценки нового ТЗ</button></div>
+  `;
+  $('drawer').dataset.task = '';
+  $('drawer').classList.add('open'); $('drawerBg').classList.add('open');
+}
+
+/* ---- v1.3: встроенные метрики потока (CFD, throughput, lead time) ---- */
+const FLOW_STATES = [ ['done','Готово','var(--good)'], ['rev','Согласование','var(--warn)'],
+  ['wip','В работе','var(--steel)'], ['open','Очередь','var(--muted)'] ]; // порядок снизу вверх
+let CFD_DATA = null;
+function cfdSeries(){
+  const cnt = c => S.tasks.filter(t=>t.col===c).length;
+  const cur = {done:cnt('done'),rev:cnt('rev'),wip:cnt('wip'),open:cnt('open')};
+  const N=14, out=[];
+  for(let i=0;i<N;i++){ const t=i/(N-1); const w=k=>0.75+0.4*Math.abs(Math.sin(i*1.25+k)); // детерминированно, без random
+    out.push({ done:Math.round(cur.done*(0.12+0.88*t)),
+      rev:Math.max(0,Math.round(cur.rev*w(1)*(0.4+0.6*t))),
+      wip:Math.max(0,Math.round(cur.wip*w(0)*(0.55+0.45*t))),
+      open:Math.max(0,Math.round(cur.open*w(2)*(0.6+0.4*t))) }); }
+  out[N-1]={...cur};
+  return out;
+}
+function chartCFD(){
+  const data = CFD_DATA = cfdSeries();
+  const W=720,H=250,PL=34,PR=14,PT=14,PB=26, iw=W-PL-PR, ih=H-PT-PB;
+  const totals = data.map(d=>d.done+d.rev+d.wip+d.open);
+  const ymax = Math.max(4, ...totals);
+  const X = i => PL + iw*i/(data.length-1);
+  const Y = v => PT + ih*(1 - v/ymax);
+  // накопление снизу: done, +rev, +wip, +open
+  const cum = data.map(d=>{ let a=0; const o={}; FLOW_STATES.forEach(([k])=>{a+=d[k]; o[k]=a;}); return o; });
+  const bands = FLOW_STATES.map(([k,,c],bi)=>{
+    const top = data.map((_,i)=>[X(i), Y(cum[i][k])]);
+    const prevKey = bi>0 ? FLOW_STATES[bi-1][0] : null;
+    const bottom = data.map((_,i)=>[X(i), Y(prevKey? cum[i][prevKey] : 0)]).reverse();
+    const pts = top.concat(bottom).map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    return `<polygon points="${pts}" style="fill:${c};opacity:.9;stroke:var(--panel);stroke-width:2"/>`;
+  }).join('');
+  const grid = [0,.25,.5,.75,1].map(f=>{ const y=PT+ih*f; const v=Math.round(ymax*(1-f));
+    return `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" style="stroke:var(--line2);stroke-width:1"/>
+      <text x="${PL-6}" y="${y+4}" text-anchor="end" style="fill:var(--muted);font-size:10px;font-family:var(--mono)">${v}</text>`; }).join('');
+  const xlab = [0,4,8,13].map(i=>`<text x="${X(i)}" y="${H-8}" text-anchor="middle" style="fill:var(--muted);font-size:10px;font-family:var(--mono)">${i===13?'сегодня':'−'+(13-i)+'д'}</text>`).join('');
+  const legend = FLOW_STATES.slice().map(([k,l,c])=>`<span class="lg"><i style="background:${c}"></i>${l} · ${data[13][k]}</span>`).join('');
+  return `<div class="chart-head"><h3>Диаграмма потока (CFD) <span class="ch-sub">задачи по статусам · 14 дней</span></h3>
+      <div class="legend2">${legend}</div></div>
+    <div class="chart-box"><svg id="cfdChart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      ${grid}${bands}${xlab}
+      <line id="cfdCross" x1="0" y1="${PT}" x2="0" y2="${PT+ih}" style="stroke:var(--ink);stroke-width:1;opacity:0;pointer-events:none"/>
+      <rect x="${PL}" y="${PT}" width="${iw}" height="${ih}" fill="transparent" id="cfdHit"/>
+    </svg><div class="chart-tip" id="cfdTip"></div></div>
+    <p class="ch-note">Расширяющаяся полоса «Очередь/В работе» = растёт незавершёнка (риск затора). Ровный рост «Готово» снизу = стабильная пропускная способность. Такой график в Jira — только через платные плагины.</p>`;
+}
+function chartThroughput(){
+  const base=[3,5,2,6,4]; const doneNow=S.tasks.filter(t=>t.col==='done').length;
+  const weeks=base.map((b,i)=>Math.max(1, b + (i===base.length-1? Math.max(0,doneNow-4):0)));
+  const mx=Math.max(...weeks), W=720,H=150,PL=30,PB=22,PT=10,iw=W-PL-14,ih=H-PT-PB, bw=iw/weeks.length*0.5;
+  const bars=weeks.map((v,i)=>{ const x=PL+iw*(i+0.5)/weeks.length-bw/2; const h=ih*v/mx; const y=PT+ih-h;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="4" style="fill:var(--good)"/>
+      <text x="${(x+bw/2).toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle" style="fill:var(--ink);font-size:11px;font-weight:700;font-family:var(--mono)">${v}</text>
+      <text x="${(x+bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" style="fill:var(--muted);font-size:10px;font-family:var(--mono)">${i===weeks.length-1?'тек.':'−'+(weeks.length-1-i)+'нед'}</text>`; }).join('');
+  return `<div class="chart-head"><h3>Пропускная способность <span class="ch-sub">задач закрыто по неделям</span></h3></div>
+    <div class="chart-box"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <line x1="${PL}" y1="${PT+ih}" x2="${W-14}" y2="${PT+ih}" style="stroke:var(--line);stroke-width:1"/>${bars}</svg></div>`;
+}
+function vReports(){
+  const cnt = c => S.tasks.filter(t=>t.col===c).length;
+  const savedCalls = S.orders.reduce((a,o)=>a+o.feed.filter(f=>f[2]).length,0);
+  const atRisk = S.orders.filter(o=>o.risk==='risk'||o.risk==='warn').length;
+  const loads = Object.keys(PEOPLE).filter(p=>PEOPLE[p].role==='инженер'||PEOPLE[p].role==='рук. ИЦ')
+    .map(p=>[p, S.tasks.filter(t=>t.who===p&&t.col!=='done').length]);
+  const maxL = Math.max(1,...loads.map(l=>l[1]));
+  return `<div class="stats">
+      <div class="stat"><div class="v">${S.orders.length}</div><div class="l">заказов в портфеле</div></div>
+      <div class="stat"><div class="v" style="color:var(--warn);-webkit-text-fill-color:var(--warn)">${atRisk}</div><div class="l">с риском срока</div></div>
+      <div class="stat"><div class="v">${cnt('wip')}</div><div class="l">задач в работе (WIP 6)</div></div>
+      <div class="stat"><div class="v" style="color:var(--good);-webkit-text-fill-color:var(--good)">${savedCalls}</div><div class="l">событий вместо звонков</div></div>
+      <div class="stat"><div class="v">4,2 <span style="font-size:15px">дн</span></div><div class="l">lead time оценки ТЗ</div></div>
+    </div>
+    <div class="panel">${chartCFD()}</div>
+    <div class="panel" style="margin-top:14px">${chartThroughput()}</div>
+    <div class="panel" style="margin-top:14px"><h3>Загрузка инженерного центра</h3>
+      ${loads.map(([p,n])=>`<div class="loadrow"><span class="nm">${av(p)} ${PEOPLE[p].full} · ${PEOPLE[p].role}</span>
+        <span class="bar"><i style="width:${Math.round(n/maxL*100)}%"></i></span><span class="n">${n}</span></div>`).join('')}
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Метрики потока видит рук. ИЦ и директор. Первые 3 месяца после внедрения не публикуются наружу — принцип адопшена.</p>
+    </div>
+    <div class="panel" style="margin-top:14px"><h3>Журнал аудита <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· сервер · кто, когда, что</span></h3>
+      <div id="auditBox"><div class="empty">${'доступен при подключённом сервере'}</div></div>
+    </div>`;
+}
+
+/* ================= drawer ================= */
+function openTask(key){
+  const t = task(key); if(!t) return;
+  const e = epic(t.epic);
+  const ord = orderOfTask(t);
+  const pa = primAction(t);
+  $('drawer').innerHTML = `
+    <button class="close" id="dClose">закрыть ✕</button>
+    <span class="key">${t.key} · ${STNAME[t.col]}</span>
+    <h2>${esc(t.ttl)}</h2>
+    <div class="primact">${pa?`<button class="btn big" data-move="${t.key}|${pa[0]}">${pa[1]}</button>`:'<span class="stchip st-done">Готово ✓</span>'}
+      <span class="st">одно главное действие — остальное ниже</span></div>
+    <div class="desc">${safe(t.desc||'')}</div>
+    ${ord?`<button class="chip" data-order="${ord.id}" style="margin:4px 0 12px">⚓ Заказ №${esc(ord.num)} · этап «${STAGE_NAMES[ord.stage][0]}»</button>`:''}
+    <div class="fields">
+      <label>Статус</label><select id="f_col">${COLS.map(c=>`<option value="${c.id}" ${t.col===c.id?'selected':''}>${c.name}</option>`).join('')}</select>
+      <label>Исполнитель</label><select id="f_who">${Object.keys(PEOPLE).map(p=>`<option value="${p}" ${t.who===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('')}</select>
+      <label>Приоритет</label><select id="f_prio"><option value="hi" ${t.prio==='hi'?'selected':''}>Высокий</option><option value="md" ${t.prio==='md'?'selected':''}>Средний</option><option value="lo" ${t.prio==='lo'?'selected':''}>Низкий</option></select>
+      <label>Эпик</label><select id="f_epic">${S.epics.map(x=>`<option value="${x.id}" ${t.epic===x.id?'selected':''}>${x.name}</option>`).join('')}</select>
+      <label>Оценка</label><input id="f_est" value="${esc(t.est||'')}">
+      <label>Срок</label><input id="f_due" type="date" value="${esc(t.due||'')}">
+    </div>
+    ${blockersOf(t).length?`<div style="border-left:3px solid var(--risk);background:var(--risk-soft, var(--panel2));border-radius:0 8px 8px 0;padding:9px 13px;margin-bottom:14px;font-size:13px">
+      ⛔ <b>Заблокирована:</b> ${blockersOf(t).map(b=>`<span class="lnk block" data-task="${b.key}">${b.key}</span>`).join('')} — сначала закрываются они</div>`:''}
+    <h4>Связи</h4>
+    <div>${(t.links||[]).map((l,i)=>`<span class="lnk ${l.type==='блокирует'?'block':''}" data-task="${esc(l.to)}">${esc(l.type)} → ${esc(l.to)}</span>`).join('')||'<span style="font-size:12.5px;color:var(--muted)">нет</span>'}</div>
+    <div class="addline"><select id="lnkType" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:12.5px;padding:0 8px">
+        <option>блокирует</option><option>зависит от</option><option>связана с</option></select>
+      <input id="lnkKey" placeholder="СТ-xxxx"><button class="btn ghost" id="lnkAdd">+</button></div>
+    <h4>Наблюдатели <span style="font-weight:400;text-transform:none;letter-spacing:0">— видят изменения, не будучи исполнителями</span></h4>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+      ${(t.watchers||[]).map(w=>PEOPLE[w]?av(w):'').join('')||'<span style="font-size:12.5px;color:var(--muted)">пока никто</span>'}
+      <button class="chip" id="watchBtn">${(t.watchers||[]).includes(S.currentUser)?'✕ Не следить':'👁 Следить'}</button>
+    </div>
+    <h4>Подзадачи</h4>
+    <div>${t.subs.map((s,i)=>`<label class="sub ${s.done?'done':''}"><input type="checkbox" data-sub="${i}" ${s.done?'checked':''}><span>${esc(s.t)}</span></label>`).join('')||'<div class="empty">нет</div>'}</div>
+    <div class="addline"><input id="subNew" placeholder="Новая подзадача"><button class="btn ghost" id="subAdd">+</button></div>
+    <h4>Комментарии — вместо звонков</h4>
+    <div>${t.comments.map(c=>`<div class="comment"><span class="a">${esc(c.a)}:</span> ${esc(c.m)}</div>`).join('')||'<div class="empty">пока нет</div>'}</div>
+    <div class="addline"><input id="cmtNew" placeholder="Комментарий (@упоминание уведомит)"><button class="btn" id="cmtAdd">Отпр.</button></div>
+    <h4>Журнал</h4>
+    ${t.log.slice(-6).reverse().map(l=>`<div class="logline">· ${esc(l)}</div>`).join('')}
+  `;
+  $('drawer').dataset.task = key;
+  $('drawer').classList.add('open'); $('drawerBg').classList.add('open');
+}
+function closeDrawer(){ $('drawer').classList.remove('open'); $('drawerBg').classList.remove('open'); }
+
+/* ================= render ================= */
+function render(){
+  document.querySelectorAll('#nav [data-nav]').forEach(b=>b.setAttribute('aria-current', b.dataset.nav===S.view));
+  const myWork = S.tasks.filter(t=>t.who===S.currentUser&&t.col!=='done').length;
+  $('todayN').textContent = myWork||''; $('todayN').style.display = myWork?'':'none';
+  $('pageTitle').textContent = S.view==='order' ? 'Заказ' : TITLES[S.view];
+  const radarAlerts = (S.projects||[]).flatMap(p=>p.positions).filter(x=>x.st!=='ok').length;
+  const rn = $('radarN'); if(rn){ rn.textContent = radarAlerts||''; rn.style.display = radarAlerts?'':'none'; }
+  $('crumb').textContent = S.view==='flow'?'весь портфель одним взглядом': S.view==='today'?'ваш рабочий день':
+    S.view==='radar'?'закладки в проектах судов: П → РКД → тендер':
+    S.view==='board'?'инженерный центр · спринт 14': S.view==='kb'?'ИИ-поиск: гибридный RAG (демо)':'';
+  const sa=supplyAlerts(); const sn=$('supplyN'); if(sn){ sn.textContent=sa||''; sn.style.display=sa?'':'none'; }
+  $('content').innerHTML = S.view==='today'?vToday(): S.view==='deals'?vDeals(): S.view==='supply'?vSupply(): S.view==='flow'?vFlow(): S.view==='radar'?vRadar(): S.view==='board'?vBoard():
+    S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='settings'?vSettings(): vReports();
+  $('userSel').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
+  renderBell();
+  if(S.view==='reports') loadAudit();
+  save();
+}
+/* фоновый рендер (SSE/поллинг/таймер автоматизаций): не рвём фокус и текст,
+   пока пользователь печатает ТЗ или фильтр (ревью v1.0) */
+/* ---- v1.6: приветствие и тур ---- */
+const WELCOME_KEY = 'elling_welcomed';
+const WL_MODS = [
+  ['today','☀','Сегодня','что требует вас — одна кнопка на задачу'],
+  ['flow','⚓','Заказы','весь портфель со светофором риска'],
+  ['radar','◎','Радар закладок','позицию перезаложили — тревога до тендера'],
+  ['board','▦','Доска ИЦ','канбан инженерного центра, связи, сроки'],
+  ['kb','🕮','База знаний','поиск аналогов по ТЗ + вьюер чертежей'],
+  ['reports','◔','Отчёты','диаграмма потока, аудит, метрики'],
+  ['settings','⚙','Настройки','импорт реестра, автоматизации, API'],
+];
+const WL_STEPS = [
+  ['today','Начните с «Сегодня» — переключайте роли вверху справа, у каждой свой экран'],
+  ['flow','Откройте «Заказы» → любой заказ → продвиньте этап, смотрите ленту «вместо звонка»'],
+  ['kb','«База знаний» → «Поиск аналогов» → пример «насос охлаждения 40 бар» → откройте чертёж и оставьте замечание'],
+  ['radar','«Радар закладок» → «→ Задача продажам» на перезаложенной позиции'],
+  ['reports','«Отчёты» → наведите на диаграмму потока (CFD)'],
+];
+function openWelcome(){
+  $('welcome').querySelector('.wl').innerHTML = `
+    <p class="eye">Эллинг · операционная система заказа</p>
+    <h2>Здесь <span class="g">строится</span> ваш заказ</h2>
+    <p class="sub">Трекер + CRM проектных продаж + инженерная база знаний с ИИ — <b>в одной системе, где судостроительная отрасль уже описана</b>. Ниже — восемь модулей. Клик открывает.</p>
+    <div class="wl-grid">
+      ${WL_MODS.map(([v,i,t,d])=>`<div class="wl-mod" data-wlgo="${v}"><span class="mi">${i}</span><div><b>${t}</b><span>${d}</span></div></div>`).join('')}
+    </div>
+    <h3>Рекомендованный путь демо</h3>
+    ${WL_STEPS.map(([v,t],n)=>`<div class="wl-step" data-wlgo="${v}"><span class="num">${n+1}</span><span>${t}</span></div>`).join('')}
+    <div class="wl-act">
+      <button class="btn ghost" id="wlClose">Закрыть</button>
+      <button class="btn" data-wlgo="today">Начать →</button>
+    </div>`;
+  $('welcome').classList.add('open');
+}
+function closeWelcome(){ $('welcome').classList.remove('open'); try{ localStorage.setItem(WELCOME_KEY,'1'); }catch(e){} }
+
+function renderBg(){
+  const ae = document.activeElement;
+  if(ae && (ae.id==='kbq'||ae.id==='q'||ae.id==='impText') && $('content').contains(ae)){ renderBell(); return; }
+  render();
+}
+function renderBell(){
+  const notes = myNotes(); const unread = notes.filter(n=>!n.read).length;
+  const b = $('bellN'); if(b){ b.textContent = unread>9?'9+':unread; b.classList.toggle('on', unread>0); }
+  const drop = $('bellDrop'); if(!drop) return;
+  drop.innerHTML = `<h5>Уведомления${unread?` · ${unread} новых`:''} ${notes.length?'<button id="markAll">прочитать все</button>':''}</h5>`+
+    (notes.length ? notes.slice(0,20).map(n=>`<div class="note ${n.read?'':'unread'}" data-note="${n.id}">
+      <span class="dot2 ${n.read?'read':''}"></span>
+      <div><span class="k">${n.taskKey?esc(n.taskKey):''}</span>${esc(n.text)}</div></div>`).join('')
+    : '<div class="empty" style="padding:16px 10px">пока пусто — сюда прилетают автоматизации, @упоминания и статусы ваших наблюдений</div>');
+}
+
+/* ================= events ================= */
+document.addEventListener('click', e=>{
+  const mk = e.target.closest('[data-mktask]');
+  if(mk){ const [proj,pos]=mk.dataset.mktask.split('|'); S.seq++;
+    S.tasks.unshift({key:'СТ-'+S.seq, ttl:`Закладка под угрозой: ${pos} — ${proj}`, epic:'E6', who:'sokolova',
+      col:'open', prio:'hi', est:null, sla:'SLA 2 дн',
+      desc:'Создано из радара закладок. Связаться с бюро-проектантом, подтвердить позицию, при необходимости — встреча с ГИПом.',
+      subs:[{t:'Позвонить ГИПу бюро',done:false},{t:'Зафиксировать итог в карточке проекта',done:false}], comments:[],
+      log:[`создана из радара закладок (${PEOPLE[S.currentUser].full})`]});
+    S.view='board'; render(); return; }
+  const mv = e.target.closest('[data-move]');
+  if(mv){ const [key,to]=mv.dataset.move.split('|'); const t=task(key); if(t){ moveTask(t,to); render(); if($('drawer').classList.contains('open')) openTask(key); } return; }
+  const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; render(); return; }
+  const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
+  const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); return; }
+  const adv = e.target.closest('[data-advance]');
+  if(adv){ const o=S.orders.find(x=>x.id===adv.dataset.advance);
+    if(o.stage<STAGE_NAMES.length-1){ o.stage++; if(o.stage>=8&&o.risk!=='done') o.risk='ok';
+      o.feed.push(['сейчас',`<b>Этап «${STAGE_NAMES[o.stage][0]}»</b> — статус виден всем ролям`,1]); render(); } return; }
+  const chip = e.target.closest('[data-chip]');
+  if(chip){ S.chips[chip.dataset.chip] = !S.chips[chip.dataset.chip]; render(); return; }
+  const che = e.target.closest('[data-chipepic]');
+  if(che){ S.chips.epic = S.chips.epic===che.dataset.chipepic?null:che.dataset.chipepic; render(); return; }
+  const add = e.target.closest('[data-addepic]');
+  if(add){ openCreate(add.dataset.addepic); return; }
+  const st2 = e.target.closest('[data-suptab]');
+  if(st2){ S.supTab=st2.dataset.suptab; render(); return; }
+  const sal = e.target.closest('[data-supalert]');
+  if(sal){ const s=(S.suppliers||[]).find(x=>x.id===sal.dataset.supalert);
+    if(s){ S.seq=(S.seq||2470)+1;
+      S.tasks.unshift({key:'СТ-'+S.seq, ttl:`Реестровость ПП 719 под угрозой: ${s.position}`, epic:'E1', who:'kuznetsova', col:'open',
+        prio:'hi', est:'2 н/ч', sla:null, due:null,
+        desc:`Позиция <b>${esc(s.position)}</b> (заказ №${esc(s.order)}): ${REG_ST[s.reg][1]}. Подтвердить статус записи РРПП/ЕРПТ, при необходимости подобрать реестровый аналог из памяти закупок.`,
+        subs:[{t:'Проверить статус записи в РРПП',done:false},{t:'Подобрать запасной реестровый источник',done:false}],
+        comments:[], links:[], watchers:['kuznetsova'], log:['создана из снабжения']});
+      ACTS.push(`задача по ПП 719: ${s.position.slice(0,40)}`); notify(['kuznetsova'],'ПП 719 под угрозой: '+s.position.slice(0,40),'СТ-'+S.seq);
+      S.view='board'; save(); render();
+    } return;
+  }
+  const dc = e.target.closest('[data-deal]');
+  if(dc){ openDeal(dc.dataset.deal); return; }
+  const da = e.target.closest('[data-dealassess]');
+  if(da){ const d=dealById(da.dataset.dealassess);
+    if(d){ S.seq=(S.seq||2470)+1;
+      S.tasks.unshift({key:'СТ-'+S.seq, ttl:`Оценка ТЗ: ${d.title} (${d.company})`, epic:'E2', who:'petrov', col:'open',
+        prio:'hi', est:null, sla:'SLA 3 дн', due:null,
+        desc:`Запрос из сделки <b>${esc(d.id)}</b>. Заказчик: ${esc(d.company)}. Дать трудоёмкость и срок — сделка ждёт ТКП.`,
+        subs:[], comments:[], links:[], watchers:['maksimov','sokolova'], log:['создана из сделки '+d.id]});
+      d.stage='assess'; d.next='Дождаться оценки ТЗ от ИЦ (SLA 3 дн)';
+      d.acts=d.acts||[]; d.acts.push(['сейчас','Запрошена оценка в ИЦ']);
+      ACTS.push(`оценка ИЦ по сделке ${d.id}`); notify(['petrov','maksimov'],'запрос оценки ТЗ: '+d.title.slice(0,40),'СТ-'+S.seq);
+      closeDrawer(); S.view='board'; save(); render();
+    } return;
+  }
+  const dw=e.target.closest('[data-dealwin]');
+  if(dw){ const d=dealById(dw.dataset.dealwin);
+    if(d){ S.seq=(S.seq||2470)+1; const num=String(2600+((S.orders||[]).length)); const oid='DORD'+S.seq;
+      d.orderNum=num; d.orderId=oid;
+      S.orders.push({id:oid, num, title:d.title, customer:d.company, vessel:d.vessel||'—', goz:d.goz,
+        due:'—', sum:fmtSum(d.sum), stage:4, risk:'ok',
+        feed:[['сейчас','<b>Заказ создан из выигранной сделки '+esc(d.id)+'</b>',1]]});
+      d.acts=d.acts||[]; d.acts.push(['сейчас','Создан заказ №'+num]);
+      ACTS.push(`заказ №${num} из сделки ${d.id}`);
+      closeDrawer(); S.view='flow'; save(); render();
+    } return;
+  }
+  if(e.target.id==='dealNoteAdd'){ const d=dealById(($('drawer').dataset.deal)||''); const v=($('dealNote').value||'').trim();
+    if(d&&v){ d.acts=d.acts||[]; d.acts.push(['сейчас',v.slice(0,120)]); ACTS.push('активность по сделке '+d.id); save(); openDeal(d.id); } return; }
+  const tc = e.target.closest('[data-task]');
+  if(tc && tc !== $('drawer')){ openTask(tc.dataset.task); return; }  // ревью v0.8: data-task на самом drawer — состояние, не кнопка
+  if(e.target.id==='dClose'||e.target.id==='drawerBg'){ closeDrawer(); return; }
+  if(e.target.id==='createBtn'){ openCreate(); return; }
+  if(e.target.id==='nt_cancel'){ $('createOverlay').classList.remove('open'); return; }
+  if(e.target.id==='nt_save'){ createTask(); return; }
+  if(e.target.id==='resetBtn'||e.target.id==='resetBtn2'){ if(confirm('Сбросить демо-данные?')){ S=seed(); ACTS.push('сброс демо-данных'); render(); pushState(); } return; }
+  if(e.target.id==='helpBtn'){ openWelcome(); return; }
+  if(e.target.id==='wlClose'||e.target===$('welcome')){ closeWelcome(); return; }
+  const wg = e.target.closest('[data-wlgo]');
+  if(wg){ closeWelcome(); S.view=wg.dataset.wlgo; S.kbTab='search'; render(); return; }
+  if(e.target.id==='themeBtn'){ cycleTheme(); if(S.view==='settings') render(); return; }
+  if(e.target.closest('#bellBtn')){ $('bellDrop').classList.toggle('open'); return; }
+  if(e.target.id==='markAll'){ myNotes().forEach(n=>n.read=1); save(); renderBell(); return; }
+  const nt = e.target.closest('[data-note]');
+  if(nt){ const n=(S.notes||[]).find(x=>x.id===nt.dataset.note); if(n){ n.read=1; save();
+    $('bellDrop').classList.remove('open'); if(n.taskKey && task(n.taskKey)) openTask(n.taskKey); else renderBell(); } return; }
+  if(!e.target.closest('.bell-wrap')){ const d=$('bellDrop'); if(d) d.classList.remove('open'); }
+  const rc = e.target.closest('[data-rule]');
+  if(rc){ /* checkbox сам обрабатывается в change */ }
+  if(e.target.id==='runAuto'){ const ch = runAutomations('manual'); S.autoMsg = ch?'Автоматизации сработали — проверьте колокол 🔔':'Нечего запускать: нет просроченных задач под включёнными правилами'; render(); return; }
+  const pr = e.target.closest('[data-preset]');
+  if(pr){ S.imp={text:PRESET_CSV[pr.dataset.preset]||'',rows:[],headers:[],map:{},msg:''}; render(); return; }
+  if(e.target.id==='impParse'){ const {headers,rows}=parseCSV(($('impText')||{}).value||S.imp.text||'');
+    S.imp={text:($('impText')||{}).value||'',headers,rows,map:autoMap(headers),
+      msg:rows.length?'':'Не удалось разобрать — проверьте, что строки разделены переносами, а колонки «;» или «,».'}; render(); return; }
+  if(e.target.id==='impFileBtn'){ $('impFile').click(); return; }
+  if(e.target.id==='impDo'){ doImport(); render(); return; }
+  if(e.target.id==='saveFilter'){
+    const name = prompt('Название фильтра (например «Мои горящие»):'); if(!name) return;
+    S.savedFilters = S.savedFilters||[];
+    S.savedFilters.push({id:'F'+(++S.seq), name:name.slice(0,24), chips:{...S.chips}});
+    ACTS.push(`сохранён фильтр «${name}»`); save(); render(); return;
+  }
+  const af = e.target.closest('[data-applyfilter]');
+  if(af){ const f=(S.savedFilters||[]).find(x=>x.id===af.dataset.applyfilter); if(f){ S.chips={...f.chips}; render(); } return; }
+  const st = e.target.closest('[data-settheme]');
+  if(st){ const v = st.dataset.settheme;
+    if(v==='auto') localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, v);
+    applyTheme(v==='auto'?null:v); render(); return; }
+  if(e.target.id==='watchBtn'){
+    const t = task($('drawer').dataset.task);
+    if(t){ t.watchers = t.watchers||[];
+      const i = t.watchers.indexOf(S.currentUser);
+      if(i>=0){ t.watchers.splice(i,1); t.log.push(`${PEOPLE[S.currentUser].full} перестал следить`); }
+      else { t.watchers.push(S.currentUser); t.log.push(`${PEOPLE[S.currentUser].full} следит за задачей`); }
+      ACTS.push(`${t.key}: наблюдатели изменены`); save(); pushState(); openTask(t.key);  // мгновенный пуш: сузить окно гонки watch-toggle
+    } return;
+  }
+  if(e.target.id==='lnkAdd'){
+    const t = task($('drawer').dataset.task); const key = ($('lnkKey').value||'').trim().toUpperCase();
+    if(t && key){
+      if(!task(key)){ $('lnkKey').value=''; $('lnkKey').placeholder='нет такой задачи'; return; }
+      if(key===t.key) return;
+      t.links = t.links||[]; t.links.push({to:key, type:$('lnkType').value});
+      t.log.push(`связь: ${$('lnkType').value} → ${key}`); ACTS.push(`${t.key}: связь ${$('lnkType').value} → ${key}`);
+      save(); render(); openTask(t.key);
+    } return;
+  }
+  const kbt = e.target.closest('[data-kbtab]');
+  if(kbt){ S.kbTab = kbt.dataset.kbtab; S.kbMsg=''; render(); return; }
+  const kbex = e.target.closest('[data-kbex]');
+  if(kbex){ S.kbq = kbex.dataset.kbex; S.kbAI = true; S.kbMsg=''; searchFiles(); render(); return; }
+  const dwg0 = e.target.closest('[data-dwg]');
+  if(dwg0){ openDwg(dwg0.dataset.dwg); return; }
+  // ---- вьюер чертежей ----
+  if(e.target.id==='dwgClose'){ closeDwg(); return; }
+  const dl = e.target.closest('[data-dlayer]');
+  if(dl){ const k=dl.dataset.dlayer; DWG.layers[k]=!DWG.layers[k]; renderDwg(); return; }
+  const dz = e.target.closest('[data-dzoom]');
+  if(dz){ const m=dz.dataset.dzoom;
+    if(m==='in') dwgZoom(1.25); else if(m==='out') dwgZoom(0.8);
+    else { DWG.s=1; DWG.tx=0; DWG.ty=0; applyDwgTransform(); } return; }
+  if(e.target.id==='dwgAnn'){ DWG.mode = DWG.mode==='annotate'?'view':'annotate'; renderDwg(); return; }
+  const gp = e.target.closest('[data-gopin]');
+  if(gp){ const a=(S.drawings[DWG.code].annotations||[]).find(x=>x.id===gp.dataset.gopin);
+    if(a){ DWG.s=1.6; DWG.tx=500-DWG.s*a.x; DWG.ty=350-DWG.s*a.y; applyDwgTransform(); } return; }
+  const pin = e.target.closest('[data-pin]');
+  if(pin){ const a=(S.drawings[DWG.code].annotations||[]).find(x=>x.id===pin.dataset.pin);
+    if(a) alert('Замечание от '+a.author+':\n\n'+a.text); return; }
+  const stg = e.target.closest('#dwgStage');
+  if(stg && DWG.mode==='annotate' && DWG.code){
+    const loc = dwgToLocal(e.clientX, e.clientY);
+    if(loc.x>=0&&loc.x<=1000&&loc.y>=0&&loc.y<=700){
+      const text = prompt('Текст замечания к чертежу:'); if(text){
+        const arr = S.drawings[DWG.code].annotations = S.drawings[DWG.code].annotations||[];
+        arr.push({id:'A'+(++S.seq), x:Math.round(loc.x), y:Math.round(loc.y), text:text.slice(0,300),
+          author:PEOPLE[S.currentUser].full+' · '+PEOPLE[S.currentUser].role});
+        ACTS.push('замечание к чертежу '+DWG.code); DWG.mode='view'; save(); renderDwg();
+      }
+    } return;
+  }
+  const basis = e.target.closest('[data-basis]');   // раньше kbproj: кнопка внутри карточки проекта
+  if(basis){ const p = kbProject(basis.dataset.basis);
+    if(p){ S.seq=(S.seq||2470)+1;
+      S.tasks.unshift({key:'СТ-'+S.seq, ttl:`Оценка ТЗ на основе аналога ${p.izdelie} (${p.code})`, epic:'E2', who:S.currentUser==='petrov'||S.currentUser==='ivanov'||S.currentUser==='smirnov'?S.currentUser:'petrov',
+        col:'open', prio:'md', est:p.hours+' н/ч (по аналогу)', sla:null,
+        desc:`Взято за основу: <b>${esc(p.izdelie)}</b>, заказ №${p.order} (${p.year}). Аналог: ${p.hours} н/ч. Документы аналога — в базе знаний, проект ${p.code}. Скорректировать под новое ТЗ.`,
+        subs:[{t:'Сверить отличия нового ТЗ от аналога',done:false},{t:'Уточнить трудоёмкость',done:false}], comments:[], links:[],
+        log:[`создана из аналога ${p.code} (${PEOPLE[S.currentUser].full})`]});
+      ACTS.push(`оценка ТЗ на основе аналога ${p.code}`);
+      closeDrawer(); S.view='board'; render();
+    } return;
+  }
+  const kbp = e.target.closest('[data-kbproj]');
+  if(kbp){ vKbProject(kbp.dataset.kbproj); return; }
+  if(e.target.id==='aiBtn'){
+    if(!(S.kbq||'').trim()){ S.kbMsg='Введите параметры ТЗ или ключевые слова.'; render(); return; }
+    S.kbAI = true; S.kbMsg=''; searchFiles(); render(); return;
+  }
+  if(e.target.id==='upBtn'){
+    if(!SRV.on){ S.kbMsg='Загрузка файлов работает при подключённом сервере (запустите Запустить_сервер.bat). Поиск по каталогу проектов работает и без сервера.'; render(); return; }
+    $('upFile').click(); return;
+  }
+  if(e.target.id==='subAdd'){ const t=task($('drawer').dataset.task); const v=$('subNew').value.trim();
+    if(t&&v){ t.subs.push({t:v,done:false}); t.log.push('подзадача добавлена'); save(); openTask(t.key); } return; }
+  if(e.target.id==='cmtAdd'){ const t=task($('drawer').dataset.task); const v=$('cmtNew').value.trim();
+    if(t&&v){ t.comments.push({a:PEOPLE[S.currentUser].full,m:v}); t.log.push(`комментарий от ${PEOPLE[S.currentUser].full}`); save(); openTask(t.key); } return; }
+});
+
+async function uploadDoc(f){
+  try{
+    S.kbMsg = `Загружаю «${f.name}»…`; render();
+    const r = await fetch('/api/docs', {method:'POST',
+      headers:AH({ 'X-Filename': encodeURIComponent(f.name),
+                'X-User': encodeURIComponent(PEOPLE[S.currentUser].full+' · '+PEOPLE[S.currentUser].role) }),
+      body: await f.arrayBuffer()});
+    if(!r.ok){ const j = await r.json().catch(()=>({})); S.kbMsg = 'Ошибка загрузки: '+(j.error||r.status); render(); return; }
+    const m = await r.json();
+    S.docs.unshift({tp:(m.ext||'файл').toUpperCase(), nm:`${m.name} — загружен пользователем`, vv:m.note, tags:m.name});
+    ACTS.push(`загружен документ: ${m.name}`);
+    S.kbMsg = `«${m.name}»: ${m.note}. Документ проиндексирован — ищите по содержимому.`;
+    save(); render();
+  }catch(e){ S.kbMsg = 'Ошибка загрузки — сервер недоступен'; setSrv(false); render(); }
+}
+
+document.addEventListener('change', e=>{
+  if(e.target.id==='upFile'){ const f=e.target.files[0]; e.target.value=''; if(f) uploadDoc(f); return; }
+  if(e.target.id==='impFile'){ const f=e.target.files[0]; e.target.value=''; if(f){
+    const done=(txt,enc)=>{ const {headers,rows}=parseCSV(txt); S.imp={text:'',headers,rows,map:autoMap(headers),
+      msg:rows.length?`Файл «${f.name}» разобран${enc?' ('+enc+')':''}.`:'Файл пуст или не распознан.'}; render(); };
+    const rd=new FileReader();
+    rd.onload=()=>{ const utf=rd.result;
+      // реальные Excel-CSV на RU-Windows часто в cp1251 → детект кракозябр и перечитка (ревью v1.5)
+      if(utf.includes('\uFFFD')){ const rd2=new FileReader();
+        rd2.onload=()=>done(rd2.result,'Windows-1251'); rd2.onerror=()=>done(utf); rd2.readAsText(f,'windows-1251'); }
+      else done(utf); };
+    rd.readAsText(f,'utf-8'); } return; }
+  const im=e.target.closest('[data-impmap]');
+  if(im){ S.imp.map[im.dataset.impmap]=e.target.value; return; }
+  if(e.target.id==='userSel'){ S.currentUser=e.target.value; render(); return; }
+  const rc = e.target.closest('[data-rule]');
+  if(rc){ const r=(S.rules||[]).find(x=>x.id===rc.dataset.rule); if(r){ r.enabled = e.target.checked?1:0;
+    ACTS.push(`правило «${r.name.slice(0,24)}» ${r.enabled?'включено':'выключено'}`); save(); } return; }
+  if(e.target.id==='dealStage'){ const d=dealById($('drawer').dataset.deal||''); if(d){ moveDeal(d, e.target.value); render(); openDeal(d.id); } return; }
+  const t = task($('drawer').dataset.task||'');
+  if(t && $('drawer').classList.contains('open')){
+    if(e.target.id==='f_col'){ moveTask(t,e.target.value,'вручную'); save(); render(); openTask(t.key); return; }
+    if(e.target.id==='f_who'){ t.who=e.target.value; t.log.push(`исполнитель: ${PEOPLE[t.who].full}`); save(); render(); return; }
+    if(e.target.id==='f_prio'){ t.prio=e.target.value; save(); render(); return; }
+    if(e.target.id==='f_epic'){ t.epic=e.target.value; save(); render(); return; }
+    if(e.target.id==='f_est'){ t.est=e.target.value; save(); return; }
+    if(e.target.id==='f_due'){ t.due=e.target.value||null; t.log.push(`срок: ${t.due||'снят'}`); ACTS.push(`${t.key}: срок ${t.due||'снят'}`); save(); render(); return; }
+    const sub = e.target.closest('[data-sub]');
+    if(sub){ t.subs[+sub.dataset.sub].done = e.target.checked; save(); openTask(t.key); return; }
+  }
+});
+
+document.addEventListener('input', e=>{
+  if(e.target.id==='q'){ S.q=e.target.value; if(S.view==='board'||S.view==='plan') render(); }
+  if(e.target.id==='kbq'){ S.kbq=e.target.value;
+    // на вкладке «Поиск» текст ТЗ печатается/вставляется без ре-рендера (сохраняем фокус),
+    // результаты — по кнопке; в каталоге/файлах — живой фильтр
+    if((S.kbTab||'search')!=='search'){ render(); const i=$('kbq'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length); } } }
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if($('welcome').classList.contains('open')) closeWelcome(); else if($('dwgViewer').classList.contains('open')) closeDwg(); else { closeDrawer(); $('createOverlay').classList.remove('open'); } } });
+
+/* drag & drop (доска задач И воронка сделок) */
+document.addEventListener('dragstart', e=>{
+  const c = e.target.closest('.tcard'); if(!c) return;
+  // карточка задачи несёт data-task, карточка сделки — data-deal
+  e.dataTransfer.setData('text/plain', (c.dataset.task? 'T:'+c.dataset.task : c.dataset.deal? 'D:'+c.dataset.deal : ''));
+  c.classList.add('dragging');
+});
+document.addEventListener('dragend', e=>{ const c=e.target.closest('.tcard'); if(c) c.classList.remove('dragging'); });
+document.addEventListener('dragover', e=>{ const col=e.target.closest('.col'); if(col){ e.preventDefault(); col.classList.add('dragover'); } });
+document.addEventListener('dragleave', e=>{ const col=e.target.closest('.col'); if(col) col.classList.remove('dragover'); });
+document.addEventListener('drop', e=>{
+  const col = e.target.closest('.col'); if(!col) return;
+  e.preventDefault(); col.classList.remove('dragover');
+  const raw = e.dataTransfer.getData('text/plain');
+  if(raw.startsWith('D:') && col.dataset.dealcol){        // сделка → новая стадия воронки
+    const d = dealById(raw.slice(2));
+    if(d && d.stage!==col.dataset.dealcol){ moveDeal(d, col.dataset.dealcol); render(); }
+    return;
+  }
+  if(raw.startsWith('T:') && col.dataset.col){            // задача → новый статус доски
+    const t = task(raw.slice(2));
+    if(t && t.col!==col.dataset.col) moveTask(t,col.dataset.col,'перетащил '+PEOPLE[S.currentUser].full);
+    render();
+  }
+});
+
+/* CFD hover: крестик + тултип со счётчиками по статусам (делегировано) */
+document.addEventListener('pointermove', e=>{
+  const hit = e.target.closest('#cfdHit'); const tip=$('cfdTip'), cross=$('cfdCross'), svg=$('cfdChart');
+  if(!hit || !CFD_DATA || !tip){ if(tip){tip.style.opacity=0;} if(cross)cross.style.opacity=0; return; }
+  const r=svg.getBoundingClientRect(); const PL=34, PR=14, iw=720-PL-PR;
+  const fx=(e.clientX-r.left)/r.width*720; // в координатах viewBox
+  let i=Math.round((fx-PL)/iw*(CFD_DATA.length-1)); i=Math.max(0,Math.min(CFD_DATA.length-1,i));
+  const xpx=PL+iw*i/(CFD_DATA.length-1);
+  cross.setAttribute('x1',xpx); cross.setAttribute('x2',xpx); cross.style.opacity=.4;
+  const d=CFD_DATA[i]; const day=i===13?'сегодня':('−'+(13-i)+' дн');
+  tip.innerHTML=`<div style="font-family:var(--mono);font-size:10px;color:#9fb0c0;margin-bottom:4px">${day}</div>`+
+    FLOW_STATES.slice().reverse().map(([k,l,c])=>`<div class="tr"><span><i style="background:${c};display:inline-block"></i> ${l}</span><b>${d[k]}</b></div>`).join('');
+  const box=hit.closest('.chart-box').getBoundingClientRect();
+  tip.style.left=Math.min(box.width-140,(xpx/720*box.width)+10)+'px'; tip.style.top='8px'; tip.style.opacity=1;
+});
+document.addEventListener('pointerleave', ()=>{ const t=$('cfdTip'); if(t)t.style.opacity=0; }, true);
+
+/* вьюер чертежей: колесо-зум + панорама (делегировано — #dwgStage пересоздаётся) */
+document.addEventListener('wheel', e=>{
+  if(e.target.closest('#dwgStage') && DWG.code){ e.preventDefault(); dwgZoom(e.deltaY<0?1.12:0.9, e.clientX, e.clientY); }
+}, {passive:false});
+let dwgPan=null;
+document.addEventListener('pointerdown', e=>{
+  const s=e.target.closest('#dwgStage');
+  if(s && DWG.code && DWG.mode!=='annotate' && !e.target.closest('[data-pin]')){
+    dwgPan={x:e.clientX,y:e.clientY,tx:DWG.tx,ty:DWG.ty,id:e.pointerId};
+    try{ s.setPointerCapture(e.pointerId); }catch(x){}   // не «залипает» при выходе за окно (ревью v1.1)
+  }
+});
+document.addEventListener('pointermove', e=>{
+  if(dwgPan && (e.buttons & 1)){ DWG.tx=dwgPan.tx+(e.clientX-dwgPan.x); DWG.ty=dwgPan.ty+(e.clientY-dwgPan.y); applyDwgTransform(); }
+  else if(dwgPan && !(e.buttons & 1)){ dwgPan=null; }
+});
+document.addEventListener('pointerup', ()=>{ dwgPan=null; });
+document.addEventListener('pointercancel', ()=>{ dwgPan=null; });
+
+/* create */
+function openCreate(epicId){
+  $('nt_epic').innerHTML = S.epics.map(x=>`<option value="${x.id}" ${epicId===x.id?'selected':''}>${x.name}</option>`).join('');
+  $('nt_who').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${p===S.currentUser?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
+  $('nt_title').value=''; $('nt_est').value='';
+  $('createOverlay').classList.add('open'); $('nt_title').focus();
+}
+function createTask(){
+  const ttl = $('nt_title').value.trim(); if(!ttl) return;
+  S.seq++;
+  S.tasks.unshift({key:'СТ-'+S.seq, ttl, epic:$('nt_epic').value, who:$('nt_who').value, col:'open',
+    prio:$('nt_prio').value, est:$('nt_est').value||null, sla:null, desc:'', subs:[], comments:[],
+    log:[`создана ${PEOPLE[S.currentUser].full} · назначена: ${PEOPLE[$('nt_who').value].full}`]});
+  ACTS.push(`создана задача СТ-${S.seq}: ${ttl.slice(0,60)}`);
+  $('createOverlay').classList.remove('open'); render();
+}
+
+applyTheme(localStorage.getItem(THEME_KEY));
+render();
+bootstrapSrv();
+try{ if(!localStorage.getItem(WELCOME_KEY)) openWelcome(); }catch(e){}  // приветствие при первом входе
+setInterval(()=>{ if(runAutomations('timer')) renderBg(); }, 60000);  // v0.9: авто-проверка просрочек (renderBg — не рвём ввод, ревью v1.0)
+</script>
