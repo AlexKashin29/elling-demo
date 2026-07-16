@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.50 «Мост Т2» — рабочий MVP</title>
+﻿<title>Эллинг v1.51 «AutoCAD+PDM» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -977,7 +977,9 @@ function seed(){
     connectors:[
       {id:'c1s',tag:'1С',name:'1С:Предприятие · обмен',sys:'от 7.7 до ERP 2.5 / УПП',dir:'↔',status:'ok',last:'сегодня 09:14',note:'заказы, номенклатура, ИГК, статус раздельного учёта ГОЗ'},
       {id:'cmail',tag:'Почта',name:'Почтовый шлюз заказа',sys:'Outlook / SMTP / IMAP',dir:'←',status:'ok',last:'сегодня 11:02',note:'входящие ТЗ и письма падают в ленту заказа'},
-      {id:'ccad',tag:'ЛОЦМАН',name:'КОМПАС / ЛОЦМАН:PLM',sys:'АСКОН · чертежи DWG, состав изделия (BOM), извещения',dir:'←',status:'ok',last:'сегодня 10:30',note:'читаем чертежи и состав из вашего PLM — САПР не заменяем'},
+      {id:'cacad',tag:'AutoCAD',name:'AutoCAD · DWG / DXF',sys:'Autodesk / nanoCAD · чертежи DWG-DXF, слои, штампы ГОСТ',dir:'←',status:'ok',last:'сегодня 10:12',note:'большинство проектов ведётся в AutoCAD — читаем DWG/DXF напрямую, вьюер в браузере; САПР не заменяем'},
+      {id:'ccad',tag:'КОМПАС',name:'КОМПАС / ЛОЦМАН:PLM',sys:'АСКОН · 3D, чертежи, состав изделия (BOM), извещения',dir:'←',status:'ok',last:'сегодня 10:30',note:'читаем чертежи и состав из вашего PLM — САПР не заменяем'},
+      {id:'cpdm',tag:'PDM',name:'PDM/PLM · T-FLEX · Appius · Intermech',sys:'T-FLEX DOCs / Appius-PLM (на 1С) / Intermech Search · структура, ревизии, извещения',dir:'←',status:'setup',last:'—',note:'единый адаптер к российским PDM — структура изделия и КД без переезда'},
       {id:'ceis',tag:'ЕИС',name:'ЕИС · тендеры',sys:'zakupki.gov.ru · 44/223-ФЗ',dir:'←',status:'ok',last:'сегодня 08:00',note:'автозагрузка тендеров по фильтру проекта'},
       {id:'cedo',tag:'ЭДО',name:'ЭДО · Диадок / СБИС',sys:'УПД, договоры',dir:'↔',status:'setup',last:'—',note:'обмен документами — в настройке'},
       {id:'cbridge',tag:'Мост',name:'Эллинг Мост · федерация нитей заказа',sys:'инсталляция ↔ инсталляция · верфь ↔ поставщик',dir:'↔',status:'ok',last:'сегодня 11:40',note:'синхронизация статусов, документов и приёмки между вашим облаком и коробкой верфи; экономика и кухня не передаются'},
@@ -1849,7 +1851,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.50';
+const APP_VER = '1.51';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2999,6 +3001,16 @@ document.addEventListener('click', e=>{
                 {type:'Спецификация',name:'Состав изделия ДУ-100 · BOM (из ЛОЦМАН)',ver:'из PLM',where:'спецификация'}]});
         obj='импортированы чертёж + состав изделия ДУ-100';
         S.agentMsg='Из КОМПАС/ЛОЦМАН прочитаны сборочный чертёж и состав изделия ДУ-100 — теперь в Базе знаний и в ИИ-поиске. САПР остаётся у вас, мы только читаем. Откройте «Базу знаний».';
+      } else if(c.id==='cacad'){                     // импорт чертежа AutoCAD (DWG) в базу знаний
+        S.seq=(S.seq||2470)+1;
+        S.kbProjects=S.kbProjects||[]; S.kbProjects.unshift({id:'IMPKB'+S.seq, izdelie:'Теплообменник ТВГ-16 (импорт из AutoCAD)', code:'ТВГ-16', order:'из DWG', year:2026, hours:64,
+          customer:'—', vessel:'—', status:'прочитан из AutoCAD', src:'AutoCAD',
+          tz:'Импортировано из AutoCAD (DWG/DXF). Теплообменник ТВГ-16, кожухотрубный, PN 16, поверхность 16 м². Прочитаны сборочный чертёж, слои и штамп ГОСТ; состав снят со спецификации на листе.',
+          tags:'теплообменник твг-16 кожухотрубный pn16 autocad dwg dxf импорт',
+          docs:[{type:'Чертёж',name:'ТВГ-16.00.00 СБ · сборочный (AutoCAD DWG)',ver:'ревизия из DWG',code:'ТВГ-16',where:'DWG · вьюер'},
+                {type:'Спецификация',name:'Спецификация ТВГ-16 (со штампа листа)',ver:'из DXF',where:'спецификация'}]});
+        obj='импортирован чертёж AutoCAD ТВГ-16 (DWG)';
+        S.agentMsg='Из AutoCAD прочитан сборочный чертёж ТВГ-16 (DWG/DXF) — слои, штамп ГОСТ и спецификация. Теперь в Базе знаний и ИИ-поиске. AutoCAD остаётся у вас, мы только читаем. Откройте «Базу знаний».';
       } else if(c.id==='cbridge'){                   // Т2: федерация нитей заказа с контуром верфи
         const gozOrd=(S.orders||[]).filter(o=>o.goz).slice(0,2);
         gozOrd.forEach(o=>{ o.feed=o.feed||[]; o.feed.unshift(['сейчас','<b>Мост:</b> нить заказа синхронизирована с контуром верфи — статус этапа и приёмка ВП сверены',1]); });
