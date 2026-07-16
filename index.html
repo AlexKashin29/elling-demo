@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.53 «Т3 пакеты» — рабочий MVP</title>
+﻿<title>Эллинг v1.54 «Мастер миграции» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -177,6 +177,14 @@
   .elx-id{font-family:var(--mono);font-size:11px;color:var(--ink);font-weight:600}
   .elx-note{color:var(--ink2);flex:1;min-width:120px}
   .elx-sig{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
+  .panel.wiz{border:1.5px solid color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 8%,transparent),var(--sh)}
+  .wiz-steps{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px}
+  .wiz-step{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:6px 14px 6px 6px}
+  .wiz-step span{width:22px;height:22px;border-radius:50%;background:var(--line);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:none}
+  .wiz-step.on{color:var(--ink);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+  .wiz-step.on span{background:var(--accent);color:#fff}
+  .wiz-step.ok span{background:var(--good)}
+  .wiz-step.ok{color:var(--good)}
   .bench-dealpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
   .bench-dealpick label{font-size:13px;font-weight:600;color:var(--ink2)}
   .bench-dealpick select{font:inherit;font-size:13.5px;font-weight:600;padding:9px 13px;border-radius:10px;border:1px solid var(--line);
@@ -1861,7 +1869,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.53';
+const APP_VER = '1.54';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2025,7 +2033,13 @@ function vSettings(){
       <p style="font-size:12px;color:var(--muted);margin-top:10px">Выбор сохраняется в этом браузере и не влияет на других пользователей.</p>
     </div>
     ${(()=>{ const imp=S.imp||(S.imp={text:'',rows:[],headers:[],map:{},msg:''});
-      return `<div class="panel" style="margin-bottom:14px"><h3>Онбординг · импорт реестра <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· запуск за день, без внедренца</span></h3>
+      const _done=/✓/.test(imp.msg||''); const _step=_done?3:imp.rows.length?2:1;
+      return `<div class="panel wiz" id="migWiz" style="margin-bottom:14px"><h3>Мастер миграции реестра <span style="font-family:var(--mono);font-size:10px;color:var(--accent)">· L1 · запуск за день, без внедренца</span></h3>
+      <div class="wiz-steps">
+        <div class="wiz-step ${_step>=1?'on':''} ${_step>1?'ok':''}"><span>1</span>Загрузка</div>
+        <div class="wiz-step ${_step>=2?'on':''} ${_step>2?'ok':''}"><span>2</span>Сопоставление колонок</div>
+        <div class="wiz-step ${_step>=3?'on':''}"><span>3</span>Импорт в портфель</div>
+      </div>
       <p style="font-size:13px;color:var(--ink2);margin:0 0 10px">Вставьте свой реестр заказов из Excel (сохраните как CSV или скопируйте ячейки) — Эллинг разберёт колонки и создаст заказы. Пресеты подставят пример под ваш сегмент:</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         ${[['sko','Производитель СКО'],['agent','Судовой агент'],['pkb','ПКБ']].map(([k,l])=>`<button class="chip" data-preset="${k}">${l}</button>`).join('')}
@@ -2702,9 +2716,9 @@ const ROLE_TILES = {
   'инженер':[['kb','i-kb','Найти в базе знаний'],['board','i-board','Доска ИЦ'],['notices','i-notices','Извещения'],['estimates','i-est','Просчёт']],
   'рук. ИЦ':[['board','i-board','Доска ИЦ'],['estimates','i-est','Очередь просчёта'],['plan','i-plan','Планирование'],['kb','i-kb','База знаний']],
   'продажи':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['estimates','i-est','Просчёт ТКП'],['portal','i-portal','Портал заказчика']],
-  'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика'],['settings','i-settings','Импорт 1С/ЛОЦМАН']],
+  'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика'],['migrate','i-supply','Мастер миграции']],
   'логист':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика'],['reports','i-reports','Отчёты']],
-  'директор':[['reports','i-reports','Отчёты'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа'],['deals','i-deals','Воронка сделок']],
+  'директор':[['reports','i-reports','Отчёты'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа'],['migrate','i-supply','Мастер миграции']],
 };
 function navCount(v){ try{
   if(v==='estimates') return estAlerts();
@@ -2717,7 +2731,8 @@ function navCount(v){ try{
 function hubTiles(){
   const tiles = ROLE_TILES[(PEOPLE[S.currentUser]||{}).role] || ROLE_TILES['инженер'];
   return `<div class="hub">${tiles.map(([v,ic,lb])=>{ const c=navCount(v);
-    return `<button class="hub-tile" data-nav2="${v}"><svg class="ic"><use href="#${ic}"/></svg>`
+    const attr = v==='migrate' ? 'data-migrate="1"' : `data-nav2="${v}"`;
+    return `<button class="hub-tile" ${attr}><svg class="ic"><use href="#${ic}"/></svg>`
       + `<span class="ht-l">${lb}</span>${c?`<span class="ht-c">${c}</span>`:''}`
       + `<svg class="ic ht-go"><use href="#i-chev"/></svg></button>`; }).join('')}</div>`;
 }
@@ -2825,6 +2840,7 @@ function render(){
   $('content').innerHTML = S.view==='today'?vToday(): S.view==='deals'?vDeals(): S.view==='supply'?vSupply(): S.view==='flow'?vFlow(): S.view==='radar'?vRadar(): S.view==='board'?vBoard():
     S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='estimates'?vEstimates(): S.view==='notices'?vNotices(): S.view==='portal'?vPortal(): S.view==='bench'?vBench(): S.view==='settings'?vSettings(): vReports();
   if(S.view!==S._prevView){ const c=$('content'); c.classList.remove('view-in'); void c.offsetWidth; c.classList.add('view-in'); S._prevView=S.view; animateCounters(); }
+  if(S._scrollMig){ S._scrollMig=0; try{ setTimeout(()=>{ const w=document.getElementById('migWiz'); if(w&&w.scrollIntoView) w.scrollIntoView({behavior:'smooth',block:'start'}); },70); }catch(e){} }
   $('userSel').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
   renderBell();
   if(S.view==='reports') loadAudit();
@@ -2909,6 +2925,7 @@ document.addEventListener('click', e=>{
   const ngh = e.target.closest('[data-navgroup]');
   if(ngh){ const id=ngh.dataset.navgroup; S.navOpen=S.navOpen||{}; S.navOpen[id]=!S.navOpen[id]; syncNavOpen(); return; }
   const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; document.body.classList.remove('nav-open'); render(); return; }
+  if(e.target.closest('[data-migrate]')){ S.view='settings'; S._scrollMig=1; document.body.classList.remove('nav-open'); render(); return; }
   const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
   const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); return; }
   const adv = e.target.closest('[data-advance]');
