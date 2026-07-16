@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.31 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.32 «Пульт» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -126,6 +126,19 @@
   .lnk:hover{border-color:var(--accent);color:var(--accent)}
   .lnk.block{border-color:var(--risk);color:var(--risk)}
   .content{padding:26px 30px 64px;overflow-x:hidden;max-width:1440px}
+  /* живой переход между экранами + мягкое появление карточек */
+  @keyframes viewIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  @keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .view-in{animation:viewIn .34s cubic-bezier(.16,1,.3,1)}
+  .view-in .stats .stat{animation:cardIn .42s cubic-bezier(.16,1,.3,1) backwards}
+  .view-in .stats .stat:nth-child(1){animation-delay:.03s}
+  .view-in .stats .stat:nth-child(2){animation-delay:.07s}
+  .view-in .stats .stat:nth-child(3){animation-delay:.11s}
+  .view-in .stats .stat:nth-child(4){animation-delay:.15s}
+  .view-in .stats .stat:nth-child(5){animation-delay:.19s}
+  .view-in .stats .stat:nth-child(n+6){animation-delay:.22s}
+  .view-in .panel,.view-in .anacard,.view-in .wcard{animation:cardIn .46s cubic-bezier(.16,1,.3,1) backwards;animation-delay:.06s}
+  @media (prefers-reduced-motion:reduce){.view-in,.view-in *{animation:none!important}}
   @media(max-width:720px){.content{padding:18px 16px 56px}}
 
   .av{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:11px;font-weight:700;flex:none;vertical-align:middle;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 1px 2px rgba(16,24,40,.14)}
@@ -1100,6 +1113,19 @@ function exportReportCSV(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='Эллинг_отчёт.csv'; document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },100);
+}
+function animateCounters(){
+  try{ if(matchMedia('(prefers-reduced-motion:reduce)').matches) return; }catch(e){ return; }
+  document.querySelectorAll('#content .stat .v').forEach(el=>{
+    const raw=el.textContent; const m=raw.match(/^(\D*)([\d\s]+(?:[.,]\d+)?)(.*)$/);
+    if(!m) return; const pre=m[1], numStr=m[2].replace(/\s/g,'').replace(',','.'), post=m[3];
+    const target=parseFloat(numStr); if(!isFinite(target)||target<=0) return;
+    const dec=(numStr.split('.')[1]||'').length; const t0=performance.now(), dur=620;
+    const fmt=v=>pre+(dec?v.toFixed(dec).replace('.',','):Math.round(v).toLocaleString('ru-RU'))+post;
+    el.textContent=fmt(0);
+    function step(t){ const p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3); el.textContent=fmt(target*e); if(p<1)requestAnimationFrame(step); else el.textContent=raw; }
+    requestAnimationFrame(step);
+  });
 }
 function emptyBox(icon,title,hint,actionLabel,actionAttr){
   return `<div class="empty-box">
@@ -2274,6 +2300,7 @@ function render(){
   const pq=portalPending(); const pn=$('portalN'); if(pn){ pn.textContent=pq||''; pn.style.display=pq?'':'none'; }
   $('content').innerHTML = S.view==='today'?vToday(): S.view==='deals'?vDeals(): S.view==='supply'?vSupply(): S.view==='flow'?vFlow(): S.view==='radar'?vRadar(): S.view==='board'?vBoard():
     S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='estimates'?vEstimates(): S.view==='notices'?vNotices(): S.view==='portal'?vPortal(): S.view==='settings'?vSettings(): vReports();
+  if(S.view!==S._prevView){ const c=$('content'); c.classList.remove('view-in'); void c.offsetWidth; c.classList.add('view-in'); S._prevView=S.view; animateCounters(); }
   $('userSel').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
   renderBell();
   if(S.view==='reports') loadAudit();
