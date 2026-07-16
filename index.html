@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.45 «Сравнение» — рабочий MVP</title>
+﻿<title>Эллинг v1.46 «Сделка↔Эталон» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -141,6 +141,17 @@
   .bm-legend span{display:inline-flex;align-items:center;gap:6px}
   .bm-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none}
   .bm-btns{display:flex;gap:6px}
+  .bench-dealpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+  .bench-dealpick label{font-size:13px;font-weight:600;color:var(--ink2)}
+  .bench-dealpick select{font:inherit;font-size:13.5px;font-weight:600;padding:9px 13px;border-radius:10px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);box-shadow:var(--sh);cursor:pointer;min-width:260px;max-width:100%}
+  .bench-dealpick select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .deal-band{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-radius:13px;margin-bottom:14px;font-size:13.3px;
+    color:var(--ink2);line-height:1.5;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+  .deal-band b{color:var(--ink)}
+  .deal-band svg.ic{width:20px;height:20px;color:var(--accent);flex:none;margin-top:1px}
+  .deal-band.nomatch{background:var(--panel2);border-color:var(--line);color:var(--muted)}
+  .deal-band.nomatch b{color:var(--ink2)}
   .bm-cmp{border:1px solid var(--accent);border-radius:16px;background:var(--panel);box-shadow:var(--sh-lg);padding:18px 20px;margin-bottom:18px;animation:cardIn .3s cubic-bezier(.16,1,.3,1)}
   .bm-cmp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
   .bm-cmp-head b{font-size:16px;font-weight:750;display:block}
@@ -1797,7 +1808,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.45';
+const APP_VER = '1.46';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2646,6 +2657,18 @@ function hubTiles(){
       + `<span class="ht-l">${lb}</span>${c?`<span class="ht-c">${c}</span>`:''}`
       + `<svg class="ic ht-go"><use href="#i-chev"/></svg></button>`; }).join('')}</div>`;
 }
+function dealMatchBench(d){
+  if(!d) return null; const bm=S.benchmarks||[]; if(!bm.length) return null;
+  const hay=((d.vessel||'')+' '+(d.title||'')).toLowerCase();
+  const codes=[['rsd59','B3'],['rst','B3'],['сухогруз','B3'],['река-море','B3'],
+    ['03141','B2'],['краб','B2'],
+    ['170701','B1'],['траулер','B1'],['рыбол','B1'],['промысл','B1'],
+    ['200101','B6'],['ярус','B6'],['морозиль','B6'],
+    ['cnf','B4'],['паром','B4'],['пассажир','B4'],
+    ['93.159','B5'],['земснаряд','B5'],['дноуглуб','B5'],['буксир','B5'],['техническ','B5']];
+  for(const [kw,id] of codes){ if(hay.indexOf(kw)>=0){ const b=bm.find(x=>x.id===id); if(b) return {b,kw}; } }
+  return null;
+}
 function vBench(){
   const bm = S.benchmarks||[];
   const types = Array.from(new Set(bm.map(b=>b.type)));
@@ -2658,6 +2681,13 @@ function vBench(){
   const avgCov = bm.length?Math.round(bm.reduce((a,b)=>a+covRatio(b),0)/bm.length*100):0;
   const TARGET_LOCAL = 72;
   const OUR_LABELS = ['Главный двигатель','Дизель-генераторы','Рефустановка','Насосное оборудование','Гидравлика','Автоматизация / АСУ ТП','Крановое оборудование','Система живой воды','Грунтовые насосы'];
+  const dealBanner = ()=>{
+    if(!S.benchDeal) return '';
+    const d=dealById(S.benchDeal); if(!d) return '';
+    const m=dealMatchBench(d);
+    if(!m) return `<div class="deal-band nomatch"><b>Сделка «${esc(d.title)}»</b> · ${esc(d.vessel||'')} · ${esc(d.company)} — прямого эталона по этому типу в базе пока нет (в базе — гражданские серии: рыболов / сухогруз / паром / техфлот). Расширим сегменты.</div>`;
+    return `<div class="deal-band"><svg class="ic"><use href="#i-bench"/></svg><div><b>Сделка «${esc(d.title)}»</b> (${esc(d.vessel||'')}, ${esc(d.company)}) → подобран эталон <b>«${esc(m.b.name)}»</b> по типу «${esc(m.b.type)}». Сверь состав СКО ниже — и учти пробелы в своём КП.</div></div>`;
+  };
   const cmpPanel = ()=>{
     const b=(S.benchmarks||[]).find(x=>x.id===S.benchCmp); if(!b) return '';
     const gaps=b.sko.filter(s=>!cov(s)); const okn=b.sko.length-gaps.length; const locGap=b.local-TARGET_LOCAL;
@@ -2705,6 +2735,10 @@ function vBench(){
       <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--good);color:var(--good)">${avgCov}%</div><div class="l">наш охват их СКО</div></div>
       <div class="stat"><div class="v">${types.length}</div><div class="l">сегментов флота</div></div>
     </div>
+    <div class="bench-dealpick"><label for="benchDealSel">Подобрать эталон под сделку из воронки:</label>
+      <select id="benchDealSel"><option value="">— выберите сделку —</option>
+      ${(S.deals||[]).filter(d=>d.stage!=='lost').map(d=>`<option value="${d.id}" ${S.benchDeal===d.id?'selected':''}>${esc(d.title)} · ${esc(d.vessel||'')}</option>`).join('')}</select></div>
+    ${dealBanner()}
     ${S.benchCmp?cmpPanel():''}
     <div class="bm-legend"><span><i style="background:var(--good)"></i> закрываем нашим профилем</span><span><i style="border:1px dashed var(--accent)"></i> пробел = возможность локализации</span></div>
     <div class="bm-filters"><button class="chip ${f==='all'?'on':''}" data-benchf="all">Все сегменты</button>
@@ -3028,8 +3062,8 @@ document.addEventListener('click', e=>{
   const bf = e.target.closest('[data-benchf]');
   if(bf){ S.benchFilter=bf.dataset.benchf; render(); return; }
   const bcm = e.target.closest('[data-benchcmp]');
-  if(bcm){ S.benchCmp=bcm.dataset.benchcmp; render(); return; }
-  if(e.target.closest('[data-benchcmpclose]')){ S.benchCmp=null; render(); return; }
+  if(bcm){ S.benchCmp=bcm.dataset.benchcmp; S.benchDeal=null; render(); return; }
+  if(e.target.closest('[data-benchcmpclose]')){ S.benchCmp=null; S.benchDeal=null; render(); return; }
   const bpl = e.target.closest('[data-benchplan]');
   if(bpl){ const b=(S.benchmarks||[]).find(x=>x.id===bpl.dataset.benchplan);
     if(b){ S.seq=(S.seq||2470)+1;
@@ -3171,6 +3205,9 @@ document.addEventListener('change', e=>{
   const im=e.target.closest('[data-impmap]');
   if(im){ S.imp.map[im.dataset.impmap]=e.target.value; return; }
   if(e.target.id==='userSel'){ S.currentUser=e.target.value; S.navOpen=navOpenForRole(S.currentUser); render(); return; }
+  if(e.target.id==='benchDealSel'){ const id=e.target.value; S.benchDeal=id||null;
+    if(id){ const m=dealMatchBench(dealById(id)); S.benchCmp=m?m.b.id:null; } else { S.benchCmp=null; }
+    render(); return; }
   const rc = e.target.closest('[data-rule]');
   if(rc){ const r=(S.rules||[]).find(x=>x.id===rc.dataset.rule); if(r){ r.enabled = e.target.checked?1:0;
     ACTS.push(`правило «${r.name.slice(0,24)}» ${r.enabled?'включено':'выключено'}`); save(); } return; }
