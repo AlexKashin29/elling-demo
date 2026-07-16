@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.17 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.18 «Пульт» — рабочий MVP</title>
 <style>
   /* Палитра «грунт и сталь» · акцент — сурик (красно-рыжий грунт корпуса на стапеле); циан-сталь — только для данных */
   :root{
@@ -8,7 +8,7 @@
     --accent:#C24309; --accent-soft:#FBE7DB; --steel:#0E7C93;
     --navy:#1F3A50; --navy-soft:#E4EBF3;
     --good:#1E7D46; --good-soft:#E1F1E7; --warn:#A9660A; --warn-soft:#F8EEDA; --risk:#C0362E; --risk-soft:#F9E4E1;
-    --grad:linear-gradient(140deg,#E9691F 0%,#C24309 100%);
+    
     --glow:0 0 0 1px rgba(194,67,9,.16), 0 8px 30px -8px rgba(30,50,70,.18);
     --shadow:0 10px 34px -14px rgba(20,35,55,.28);
     --mono:"Cascadia Mono",Consolas,"Roboto Mono",ui-monospace,monospace;
@@ -19,7 +19,7 @@
       --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#22303E;--line2:#1A2734;
       --accent:#FF7A33;--accent-soft:#37220F;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;
       --good:#5FD08B;--good-soft:#122A1B;--warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
-      --grad:linear-gradient(140deg,#E9691F 0%,#C24309 100%);
+      
       --glow:0 0 0 1px rgba(255,122,51,.18), 0 10px 40px -10px rgba(0,0,0,.6);
       --shadow:0 16px 50px -18px rgba(0,0,0,.7);}
   }
@@ -27,53 +27,50 @@
     --ink:#111A24;--ink2:#48586A;--muted:#7C8C9C;--line:#DCE2EB;--line2:#E9EDF3;--accent:#C24309;
     --accent-soft:#FBE7DB;--steel:#0E7C93;--navy:#1F3A50;--navy-soft:#E4EBF3;--good:#1E7D46;--good-soft:#E1F1E7;
     --warn:#A9660A;--warn-soft:#F8EEDA;--risk:#C0362E;--risk-soft:#F9E4E1;
-    --grad:linear-gradient(140deg,#E9691F 0%,#C24309 100%);
+    
     --glow:0 0 0 1px rgba(194,67,9,.16), 0 8px 30px -8px rgba(30,50,70,.18);
     --shadow:0 10px 34px -14px rgba(20,35,55,.28);}
   :root[data-theme="dark"]{--bg:#080C12;--panel:#111A24;--panel2:#17222F;--side:#060A0F;--side-ink:#8195A9;
     --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#22303E;--line2:#1A2734;--accent:#FF7A33;
     --accent-soft:#37220F;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;--good:#5FD08B;--good-soft:#122A1B;
     --warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
-    --grad:linear-gradient(140deg,#E9691F 0%,#C24309 100%);
+    
     --glow:0 0 0 1px rgba(255,122,51,.18), 0 10px 40px -10px rgba(0,0,0,.6);
     --shadow:0 16px 50px -18px rgba(0,0,0,.7);}
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;display:flex;min-height:100vh;
     -webkit-font-smoothing:antialiased;letter-spacing:-.005em;position:relative}
-  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-    background:radial-gradient(60vw 50vh at 78% -8%, rgba(255,122,51,.09), transparent 60%),
-               radial-gradient(50vw 40vh at 8% 108%, rgba(56,198,232,.07), transparent 60%)}
   body>*{position:relative;z-index:1}
   button{font-family:var(--sans)}
   ::selection{background:var(--accent);color:#fff}
-  button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--steel);outline-offset:2px}
+  button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .search:focus,.userbox select:focus,.fields input:focus,.fields select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 
   /* ===== sidebar ===== */
   aside{width:216px;flex:none;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;
     padding:16px 12px;gap:2px;position:sticky;top:0;height:100vh;border-right:1px solid rgba(255,255,255,.05)}
   aside .logo{display:flex;align-items:center;gap:11px;font-weight:750;color:#fff;font-size:17px;padding:6px 8px 18px;letter-spacing:-.02em}
-  aside .logo .dot{width:26px;height:26px;border-radius:8px;background:var(--grad);flex:none;position:relative;box-shadow:0 4px 16px rgba(255,122,51,.4)}
+  aside .logo .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);flex:none;position:relative}
   aside .logo .dot::after{content:"";position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,transparent 52%,var(--side) 52%,var(--side) 68%,transparent 68%)}
   aside .logo small{font-family:var(--mono);font-size:8.5px;color:var(--side-ink);font-weight:400;margin-left:auto;letter-spacing:0;opacity:.7}
   aside nav button{display:flex;align-items:center;gap:11px;background:none;border:none;color:var(--side-ink);
     font-size:14px;font-weight:600;padding:11px 13px;border-radius:10px;cursor:pointer;text-align:left;width:100%;
     position:relative;transition:background .15s,color .15s;letter-spacing:-.01em}
   aside nav button:hover{background:rgba(255,255,255,.06);color:#fff}
-  aside nav button[aria-current="true"]{background:linear-gradient(90deg,rgba(255,122,51,.18),rgba(56,198,232,.06));color:#fff}
-  aside nav button[aria-current="true"]::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--grad)}
+  aside nav button[aria-current="true"]{background:rgba(255,122,51,.13);color:#fff}
+  aside nav button[aria-current="true"]::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
   aside nav button .ic{width:20px;text-align:center;opacity:.9}
-  aside nav button .n{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--grad);color:#fff;border-radius:99px;padding:1px 7px;font-weight:700}
+  aside nav button .n{margin-left:auto;font-family:var(--mono);font-size:10px;background:var(--accent);color:#fff;border-radius:99px;padding:1px 7px;font-weight:700}
   aside .create{margin:16px 4px 6px}
-  aside .create button{width:100%;background:var(--grad);color:#fff;border:none;border-radius:11px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;
-    box-shadow:0 6px 22px -6px rgba(255,122,51,.5);transition:transform .12s,box-shadow .15s;letter-spacing:-.01em}
-  aside .create button:hover{transform:translateY(-1px);box-shadow:0 10px 28px -6px rgba(56,198,232,.5)}
+  aside .create button{width:100%;background:var(--accent);color:#fff;border:none;border-radius:11px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;
+    transition:filter .15s;letter-spacing:-.01em}
+  aside .create button:hover{filter:brightness(.92)}
   aside .bottom{margin-top:auto;padding:10px 12px;font-family:var(--mono);font-size:10px;line-height:1.6;color:var(--side-ink);opacity:.6}
 
   /* ===== main ===== */
   main{flex:1;min-width:0;display:flex;flex-direction:column}
-  .topbar{display:flex;align-items:center;gap:12px;padding:13px 24px;background:color-mix(in srgb,var(--panel) 82%, transparent);
-    backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
+  .topbar{display:flex;align-items:center;gap:12px;padding:13px 24px;background:var(--panel);
     border-bottom:1px solid var(--line);flex-wrap:wrap;position:sticky;top:0;z-index:30}
   /* сигнатура: шпангоутная линейка — засечки плазовой разбивки корпуса вдоль нижнего края шапки */
   .topbar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:6px;pointer-events:none;
@@ -90,7 +87,7 @@
   .icobtn:hover{border-color:var(--accent);color:var(--accent)}
   .bell-wrap{position:relative}
   .bell-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:99px;
-    background:var(--grad);color:#fff;font-size:9px;font-weight:700;display:none;place-items:center;padding:0 4px;font-family:var(--mono);box-shadow:0 2px 8px -2px rgba(255,122,51,.6)}
+    background:var(--accent);color:#fff;font-size:9px;font-weight:700;display:none;place-items:center;padding:0 4px;font-family:var(--mono)}
   .bell-badge.on{display:grid}
   .bell-drop{position:absolute;top:44px;right:0;width:340px;max-height:420px;overflow-y:auto;z-index:70;
     background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(10,20,30,.25);
@@ -115,25 +112,24 @@
   .content{padding:20px 22px 60px;overflow-x:hidden}
 
   .av{width:27px;height:27px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:11px;font-weight:700;flex:none;vertical-align:middle}
-  .btn{background:var(--grad);color:#fff;border:none;border-radius:10px;padding:9px 17px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;
-    box-shadow:0 5px 18px -6px rgba(255,122,51,.45);transition:transform .12s,box-shadow .15s,filter .15s;letter-spacing:-.01em}
-  .btn:hover{transform:translateY(-1px);box-shadow:0 9px 24px -6px rgba(56,198,232,.45)}
-  .btn:hover{filter:brightness(1.07)}
-  .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line);box-shadow:none}
-  .btn.ghost:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:none}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 17px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;
+    transition:filter .15s;letter-spacing:-.01em}
+  .btn:hover{filter:brightness(.92)}
+  .btn:active{filter:brightness(.85)}
+  .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--accent);filter:none}
   .btn.big{padding:11px 22px;font-size:14px}
   .chip{font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer;transition:.14s}
   .chip:hover{border-color:var(--muted);color:var(--ink)}
-  .chip[aria-pressed="true"]{border-color:transparent;color:#fff;background:var(--grad);box-shadow:0 3px 12px -4px rgba(255,122,51,.5)}
+  .chip[aria-pressed="true"]{border-color:var(--accent);color:#fff;background:var(--accent)}
   .chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;align-items:center}
   .chips .lbl{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-right:2px}
 
-  /* === футуристичная полировка: глубина, подъём, градиентные акценты === */
-  .wcard,.kbcard,.anacard,.ocard,.mod,.role,.pain{box-shadow:var(--shadow);transition:transform .16s cubic-bezier(.16,1,.3,1),border-color .16s,box-shadow .16s}
-  .wcard:hover,.kbcard:hover,.anacard:hover,.ocard:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:var(--glow)}
-  .panel,.evfeed,.card,.stat,.flow-wrap{box-shadow:var(--shadow)}
-  .tsec h3 .cnt{background:var(--grad);color:#fff;font-weight:700}
-  .step.current .node{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft),0 0 16px -2px var(--accent)}
+  /* === спокойная глубина: состояние передаёт рамка, не подпрыгивание (impeccable · product) === */
+  .wcard,.kbcard,.anacard,.ocard,.mod,.role,.pain{transition:border-color .18s}
+  .wcard:hover,.kbcard:hover,.anacard:hover,.ocard:hover{border-color:var(--accent)}
+  .tsec h3 .cnt{background:var(--panel2);color:var(--ink2);border:1px solid var(--line);font-weight:700}
+  .step.current .node{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
   .content{scroll-behavior:smooth}
 
   /* ===== TODAY ===== */
@@ -329,13 +325,13 @@
   /* reports */
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
   /* v1.6 приветствие / тур */
-  .wl-bg{position:fixed;inset:0;z-index:90;background:rgba(6,10,15,.72);backdrop-filter:blur(6px);
+  .wl-bg{position:fixed;inset:0;z-index:90;background:rgba(6,10,15,.78);
     display:none;place-items:center;padding:20px}
   .wl-bg.open{display:grid}
   .wl{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:640px;width:100%;
     max-height:88vh;overflow-y:auto;padding:32px 34px;box-shadow:var(--shadow);position:relative}
   .wl::before{content:"";position:absolute;inset:0;border-radius:20px;padding:1px;pointer-events:none;
-    background:var(--grad);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    background:var(--accent);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
     -webkit-mask-composite:xor;mask-composite:exclude;opacity:.4}
   .wl .eye{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
   .wl h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
@@ -346,14 +342,14 @@
   @media(max-width:520px){.wl-grid{grid-template-columns:1fr}}
   .wl-mod{display:flex;gap:10px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);
     border-radius:12px;padding:11px 13px;cursor:pointer;transition:border-color .14s,transform .14s}
-  .wl-mod:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .wl-mod:hover{border-color:var(--accent)}
   .wl-mod .mi{font-size:16px;flex:none;margin-top:1px}
   .wl-mod b{font-size:13.5px;display:block}
   .wl-mod span{font-size:11.5px;color:var(--muted);line-height:1.4}
   .wl h3{font-size:13px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
   .wl-step{display:flex;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line2);cursor:pointer;font-size:13.5px;color:var(--ink)}
   .wl-step:hover{color:var(--accent)}
-  .wl-step .num{width:22px;height:22px;border-radius:50%;background:var(--grad);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+  .wl-step .num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
   .wl-act{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
   /* v1.3 графики */
   .chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:12px}
@@ -390,7 +386,7 @@
   .primact{display:flex;gap:10px;align-items:center;margin:0 0 16px;flex-wrap:wrap}
   .primact .st{font-size:12.5px;color:var(--muted)}
   .fields{display:grid;grid-template-columns:110px 1fr;gap:9px 12px;align-items:center;margin-bottom:16px}
-  .fields label{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .fields label{font-size:12px;font-weight:600;color:var(--ink2)}
   .fields select,.fields input{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--ink);font-size:13px;font-family:var(--sans);width:100%}
   .drawer h4{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px;font-weight:600}
   .sub{display:flex;gap:9px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line2);font-size:13.5px;color:var(--ink)}
@@ -429,7 +425,7 @@
 </style>
 
 <aside>
-  <div class="logo"><span class="dot"></span> Эллинг <small>v1.17 · Пульт</small></div>
+  <div class="logo"><span class="dot"></span> Эллинг <small>v1.18 · Пульт</small></div>
   <nav id="nav">
     <button data-nav="today"><span class="ic">☀</span> Сегодня <span class="n" id="todayN"></span></button>
     <button data-nav="deals"><span class="ic">₽</span> Сделки</button>
@@ -1587,7 +1583,7 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
     <div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
-        Версия: Эллинг v1.17 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
+        Версия: Эллинг v1.18 «Пульт» · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
         <button class="chip" id="resetBtn2" style="margin-top:6px">Сбросить демо-данные</button>
       </div>
     </div>`;
