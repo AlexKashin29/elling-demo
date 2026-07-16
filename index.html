@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.58 «Настройки» — рабочий MVP</title>
+﻿<title>Эллинг v1.59 «Организация» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -196,6 +196,27 @@
   .set-cat.on svg.ic{opacity:1}
   .set-main{min-width:0}
   .set-sec[hidden]{display:none}
+  .org-head{display:flex;align-items:center;gap:14px;padding-bottom:14px;border-bottom:1px solid var(--line2);margin-bottom:14px}
+  .org-mark{width:46px;height:46px;border-radius:12px;flex:none;background:linear-gradient(140deg,var(--steel),var(--accent));position:relative}
+  .org-mark::after{content:"";position:absolute;inset:0;border-radius:12px;background:linear-gradient(180deg,transparent 54%,var(--panel) 54%,var(--panel) 66%,transparent 66%)}
+  .org-name{font-size:16.5px;font-weight:750;letter-spacing:-.01em}
+  .org-sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .org-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 22px}
+  .org-f label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+  .org-f>div{font-size:13.5px;color:var(--ink);font-weight:600}
+  .org-contour{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.org-contour{grid-template-columns:1fr}}
+  .cont-opt{text-align:left;padding:14px 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel2);cursor:pointer;font:inherit;transition:border-color .15s,background .15s}
+  .cont-opt b{display:block;font-size:14px;color:var(--ink);font-weight:700;margin-bottom:4px}
+  .cont-opt small{font-size:11.5px;color:var(--muted);line-height:1.4;display:block}
+  .cont-opt:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+  .cont-opt.on{border-color:var(--accent);background:var(--accent-soft)}
+  .cont-opt.on b{color:var(--accent)}
+  .org-plan{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:var(--panel2);border-radius:12px;padding:16px 18px}
+  .plan-name{font-size:16px;font-weight:750}
+  .plan-sub{font-size:12.5px;color:var(--muted);margin-top:3px;max-width:44ch}
+  .plan-price{font-size:22px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+  .plan-price small{font-size:12px;font-weight:500;color:var(--muted)}
   @media(max-width:860px){.set-wrap{grid-template-columns:1fr}.set-rail{position:static;flex-direction:row;overflow-x:auto;flex-wrap:nowrap;top:0}.set-cat{white-space:nowrap}.set-cat.on::before{display:none}}
   .bench-dealpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
   .bench-dealpick label{font-size:13px;font-weight:600;color:var(--ink2)}
@@ -1887,7 +1908,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.58';
+const APP_VER = '1.59';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2043,9 +2064,38 @@ function vSettings(){
     ['Закупки','спецификации, поставщики, ПП 719','CRM-воронка'],
     ['Логист','отгрузки, комплектация, пропуска','CRM, инженерная БЗ'],
   ];
-  const tab = S.setTab||'users';
-  const SET_CATS=[['users','i-deals','Пользователи и роли'],['integrations','i-supply','Интеграции'],['migrate','i-supply','Миграция реестра'],['auto','i-today','Автоматизации'],['notify','i-bell','Уведомления'],['theme','i-settings','Оформление'],['api','i-kb','API'],['system','i-plan','Система']];
+  const tab = S.setTab||'org';
+  const cont = S.orgContour||'cloud';
+  const SET_CATS=[['org','i-portal','Организация'],['users','i-deals','Пользователи и роли'],['integrations','i-supply','Интеграции'],['migrate','i-supply','Миграция реестра'],['auto','i-today','Автоматизации'],['notify','i-bell','Уведомления'],['theme','i-settings','Оформление'],['api','i-kb','API'],['system','i-plan','Система']];
   return `<div class="set-wrap"><aside class="set-rail">${SET_CATS.map(([id,ic,l])=>`<button class="set-cat ${tab===id?'on':''}" data-settab="${id}"><svg class="ic"><use href="#${ic}"/></svg><span>${l}</span></button>`).join('')}</aside><div class="set-main">
+    <section class="set-sec" data-sec="org" ${tab==='org'?'':'hidden'}>
+      <div class="panel" style="margin-bottom:14px">
+        <div class="org-head"><span class="org-mark"></span>
+          <div style="flex:1"><div class="org-name">АО «Завод судового оборудования»</div>
+            <div class="org-sub">Производитель СКО · Санкт-Петербург</div></div>
+          <span class="stchip" style="color:var(--accent);border:1px solid var(--accent)">дизайн-партнёр</span></div>
+        <div class="org-grid">
+          <div class="org-f"><label>Сегмент</label><div>Производитель судового комплектующего оборудования</div></div>
+          <div class="org-f"><label>ИНН / ОГРН</label><div>7801XXXXXX · 1157847XXXXXX</div></div>
+          <div class="org-f"><label>Регион</label><div>Санкт-Петербург</div></div>
+          <div class="org-f"><label>Профиль ГОЗ</label><div>работает по 275-ФЗ · ИГК, приёмка ВП</div></div>
+          <div class="org-f"><label>Ответственный</label><div>Александр · директор внешних продуктов</div></div>
+          <div class="org-f"><label>Пресет отрасли</label><div>Производитель СКО (можно сменить в мастере миграции)</div></div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px">Реквизиты подставляются в договоры, ТКП и портал заказчика. В демо — примерные значения.</p>
+      </div>
+      <div class="panel" style="margin-bottom:14px"><h3>Размещение и контур</h3>
+        <div class="org-contour">
+          <button class="cont-opt ${cont==='cloud'?'on':''}" data-contour="cloud"><b>☁ Облако</b><small>SaaS · обновления автоматически · быстрый старт</small></button>
+          <button class="cont-opt ${cont==='box'?'on':''}" data-contour="box"><b>▣ Коробка (on-prem)</b><small>закрытый контур / КИИ · Astra Linux, Postgres Pro</small></button>
+        </div>
+        <p style="font-size:13px;color:var(--ink2);margin-top:12px">Текущее размещение: <b>${cont==='cloud'?'облако':'закрытый контур (коробка)'}</b>. Переход между контурами — миграцией без потери данных; связь с внешними участниками (верфь) при этом идёт через «Эллинг Мост».</p>
+      </div>
+      <div class="panel" style="margin-bottom:14px"><h3>Тариф</h3>
+        <div class="org-plan"><div><div class="plan-name">Отрасль</div><div class="plan-sub">CRM продаж + ось заказа + инженерная БЗ с ИИ · ГОЗ из коробки</div></div>
+          <div class="plan-price">990 ₽<small>/ место · <span style="color:var(--good)">−50% дизайн-партнёр</span></small></div></div>
+      </div>
+    </section>
     <section class="set-sec" data-sec="theme" ${tab==='theme'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Оформление</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${[['auto','◐ Авто (по системе)'],['dark','☾ Тёмная'],['light','☀ Светлая']].map(([v,l])=>
@@ -2948,7 +2998,9 @@ document.addEventListener('click', e=>{
   const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; document.body.classList.remove('nav-open'); render(); return; }
   if(e.target.closest('[data-migrate]')){ S.view='settings'; S.setTab='migrate'; S._scrollMig=1; document.body.classList.remove('nav-open'); render(); return; }
   const stab = e.target.closest('[data-settab]');
-  if(stab){ S.setTab=stab.dataset.settab; render(); const m=$('content'); if(m&&m.scrollIntoView) try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
+  if(stab){ S.setTab=stab.dataset.settab; render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
+  const cont = e.target.closest('[data-contour]');
+  if(cont){ S.orgContour=cont.dataset.contour; save(); render(); toast(S.orgContour==='box'?'Контур: закрытый (коробка on-prem)':'Контур: облако','ok'); return; }
   const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
   const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); return; }
   const adv = e.target.closest('[data-advance]');
