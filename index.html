@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.42 «Морской-2» — рабочий MVP</title>
+﻿<title>Эллинг v1.43 «Корабли» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1751,7 +1751,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.42';
+const APP_VER = '1.43';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2068,8 +2068,9 @@ function vToday(){
         <span class="stchip" style="color:${a.c};border:1px solid ${a.c}">открыть →</span></div>`).join('')}</div>`
     :`<div class="zero" style="margin-bottom:18px">Портфель в графике — ничего не требует вмешательства.</div>`}`;
   })() : '';
-  return `<div class="hello">${p.role==='директор'?'Портфель под контролем':isBoss?'Инженерный центр':'Добрый день'}, ${p.full}
-      <small>${p.role} · ${isBoss?'состояние портфеля и что требует вмешательства':'что требует вашего участия сегодня'}</small></div>
+  return `<div class="hello hello-ship">${p.role==='директор'?'Портфель под контролем':isBoss?'Инженерный центр':'Добрый день'}, ${p.full}
+      <small>${p.role} · ${isBoss?'состояние портфеля и что требует вмешательства':'что требует вашего участия сегодня'}</small>
+      <svg class="hello-ship-art" viewBox="0 0 240 90" aria-hidden="true"><use href="#i-ship-hero"/></svg></div>
     ${hubTiles()}
     ${pulse}
     ${isBoss ? `<div class="tsec"><h3>Последние события по заказам</h3>
