@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.56 «Скролл+фильтры» — рабочий MVP</title>
+﻿<title>Эллинг v1.57 «Читаемость» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -290,6 +290,8 @@
   .content::-webkit-scrollbar-track{background:transparent}
   .content::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--muted) 55%,transparent);border-radius:8px;border:3px solid transparent;background-clip:padding-box}
   .content::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+  /* v1.57: комфортная длина строки текста на широких экранах (карточки остаются во всю ширину) */
+  .panel>p,.xorg-note,.hello small{max-width:82ch}
   /* живой переход между экранами + мягкое появление карточек */
   @keyframes viewIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
   @keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
@@ -1873,7 +1875,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.56';
+const APP_VER = '1.57';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
