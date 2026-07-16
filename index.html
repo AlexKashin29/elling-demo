@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.40 «Роли» — рабочий MVP</title>
+﻿<title>Эллинг v1.41 «Бенчмарки» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -103,6 +103,35 @@
   .hub-tile:hover svg.ic.ht-go{color:var(--accent);opacity:1}
   @media(max-width:900px){.hub{grid-template-columns:1fr 1fr}}
   @media(max-width:520px){.hub{grid-template-columns:1fr}}
+  /* ---- v1.41: бенчмарки флота + силуэт судна ---- */
+  .hello-ship{position:relative;overflow:hidden}
+  .hello-ship-art{position:absolute;right:8px;bottom:-8px;width:210px;height:80px;stroke:var(--accent);fill:none;stroke-width:1.6;opacity:.15;pointer-events:none;stroke-linecap:round;stroke-linejoin:round}
+  @media(max-width:680px){.hello-ship-art{display:none}}
+  .ai-strip{display:flex;gap:13px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--sh);margin:2px 0 16px;font-size:13.5px;color:var(--ink2);line-height:1.5}
+  .ai-strip b{color:var(--ink)}
+  .ai-strip svg.ic{width:22px;height:22px;color:var(--accent);flex:none;margin-top:1px}
+  .bm-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .bm-filters .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .bm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(335px,1fr));gap:14px}
+  .bm-card{border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:var(--sh);padding:16px 17px;display:flex;flex-direction:column;gap:11px;transition:transform .16s cubic-bezier(.16,1,.3,1),box-shadow .16s,border-color .16s}
+  .bm-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+  .bm-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .bm-name{font-weight:750;font-size:15.5px;letter-spacing:-.01em}
+  .bm-cls{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .bm-series{flex:none;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:3px 10px;white-space:nowrap}
+  .bm-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:2px 0}
+  .bm-metrics>div{background:var(--panel2);border-radius:10px;padding:8px 10px;text-align:center}
+  .bm-metrics b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em}
+  .bm-metrics span{font-size:10.5px;color:var(--muted)}
+  .bm-sko{display:flex;flex-wrap:wrap;gap:6px}
+  .bm-ins{font-size:12.8px;color:var(--ink2);line-height:1.45}
+  .bm-tag{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:1px 7px;border-radius:6px;margin-right:6px;vertical-align:middle}
+  .bm-tag.good{color:var(--good);background:var(--good-soft)}
+  .bm-tag.acc{color:var(--accent);background:var(--accent-soft)}
+  .bm-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:2px;padding-top:10px;border-top:1px solid var(--line2)}
+  .bm-src{font-size:11px;color:var(--muted)}
+  .bm-foot .btn.ghost{padding:5px 12px;font-size:12px}
+  .wl-ship{display:block;width:min(300px,72%);height:auto;stroke:var(--accent);fill:none;stroke-width:1.5;opacity:.92;margin:10px 0 2px;stroke-linecap:round;stroke-linejoin:round}
   aside .create{margin:16px 4px 6px}
   aside .create button{width:100%;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 88%,#fff),var(--accent) 70%);color:#fff;border:none;border-radius:12px;padding:12px;font-weight:600;font-size:14px;cursor:pointer;
     box-shadow:0 2px 8px -2px color-mix(in srgb,var(--accent) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.22);transition:filter .15s;letter-spacing:-.01em}
@@ -593,6 +622,7 @@
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
   <symbol id="i-bench" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 4-6"/><circle cx="7" cy="15" r="1"/><circle cx="20" cy="7" r="1"/></symbol>
   <symbol id="i-ship" viewBox="0 0 24 24"><path d="M3 15l1.5 5a1 1 0 0 0 .95.7h13.1a1 1 0 0 0 .95-.7L21 15"/><path d="M4 15l7.2-2.4a2 2 0 0 1 1.3 0L20 15"/><path d="M12 12V6"/><path d="M9 6h6"/><path d="M12 3v3"/></symbol>
+  <symbol id="i-ship-hero" viewBox="0 0 240 90"><path d="M20 58 H168 L152 77 H40 a10 10 0 0 1 -9 -6 Z"/><path d="M55 58 V40 H97 V58"/><path d="M69 40 V29 H90 V40"/><path d="M104 40 V32 H114 V40"/><path d="M120 58 V47 H150 L156 58"/><path d="M78 29 V16"/><path d="M78 18 H98"/><path d="M6 71 q11 -6 22 0 t22 0 t22 0 t22 0 t22 0 t22 0 t22 0 t22 0 t22 0 t22 0"/></symbol>
 </svg>
 <aside>
   <div class="logo"><span class="dot"></span> Эллинг <small>ОС заказа</small></div>
@@ -957,6 +987,38 @@ function seed(){
          {t:'Контроль по всем зонам карты',tip:'Не пропускать зоны концентрации напряжений'},
          {t:'Заключение с эскизом дефекта',tip:'Заключение без эскиза не принимается'},
        ]},
+    ],
+    benchmarks:[
+      {id:'B1',name:'Траулер-процессор пр. 170701',cls:'РТМ-С «Баренцево море»',yard:'Адмиралтейские верфи',type:'Рыболовный флот',series:10,months:44,local:63,
+       sko:['Гл. двигатель','Рефустановка','Траловый комплекс','Рыбофабрика','ВРК/подрулька','Автоматизация ГЭУ'],
+       won:'Победил за счёт полного рефрижераторного комплекса под «квоты под киль» и локализации рыбофабрики',
+       lesson:'Комплект «фабрика + рефа + трал» продаётся как один узел — заказчик не хочет собирать поставщиков сам',
+       src:'реестр РМРС + пресс-релизы верфи'},
+      {id:'B2',name:'Краболов пр. 03141',cls:'«Омолон» / «Кедон»',yard:'Онежский ССЗ',type:'Рыболовный флот',series:7,months:34,local:71,
+       sko:['Гл. двигатель','РРО (краб. танки)','Система живой воды','Кран-балки','ДГ комплект'],
+       won:'Система хранения живого краба (RSW/циркуляция) — критичный узел, мало кто локализовал',
+       lesson:'Узкий, но незаменимый узел = высокая маржа и защита от конкурентов; ищи «дефицитную» позицию в СКО',
+       src:'реестр РМРС + ЕИС'},
+      {id:'B3',name:'Сухогруз RSD59',cls:'«Волго-Дон макс»',yard:'Красное Сормово',type:'Сухогрузы / река-море',series:'40+',months:12,local:78,
+       sko:['Гл. двигатель','Люковые закрытия','Подрулька','Грузовая система','Автоматизация'],
+       won:'Серийность и сжатый цикл (~12 мес/корпус) — выиграл на предсказуемости поставок',
+       lesson:'В серии решает не цена узла, а гарантия ритмичной поставки под такт верфи — SLA важнее скидки',
+       src:'открытые данные ОСК'},
+      {id:'B4',name:'Паром пр. CNF11CPD',cls:'«Маршал Рокоссовский»',yard:'верфь-интегратор (Турция→РФ)',type:'Пассажирский / паромы',series:2,months:52,local:41,
+       sko:['ДГУ (эл.движение)','Азиподы','АСУ ТП','Системы швартовки','Спецоборуд. накат'],
+       won:'Электродвижение и накатное оборудование под конкретную линию Усть-Луга — Балтийск',
+       lesson:'Низкая локализация (41%) = окно для импортозамещения: азиподы и АСУ ТП — приоритет ПП719',
+       src:'пресс-релизы + Минпромторг'},
+      {id:'B5',name:'Земснаряд пр. 93.159',cls:'дноуглубительный',yard:'Завод «Красное Сормово»',type:'Технический флот',series:4,months:28,local:69,
+       sko:['Грунтовый насос','Разрыхлитель','Гидравлика стрелы','ДГ','Система позиционирования'],
+       won:'Грунтовый насос + разрыхлитель под конкретные грунты Азово-Черноморского бассейна',
+       lesson:'Инженерная адаптация узла под регион эксплуатации — то, чего нет у типового импорта; продавай «под бассейн»',
+       src:'реестр РМРС'},
+      {id:'B6',name:'Ярусолов пр. 200101',cls:'МРТР',yard:'Северная верфь / Ленинград',type:'Рыболовный флот',series:5,months:38,local:58,
+       sko:['Гл. двигатель','Ярусный комплекс','Морозильный трюм','Обработка улова','ВРК'],
+       won:'Автоматизированный ярусный комплекс — импортозамещение норвежского аналога',
+       lesson:'Прямая замена ушедшего западного бренда с сервисом в РФ — сильнейший аргумент 2024–2026',
+       src:'реестр РМРС + пресс-релизы'},
     ],
     notes:[], fired:[], savedFilters:[], notifCh:{mail:true,tg:false},
   };
@@ -1389,7 +1451,7 @@ function moveTask(t,to,how){
 }
 
 /* ================= views ================= */
-const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Заказы',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',settings:'Настройки',order:'Заказ'};
+const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Заказы',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',bench:'Бенчмарки флота',settings:'Настройки',order:'Заказ'};
 
 /* ---- Снабжение: память о поставщиках + ПП 719 + сертификаты РМРС ---- */
 const REG_ST = {ok:['var(--good)','в реестре ПП 719'],warn:['var(--warn)','под угрозой (нет отчёта ГИСП)'],expired:['var(--risk)','аннулирована']};
@@ -2470,6 +2532,7 @@ const NAVGROUPS = [
   ]},
   {id:'analytics', icon:'i-reports', label:'Аналитика', items:[
     {view:'reports', icon:'i-reports', label:'Отчёты'},
+    {view:'bench', icon:'i-bench', label:'Бенчмарки флота'},
   ]},
   {solo:true, view:'settings', icon:'i-settings', label:'Настройки'},
 ];
@@ -2508,7 +2571,7 @@ const ROLE_TILES = {
   'продажи':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['estimates','i-est','Просчёт ТКП'],['portal','i-portal','Портал заказчика']],
   'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика'],['settings','i-settings','Импорт 1С/ЛОЦМАН']],
   'логист':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика'],['reports','i-reports','Отчёты']],
-  'директор':[['reports','i-reports','Отчёты'],['flow','i-flow','Ось заказа'],['deals','i-deals','Воронка сделок'],['radar','i-radar','Радар закладок']],
+  'директор':[['reports','i-reports','Отчёты'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа'],['deals','i-deals','Воронка сделок']],
 };
 function navCount(v){ try{
   if(v==='estimates') return estAlerts();
@@ -2524,6 +2587,41 @@ function hubTiles(){
     return `<button class="hub-tile" data-nav2="${v}"><svg class="ic"><use href="#${ic}"/></svg>`
       + `<span class="ht-l">${lb}</span>${c?`<span class="ht-c">${c}</span>`:''}`
       + `<svg class="ic ht-go"><use href="#i-chev"/></svg></button>`; }).join('')}</div>`;
+}
+function vBench(){
+  const bm = S.benchmarks||[];
+  const types = Array.from(new Set(bm.map(b=>b.type)));
+  const f = S.benchFilter||'all';
+  const list = f==='all'?bm:bm.filter(b=>b.type===f);
+  const avgLocal = bm.length?Math.round(bm.reduce((a,b)=>a+b.local,0)/bm.length):0;
+  const bestLocal = bm.length?Math.max.apply(null,bm.map(b=>b.local)):0;
+  const card = b=>`<div class="bm-card">
+    <div class="bm-top"><div><div class="bm-name">${esc(b.name)}</div><div class="bm-cls">${esc(b.cls)} · ${esc(b.yard)}</div></div>
+      <span class="bm-series">серия ${b.series}</span></div>
+    <div class="bm-metrics">
+      <div><b>${b.local}%</b><span>локализация</span></div>
+      <div><b>${b.months} мес</b><span>цикл</span></div>
+      <div><b>${b.sko.length}</b><span>узлов СКО</span></div>
+    </div>
+    <div class="bm-sko">${b.sko.map(s=>`<span class="stchip">${esc(s)}</span>`).join('')}</div>
+    <div class="bm-ins"><span class="bm-tag good">почему выиграл</span> ${esc(b.won)}</div>
+    <div class="bm-ins"><span class="bm-tag acc">на что равняться</span> ${esc(b.lesson)}</div>
+    <div class="bm-foot"><span class="bm-src">источник: ${esc(b.src)}</span>
+      <button class="btn ghost" data-benchdo="${b.id}">Взять в проработку →</button></div>
+  </div>`;
+  return `<div class="hello hello-ship">Бенчмарки флота<small>успешные серии: состав СКО, локализация ПП719 и сроки — на что равняться и что подсмотреть</small>
+      <svg class="hello-ship-art" viewBox="0 0 240 90" aria-hidden="true"><use href="#i-ship-hero"/></svg></div>
+    <div class="ai-strip"><svg class="ic"><use href="#i-bench"/></svg>
+      <div><b>ИИ-помощник по бенчмаркам.</b> Собрано из открытых источников — реестр судов РМРС, ЕИС, пресс-релизы верфей. Сравнивай состав СКО и локализацию своих проектов с эталонными сериями: где ты отстаёшь и какой узел стоит добавить.</div></div>
+    <div class="stats" style="margin:8px 0 16px">
+      <div class="stat"><div class="v">${bm.length}</div><div class="l">эталонных серий</div></div>
+      <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--accent);color:var(--accent)">${avgLocal}%</div><div class="l">средняя локализация</div></div>
+      <div class="stat"><div class="v">${types.length}</div><div class="l">сегментов флота</div></div>
+      <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--good);color:var(--good)">${bestLocal}%</div><div class="l">лучший по локализации</div></div>
+    </div>
+    <div class="bm-filters"><button class="chip ${f==='all'?'on':''}" data-benchf="all">Все сегменты</button>
+      ${types.map(t=>`<button class="chip ${f===t?'on':''}" data-benchf="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+    <div class="bm-grid">${list.map(card).join('')||emptyBox('i-bench','Нет данных','По этому сегменту пока нет эталонов.','Показать все','data-benchf=\"all\"')}</div>`;
 }
 function render(){
   syncNavOpen();
@@ -2541,7 +2639,7 @@ function render(){
   const ea=estAlerts(); const en=$('estN'); if(en){ en.textContent=ea||''; en.style.display=ea?'':'none'; }
   const pq=portalPending(); const pn=$('portalN'); if(pn){ pn.textContent=pq||''; pn.style.display=pq?'':'none'; }
   $('content').innerHTML = S.view==='today'?vToday(): S.view==='deals'?vDeals(): S.view==='supply'?vSupply(): S.view==='flow'?vFlow(): S.view==='radar'?vRadar(): S.view==='board'?vBoard():
-    S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='estimates'?vEstimates(): S.view==='notices'?vNotices(): S.view==='portal'?vPortal(): S.view==='settings'?vSettings(): vReports();
+    S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='estimates'?vEstimates(): S.view==='notices'?vNotices(): S.view==='portal'?vPortal(): S.view==='bench'?vBench(): S.view==='settings'?vSettings(): vReports();
   if(S.view!==S._prevView){ const c=$('content'); c.classList.remove('view-in'); void c.offsetWidth; c.classList.add('view-in'); S._prevView=S.view; animateCounters(); }
   $('userSel').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
   renderBell();
@@ -2577,6 +2675,7 @@ const WL_STEPS = [
 function openWelcome(){
   $('welcome').querySelector('.wl').innerHTML = `
     <p class="eye">Эллинг · операционная система заказа</p>
+    <svg class="wl-ship" viewBox="0 0 240 90" aria-hidden="true"><use href="#i-ship-hero"/></svg>
     <h2>Здесь <span class="g">строится</span> ваш заказ</h2>
     <p class="sub">Трекер + CRM проектных продаж + инженерная база знаний с ИИ — <b>в одной системе, где судостроительная отрасль уже описана</b>. Ниже — восемь модулей. Клик открывает.</p>
     <div class="wl-grid">
@@ -2838,6 +2937,19 @@ document.addEventListener('click', e=>{
     save(); render(); toast(ch.length?('Уведомление отправлено · '+ch.join(' + ')):'Уведомление отправлено в приложение','ok'); return; }
   if(e.target.id==='expCSV'){ exportReportCSV(); toast('Отчёт выгружен в CSV','ok'); return; }
   if(e.target.id==='expPrint'){ window.print(); return; }
+  const bf = e.target.closest('[data-benchf]');
+  if(bf){ S.benchFilter=bf.dataset.benchf; render(); return; }
+  const bdo = e.target.closest('[data-benchdo]');
+  if(bdo){ const b=(S.benchmarks||[]).find(x=>x.id===bdo.dataset.benchdo);
+    if(b){ S.seq=(S.seq||2470)+1;
+      S.tasks.unshift({key:'СТ-'+S.seq, ttl:`Проработать бенчмарк: ${b.name}`, epic:'E2',
+        who:(S.currentUser==='orlov'||S.currentUser==='sokolova')?'maksimov':S.currentUser, col:'open', prio:'md', est:null, sla:null, due:null,
+        desc:`Эталон: <b>${esc(b.name)}</b> (${esc(b.cls)}, ${esc(b.yard)}). Локализация ${b.local}%, цикл ${b.months} мес, серия ${b.series}. Состав СКО: ${b.sko.join(', ')}.<br><b>На что равняться:</b> ${esc(b.lesson)}<br>Сверить наш портфель с этим составом СКО — чего не хватает и где отстаём по локализации ПП719.`,
+        subs:[{t:'Сверить состав СКО с нашим предложением',done:false},{t:'Оценить разрыв по локализации ПП719',done:false},{t:'Наметить узел, который добавить/локализовать',done:false}],
+        comments:[], links:[], watchers:[], log:['создана из бенчмарка '+b.id]});
+      ACTS.push('бенчмарк в проработке: '+b.name.slice(0,40)); S.view='board'; save(); render(); toast('Бенчмарк взят в проработку — задача создана','ok');
+    } return;
+  }
   const kbt = e.target.closest('[data-kbtab]');
   if(kbt){ S.kbTab = kbt.dataset.kbtab; S.kbMsg=''; render(); return; }
   const clx = e.target.closest('[data-clapply]');
