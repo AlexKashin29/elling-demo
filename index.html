@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.24 «Пульт» — рабочий MVP</title>
+﻿<title>Эллинг v1.25 «Пульт» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -451,7 +451,20 @@
   .nt-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:520px){.nt-row{grid-template-columns:1fr}}
   .empty{color:var(--muted);font-size:13px;padding:14px 4px}
-  @media(max-width:760px){ aside{display:none} }
+  .hamburger{display:none}
+  .nav-backdrop{display:none}
+  @media(max-width:860px){
+    aside{position:fixed;left:0;top:0;bottom:0;z-index:80;width:250px;transform:translateX(-100%);
+      transition:transform .26s cubic-bezier(.16,1,.3,1);box-shadow:var(--sh-lg)}
+    body.nav-open aside{transform:translateX(0)}
+    .nav-backdrop{display:block;position:fixed;inset:0;background:rgba(8,13,20,.5);z-index:70;opacity:0;
+      pointer-events:none;transition:opacity .26s}
+    body.nav-open .nav-backdrop{opacity:1;pointer-events:auto}
+    .hamburger{display:grid;order:-1}
+    main{width:100%;min-width:0}
+    .topbar{padding:12px 16px}
+  }
+  @media(max-width:600px){ .search-wrap{display:none} .topbar h1{font-size:18px} }
 </style>
 
 <svg style="display:none" aria-hidden="true">
@@ -471,6 +484,7 @@
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
 </svg>
 <aside>
   <div class="logo"><span class="dot"></span> Эллинг <small>v1.21 · Пульт</small></div>
@@ -492,9 +506,11 @@
   <div class="create"><button id="createBtn" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg class="ic" style="stroke-width:2.2"><use href="#i-plus"/></svg>Создать задачу</button></div>
   <div class="bottom"><span id="srvState">локальный режим</span><br><button id="resetBtn" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;padding:0;font:inherit">сбросить демо</button></div>
 </aside>
+<div class="nav-backdrop" id="navBackdrop"></div>
 
 <main>
   <div class="topbar">
+    <button class="icobtn hamburger" id="navToggle" aria-label="Меню" aria-expanded="false"><svg class="ic" style="pointer-events:none"><use href="#i-menu"/></svg></button>
     <h1 id="pageTitle">Сегодня</h1>
     <span class="crumb" id="crumb"></span>
     <span class="spacer"></span>
@@ -2201,7 +2217,9 @@ document.addEventListener('click', e=>{
     S.view='board'; render(); return; }
   const mv = e.target.closest('[data-move]');
   if(mv){ const [key,to]=mv.dataset.move.split('|'); const t=task(key); if(t){ moveTask(t,to); render(); if($('drawer').classList.contains('open')) openTask(key); } return; }
-  const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; render(); return; }
+  if(e.target.closest('#navToggle')){ document.body.classList.toggle('nav-open'); return; }
+  if(e.target.id==='navBackdrop'){ document.body.classList.remove('nav-open'); return; }
+  const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; document.body.classList.remove('nav-open'); render(); return; }
   const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
   const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); return; }
   const adv = e.target.closest('[data-advance]');
