@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.48 «Полировка-2» — рабочий MVP</title>
+﻿<title>Эллинг v1.49 «Кросс-орг Т1» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -143,6 +143,31 @@
   .bm-btns{display:flex;gap:6px}
   .psec{margin:22px 0 10px;font-size:15px;color:var(--ink);font-weight:700;letter-spacing:-.01em}
   .psec:first-child{margin-top:4px}
+  /* v1.49: прототип Т1 — кросс-орг взаимодействие в портале */
+  .xorg{display:flex;align-items:stretch;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:var(--sh);flex-wrap:wrap}
+  .xorg-side{display:flex;align-items:center;gap:11px;flex:1;min-width:180px}
+  .xorg-side b{font-size:13.5px;display:block;letter-spacing:-.01em}
+  .xorg-side small{font-size:11px;color:var(--muted)}
+  .xdot{width:13px;height:13px;border-radius:50%;flex:none}
+  .xdot.cloud{background:var(--steel);box-shadow:0 0 0 4px color-mix(in srgb,var(--steel) 26%,transparent)}
+  .xdot.box{background:var(--navy);box-shadow:0 0 0 4px color-mix(in srgb,var(--navy) 22%,transparent)}
+  .xorg-link{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:none;padding:0 4px}
+  .xarrow{font-size:18px;color:var(--muted);line-height:1}
+  .xsync{font-family:var(--mono);font-size:10px;color:var(--good);white-space:nowrap}
+  .xorg-note{font-size:12.3px;color:var(--ink2);line-height:1.5;margin-bottom:16px}
+  .xorg-note b{color:var(--ink)}
+  .xown-leg{display:flex;gap:16px;font-size:11px;color:var(--muted);margin:-2px 0 8px;flex-wrap:wrap}
+  .xown-leg span{display:inline-flex;align-items:center;gap:5px}
+  .xown-leg i{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .xown-leg i.sup{background:var(--accent)}.xown-leg i.yard{background:var(--good)}
+  .xown{font-size:9.5px;font-weight:700;border-radius:6px;padding:2px 8px;white-space:nowrap;flex:none}
+  .xown.sup{background:var(--accent-soft);color:var(--accent)}
+  .xown.yard{background:var(--good-soft);color:var(--good)}
+  .xtag{display:inline-block;font-size:9.5px;font-weight:700;border-radius:5px;padding:1px 7px;vertical-align:middle}
+  .xtag.ext{background:var(--good-soft);color:var(--good)}
+  .xtag.int{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .xtoggle{display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-size:11.5px;color:var(--ink2);cursor:pointer;user-select:none}
+  .xtoggle input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
   .bench-dealpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
   .bench-dealpick label{font-size:13px;font-weight:600;color:var(--ink2)}
   .bench-dealpick select{font:inherit;font-size:13.5px;font-weight:600;padding:9px 13px;border-radius:10px;border:1px solid var(--line);
@@ -1585,9 +1610,12 @@ function vPortal(){
   const docs=(S.portalDocs||[]).filter(d=>d.orderId===oid);
   const qa=(S.portalQA||[]).filter(q=>q.orderId===oid);
   const mgr=PEOPLE.sokolova?PEOPLE.sokolova.full:'ваш менеджер';
-  return `<div style="background:var(--navy-soft);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:12.5px;color:var(--ink2);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
-      <b style="color:var(--ink)">Предпросмотр внешнего портала</b> — так заказчик и военная приёмка видят свой заказ через защищённую ссылку.
-      <span style="color:var(--muted)">Скрыто: цена и маржа, поставщики, внутренние задачи и переписка.</span></div>
+  return `<div class="xorg">
+      <div class="xorg-side"><span class="xdot cloud"></span><div><b>Поставщик</b><small>облако · вы</small></div></div>
+      <div class="xorg-link"><span class="xarrow">⟷</span><span class="xsync">⟳ синхронизировано · сейчас</span></div>
+      <div class="xorg-side"><span class="xdot box"></span><div><b>Верфь / ВП</b><small>закрытый контур · внешний участник</small></div></div>
+    </div>
+    <div class="xorg-note">Верфь и военная приёмка работают с заказом как <b>внешние участники</b> — видят только вехи, документы, приёмку и Q&A, синхронизированные из вашего контура. <span style="color:var(--muted)">Скрыто: цена и маржа, свои поставщики, внутренние задачи и переписка.</span></div>
     <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
       ${orders.map(x=>`<button class="chip" data-portalorder="${x.id}" aria-pressed="${x.id===oid}">№${esc(x.num)} · ${esc(x.customer)}</button>`).join('')}</div>
 
@@ -1604,12 +1632,15 @@ function vPortal(){
     </div>
 
     <h4 class="psec">Ход исполнения</h4>
+    <div class="xown-leg"><span><i class="sup"></i> статус двигает поставщик</span><span><i class="yard"></i> двигает верфь / ВП</span></div>
     <div class="anacard" style="cursor:default">
       ${PORTAL_PHASES.map((p,i)=>{ const st=i<curIdx?'done':i===curIdx?'cur':'next';
         const col=st==='done'?'var(--good)':st==='cur'?'var(--accent)':'var(--muted)';
+        const yard = p[1]===7; // «Приёмка ВП» — поле верфи/ВП, остальное двигает поставщик
         return `<div style="display:flex;gap:12px;align-items:center;padding:9px 0;${i<PORTAL_PHASES.length-1?'border-bottom:1px solid var(--line2)':''}">
           <span style="width:14px;height:14px;border-radius:50%;flex:none;background:${st==='next'?'transparent':col};border:2px solid ${col}"></span>
           <span style="flex:1;font-size:13.5px;color:${st==='next'?'var(--muted)':'var(--ink)'};font-weight:${st==='cur'?'700':'500'}">${p[0]}</span>
+          <span class="xown ${yard?'yard':'sup'}">${yard?'верфь · ВП':'поставщик'}</span>
           <span class="stchip" style="color:${col};border:1px solid ${col};font-size:9px">${st==='done'?'выполнено':st==='cur'?'сейчас':'предстоит'}</span>
         </div>`; }).join('')}
     </div>
@@ -1625,10 +1656,13 @@ function vPortal(){
 
     <h4 class="psec">Вопросы и ответы — вместо звонков</h4>
     ${qa.length?qa.map(q=>`<div class="anacard" style="cursor:default;padding:14px 18px">
-      <div style="font-size:13px;color:var(--ink)"><b>${esc(q.from)}:</b> ${esc(q.m)} <span style="color:var(--muted);font-size:11px">· ${esc(q.ts)}</span></div>
-      ${q.a?`<div style="font-size:13px;color:var(--ink2);margin-top:8px;background:var(--good-soft);border-radius:8px;padding:8px 12px"><b style="color:var(--good)">${esc(mgr)}:</b> ${esc(q.a)}</div>`
+      <div style="font-size:13px;color:var(--ink)"><b>${esc(q.from)}:</b> ${esc(q.m)} <span class="xtag ext">внешний · верфь</span> <span style="color:var(--muted);font-size:11px">· ${esc(q.ts)}</span></div>
+      ${q.a?(q.aInt
+        ?`<div style="font-size:13px;color:var(--ink2);margin-top:8px;background:var(--panel2);border:1px dashed var(--line);border-radius:8px;padding:8px 12px"><b>${esc(mgr)}:</b> ${esc(q.a)} <span class="xtag int">внутреннее · не ушло верфи</span></div>`
+        :`<div style="font-size:13px;color:var(--ink2);margin-top:8px;background:var(--good-soft);border-radius:8px;padding:8px 12px"><b style="color:var(--good)">${esc(mgr)}:</b> ${esc(q.a)} <span class="xtag ext">видно верфи</span></div>`)
         :`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="stchip" style="color:var(--warn);border:1px solid var(--warn)">ожидает ответа менеджера</span></div>
-          <div class="addline" style="margin-top:8px"><input id="pa_${q.id}" placeholder="Ответ менеджера заказчику"><button class="btn" data-portalanswer="${q.id}">Ответить</button></div>`}
+          <div class="addline" style="margin-top:8px"><input id="pa_${q.id}" placeholder="Ответ менеджера заказчику"><button class="btn" data-portalanswer="${q.id}">Ответить</button></div>
+          <label class="xtoggle"><input type="checkbox" id="pa_ext_${q.id}" checked> ответ виден верфи (снять — внутренняя заметка команде)</label>`}
     </div>`).join(''):emptyBox('i-portal','Вопросов пока нет','Здесь появятся вопросы заказчика по этому заказу — и ваши ответы. Это заменяет статусные звонки: клиент спрашивает в портале, вы отвечаете, всё в истории.')}
     <div class="addline" style="margin-top:12px"><input id="portalAsk" placeholder="Задать вопрос от лица заказчика"><button class="btn ghost" id="portalAskBtn">Задать вопрос</button></div>
     ${pre?`<p style="font-size:12px;color:var(--muted);margin-top:14px">Ещё ${pre} заказ(а) в проработке до контракта — заказчику в портале пока не видны.</p>`:''}`;
@@ -1814,7 +1848,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.48';
+const APP_VER = '1.49';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2974,8 +3008,10 @@ document.addEventListener('click', e=>{
   const pans = e.target.closest('[data-portalanswer]');
   if(pans){ const q=(S.portalQA||[]).find(x=>x.id===pans.dataset.portalanswer);
     const inp=$('pa_'+pans.dataset.portalanswer); const v=inp?(inp.value||'').trim():'';
-    if(q && v){ q.a=v.slice(0,300); ACTS.push('ответ заказчику по вопросу '+q.id);
-      notify(['orlov'],'менеджер ответил заказчику: '+v.slice(0,40),null); save(); render(); toast('Ответ отправлен заказчику','ok'); } return;
+    if(q && v){ const extEl=$('pa_ext_'+pans.dataset.portalanswer); const ext=extEl?extEl.checked:true;
+      q.a=v.slice(0,300); q.aInt=!ext; ACTS.push((ext?'ответ заказчику':'внутренняя заметка')+' по вопросу '+q.id);
+      if(ext) notify(['orlov'],'менеджер ответил заказчику: '+v.slice(0,40),null); save(); render();
+      toast(ext?'Ответ отправлен верфи':'Внутренняя заметка сохранена (верфи не видна)','ok'); } return;
   }
   if(e.target.id==='portalAskBtn'){ const oid=curPortalOrder(); const o=(S.orders||[]).find(x=>x.id===oid);
     const v=($('portalAsk').value||'').trim();
