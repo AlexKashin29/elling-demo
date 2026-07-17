@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.73 «Мост вживую» — рабочий MVP</title>
+﻿<title>Эллинг v1.74 «UI→нить» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1570,6 +1570,25 @@ function esign(s){ let h=0; s=String(s); for(let i=0;i<s.length;i++){ h=(h*31 + 
 /* ---- v1.73: настоящий обмен пакетами через бэкенд (Мост, Т3) ----
    Экспорт скачивает подписанный .elx-файл, импорт принимает такой файл —
    это и есть реальный маршрут через воздушный зазор (ЭДО / диод / носитель). */
+/* Действие в UI → событие нити заказа. Уходит только то, что разрешено
+   контрактом Моста; сервер проверяет владение полем и может отказать. */
+async function fedEmit(field, value, actor, orderNum){
+  if(!SRV.on || !orderNum) return null;                 // без сервера нити нет
+  try{
+    const r = await fetch('/api/fed/emit', {method:'POST',
+      headers:AH({'Content-Type':'application/json'}),
+      body:JSON.stringify({thread:'T-'+orderNum, order:String(orderNum), field, value, actor})});
+    const j = await r.json();
+    if(!r.ok){                                          // контракт не пустил — показываем причину
+      toast('В нить не ушло: '+(j.error||'отказ сервера'),'warn');
+      return null;
+    }
+    const o=(S.orders||[]).find(x=>String(x.num)===String(orderNum));
+    if(o){ o.feed=o.feed||[]; o.feed.unshift(['сейчас',
+      `<b>Мост:</b> «${esc(String(value).slice(0,60))}» ушло в нить заказа — верфь получит с пакетом`,1]); }
+    return j;
+  }catch(e){ return null; }
+}
 async function elxExportReal(){
   try{
     const r = await fetch('/api/fed/export?peer=yard1&mark=1', {cache:'no-store', headers:AH()});
@@ -2082,7 +2101,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.73';
+const APP_VER = '1.74';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -3345,7 +3364,10 @@ document.addEventListener('click', e=>{
   const adv = e.target.closest('[data-advance]');
   if(adv){ const o=S.orders.find(x=>x.id===adv.dataset.advance);
     if(o.stage<STAGE_NAMES.length-1){ o.stage++; if(o.stage>=8&&o.risk!=='done') o.risk='ok';
-      o.feed.push(['сейчас',`<b>Этап «${STAGE_NAMES[o.stage][0]}»</b> — статус виден всем ролям`,1]); render(); } return; }
+      o.feed.push(['сейчас',`<b>Этап «${STAGE_NAMES[o.stage][0]}»</b> — статус виден всем ролям`,1]);
+      // этап — наше поле по контракту: уходит верфи через нить заказа
+      fedEmit('stage', STAGE_NAMES[o.stage][0], PEOPLE[S.currentUser].full, o.num).then(j=>{ if(j) render(); });
+      render(); } return; }
   const chip = e.target.closest('[data-chip]');
   if(chip){ S.chips[chip.dataset.chip] = !S.chips[chip.dataset.chip]; render(); return; }
   const che = e.target.closest('[data-chipepic]');
@@ -3422,6 +3444,9 @@ document.addEventListener('click', e=>{
       if(en.dealId){ const d=dealById(en.dealId); if(d){ d.next=`Оценка ИЦ готова: ${h} н/ч · ТКП ${fmtSum(sv)} — отправить ТКП`;
         d.acts=d.acts||[]; d.acts.push(['сейчас',`Оценка ИЦ: ${h} н/ч, ТКП ${fmtSum(sv)}`]);
         notify(['sokolova'],`оценка ИЦ готова: ${en.title.slice(0,40)} (${h} н/ч)`,null); } }
+      // верфи уходит ФАКТ готовности ТКП, без суммы: деньги не пересекают границу
+      if(en.dealId){ const d0=dealById(en.dealId); const ord=d0&&d0.orderNum?d0.orderNum:null;
+        if(ord) fedEmit('tkp', 'ТКП подготовлено, срок оценки соблюдён', PEOPLE[S.currentUser].full, ord); }
       save(); render(); toast(`Просчитано: ${h} н/ч${canFin()?` · ТКП ${fmtSum(sv)}`:''}`,'ok');
     } return;
   }
@@ -3482,7 +3507,11 @@ document.addEventListener('click', e=>{
     const inp=$('pa_'+pans.dataset.portalanswer); const v=inp?(inp.value||'').trim():'';
     if(q && v){ const extEl=$('pa_ext_'+pans.dataset.portalanswer); const ext=extEl?extEl.checked:true;
       q.a=v.slice(0,300); q.aInt=!ext; ACTS.push((ext?'ответ заказчику':'внутренняя заметка')+' по вопросу '+q.id);
-      if(ext) notify(['orlov'],'менеджер ответил заказчику: '+v.slice(0,40),null); save(); render();
+      if(ext){ notify(['orlov'],'менеджер ответил заказчику: '+v.slice(0,40),null);
+        // внешний ответ — общее поле контракта; внутренняя заметка НЕ уходит
+        const ord=(S.orders||[]).find(x=>x.id===q.orderId);
+        if(ord) fedEmit('qa', v.slice(0,120), PEOPLE[S.currentUser].full, ord.num); }
+      save(); render();
       toast(ext?'Ответ отправлен верфи':'Внутренняя заметка сохранена (верфи не видна)','ok'); } return;
   }
   if(e.target.id==='portalAskBtn'){ const oid=curPortalOrder(); const o=(S.orders||[]).find(x=>x.id===oid);
