@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.64 «Экспорт по ролям» — рабочий MVP</title>
+﻿<title>Эллинг v1.65 «Команда» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -227,6 +227,19 @@
   .on-scope{display:block;font-size:11px;color:var(--muted);margin-top:1px}
   .on-sub{flex:none;font-size:10.5px;font-weight:700;color:var(--good);background:var(--good-soft);border-radius:99px;padding:2px 9px;white-space:nowrap}
   .on-sub.muted{color:var(--muted);background:var(--panel2)}
+  /* v1.65: дашборд руководителя «Команда» */
+  .tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .tm-card{border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--sh);padding:14px 16px;transition:transform .15s,box-shadow .15s,border-color .15s}
+  .tm-card:hover{transform:translateY(-2px);box-shadow:var(--sh-lg);border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+  .tm-top{display:flex;align-items:center;gap:11px;margin-bottom:4px}
+  .tm-top .av{flex:none}
+  .tm-name{font-weight:700;font-size:14px;letter-spacing:-.01em}
+  .tm-role{font-size:11.5px;color:var(--accent);font-weight:600;margin-top:1px}
+  .tm-bar{display:block;height:8px;border-radius:99px;background:var(--panel2);overflow:hidden;margin:9px 0}
+  .tm-bar i{display:block;height:100%;border-radius:99px;background:var(--accent);transition:width .5s cubic-bezier(.16,1,.3,1)}
+  .tm-badges{display:flex;gap:7px;flex-wrap:wrap}
+  .tm-badge{background:var(--panel2);border-radius:8px;padding:3px 9px;color:var(--ink2);font-weight:600;font-size:11.5px;white-space:nowrap;flex:none}
+  .tm-badge.over{background:var(--risk-soft);color:var(--risk)}
   @media(max-width:860px){.set-wrap{grid-template-columns:1fr}.set-rail{position:static;flex-direction:row;overflow-x:auto;flex-wrap:nowrap;top:0}.set-cat{white-space:nowrap}.set-cat.on::before{display:none}}
   .bench-dealpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
   .bench-dealpick label{font-size:13px;font-weight:600;color:var(--ink2)}
@@ -891,13 +904,13 @@ const ACC = {
   'логист':        ['—','✓','○','—','—','—','—','—'],
 };
 /* доступные экраны по роли (реальное скрытие модулей в навигации) */
-const ALL_VIEWS = ['today','deals','radar','estimates','flow','supply','portal','board','kb','notices','plan','reports','bench','settings'];
+const ALL_VIEWS = ['today','deals','radar','estimates','flow','supply','portal','board','kb','notices','plan','reports','bench','team','settings'];
 const ROLE_VIEWS = {
   'директор': ALL_VIEWS, 'зам. директора': ALL_VIEWS,
-  'рук. ИЦ':        ['today','board','kb','notices','plan','estimates','flow','reports','bench','settings'],
-  'рук. продаж':    ['today','deals','radar','estimates','portal','flow','reports','bench','settings'],
-  'рук. закупок':   ['today','supply','flow','portal','reports','settings'],
-  'рук. логистики': ['today','flow','supply','portal','reports','settings'],
+  'рук. ИЦ':        ['today','board','kb','notices','plan','estimates','flow','reports','bench','team','settings'],
+  'рук. продаж':    ['today','deals','radar','estimates','portal','flow','reports','bench','team','settings'],
+  'рук. закупок':   ['today','supply','flow','portal','reports','team','settings'],
+  'рук. логистики': ['today','flow','supply','portal','reports','team','settings'],
   'инженер':        ['today','board','kb','notices','plan','estimates','flow','settings'],
   'продажи':        ['today','deals','radar','estimates','portal','flow','settings'],
   'закупки':        ['today','supply','flow','portal','settings'],
@@ -1690,11 +1703,11 @@ function moveTask(t,to,how){
 }
 
 /* ================= views ================= */
-const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Ось заказа',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',bench:'Бенчмарки флота',settings:'Настройки',order:'Заказ'};
+const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Ось заказа',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',bench:'Бенчмарки флота',team:'Команда',settings:'Настройки',order:'Заказ'};
 const CRUMBS = {today:'ваш рабочий день', flow:'весь портфель одним взглядом', deals:'воронка проектных продаж', radar:'закладки в проектах судов: П → РКД → тендер',
   estimates:'очередь оценки ТЗ в ИЦ · SLA 4 ч / 3 дн', board:'инженерный центр · спринт 14', plan:'загрузка ИЦ и вехи', kb:'поиск по архиву: шифр + смысл',
   supply:'снабжение и реестровость ПП 719', notices:'изменения КД по ГОСТ 2.503', portal:'внешний вид заказа для верфи и ВП', reports:'воронка, конверсия, поток',
-  bench:'эталонные серии флота: на что равняться', settings:'импорт, автоматизации, коннекторы', order:'карточка заказа'};
+  bench:'эталонные серии флота: на что равняться', team:'загрузка подчинённых и узкие места', settings:'импорт, автоматизации, коннекторы', order:'карточка заказа'};
 
 /* ---- Снабжение: память о поставщиках + ПП 719 + сертификаты РМРС ---- */
 const REG_ST = {ok:['var(--good)','в реестре ПП 719'],warn:['var(--warn)','под угрозой (нет отчёта ГИСП)'],expired:['var(--risk)','аннулирована']};
@@ -1994,7 +2007,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.64';
+const APP_VER = '1.65';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2844,6 +2857,7 @@ const NAVGROUPS = [
   ]},
   {id:'analytics', icon:'i-reports', label:'Аналитика', items:[
     {view:'reports', icon:'i-reports', label:'Отчёты'},
+    {view:'team', icon:'i-deals', label:'Команда'},
     {view:'bench', icon:'i-bench', label:'Бенчмарки флота'},
   ]},
   {solo:true, view:'settings', icon:'i-settings', label:'Настройки'},
@@ -2919,6 +2933,55 @@ function dealMatchBench(d){
     ['93.159','B5'],['земснаряд','B5'],['дноуглуб','B5'],['буксир','B5'],['техническ','B5']];
   for(const [kw,id] of codes){ if(hay.indexOf(kw)>=0){ const b=bm.find(x=>x.id===id); if(b) return {b,kw}; } }
   return null;
+}
+function vTeam(){
+  const me=S.currentUser, p=PEOPLE[me]||{};
+  const team=subordinates(me);
+  const scope = p.lvl<=1 ? 'вся компания' : ('отдел · '+(p.dept||''));
+  const head=`<div class="hello hello-ship">Команда<small>${esc(p.role)} · ${esc(scope)} — загрузка подчинённых и узкие места</small>
+      <svg class="hello-ship-art" viewBox="0 0 240 90" aria-hidden="true"><use href="#i-ship-hero"/></svg></div>`;
+  if(!team.length) return head+emptyBox('i-deals','У вас нет подчинённых','Экран «Команда» показывает загрузку сотрудников в вашем подчинении. Переключите роль на директора или руководителя отдела вверху справа.');
+  const rows=team.map(uid=>{
+    const u=PEOPLE[uid]; const ts=S.tasks.filter(t=>t.who===uid);
+    const open=ts.filter(t=>t.col!=='done').length;
+    const wip=ts.filter(t=>t.col==='wip').length;
+    const rev=ts.filter(t=>t.col==='rev').length;
+    let over=0; ts.forEach(t=>{ try{ const di=dueInfo(t); if(di&&di.over) over++; }catch(x){} });
+    return {uid,u,open,wip,rev,over,sub:subordinates(uid).length};
+  }).sort((a,b)=>b.over-a.over||b.open-a.open);
+  const totOpen=rows.reduce((a,r)=>a+r.open,0), totOver=rows.reduce((a,r)=>a+r.over,0);
+  const heads=rows.filter(r=>r.sub>0).length;
+  const maxOpen=Math.max(1,...rows.map(r=>r.open));
+  const depts={}; rows.forEach(r=>{ const d=r.u.dept||'—'; depts[d]=depts[d]||{open:0,over:0,n:0}; depts[d].open+=r.open; depts[d].over+=r.over; depts[d].n++; });
+  const cc=c=>`color:${c};-webkit-text-fill-color:${c}`;
+  return head+`
+    <div class="stats" style="margin:8px 0 16px">
+      <div class="stat"><div class="v">${team.length}</div><div class="l">человек в подчинении</div></div>
+      <div class="stat"><div class="v">${totOpen}</div><div class="l">открытых задач у команды</div></div>
+      <div class="stat"><div class="v" style="${cc(totOver?'var(--risk)':'var(--good)')}">${totOver}</div><div class="l">просрочено — разобрать</div></div>
+      <div class="stat"><div class="v">${heads}</div><div class="l">руководителей в подчинении</div></div>
+    </div>
+    ${p.lvl<=1?`<div class="panel" style="margin-bottom:14px"><h3>По отделам</h3>
+      ${Object.keys(depts).map(d=>{ const x=depts[d];
+        return `<div class="loadrow" style="align-items:center;gap:12px">
+          <span style="flex:0 0 170px;font-size:13px;color:var(--ink);font-weight:640">${esc(d)}</span>
+          <span class="tm-bar" style="flex:1"><i style="width:${Math.round(x.open/Math.max(1,totOpen)*100)}%"></i></span>
+          <span style="flex:none;font-size:12px;color:var(--ink2)">${x.n} чел · ${x.open} задач</span>
+          ${x.over?`<span class="tm-badge over">${x.over} просроч.</span>`:'<span class="tm-badge">в графике</span>'}
+        </div>`; }).join('')}
+    </div>`:''}
+    <h4 class="psec">Сотрудники · по остроте</h4>
+    <div class="tm-grid">${rows.map(r=>`<div class="tm-card">
+      <div class="tm-top">${av(r.uid)}
+        <div style="flex:1;min-width:0"><div class="tm-name">${esc(r.u.full)}</div>
+          <div class="tm-role">${esc(r.u.role)}${r.sub?` · ведёт ${r.sub}`:''}</div></div>
+        ${r.over?`<span class="tm-badge over">⚠ ${r.over}</span>`:''}</div>
+      <span class="tm-bar"><i style="width:${Math.round(r.open/maxOpen*100)}%;${r.over?'background:var(--risk)':''}"></i></span>
+      <div class="tm-badges"><span class="tm-badge">${r.open} открытых</span>
+        <span class="tm-badge">${r.wip} в работе</span>
+        ${r.rev?`<span class="tm-badge">${r.rev} на согласовании</span>`:''}
+        ${r.open===0?'<span class="tm-badge" style="color:var(--good)">свободен</span>':''}</div>
+    </div>`).join('')}</div>`;
 }
 function vBench(){
   const bm = S.benchmarks||[];
@@ -3011,7 +3074,7 @@ function render(){
   const ea=estAlerts(); const en=$('estN'); if(en){ en.textContent=ea||''; en.style.display=ea?'':'none'; }
   const pq=portalPending(); const pn=$('portalN'); if(pn){ pn.textContent=pq||''; pn.style.display=pq?'':'none'; }
   $('content').innerHTML = S.view==='today'?vToday(): S.view==='deals'?vDeals(): S.view==='supply'?vSupply(): S.view==='flow'?vFlow(): S.view==='radar'?vRadar(): S.view==='board'?vBoard():
-    S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='estimates'?vEstimates(): S.view==='notices'?vNotices(): S.view==='portal'?vPortal(): S.view==='bench'?vBench(): S.view==='settings'?vSettings(): vReports();
+    S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='estimates'?vEstimates(): S.view==='notices'?vNotices(): S.view==='portal'?vPortal(): S.view==='bench'?vBench(): S.view==='team'?vTeam(): S.view==='settings'?vSettings(): vReports();
   if(S.view!==S._prevView){ const c=$('content'); c.classList.remove('view-in'); void c.offsetWidth; c.classList.add('view-in'); S._prevView=S.view; animateCounters(); }
   if(S._scrollMig){ S._scrollMig=0; try{ setTimeout(()=>{ const w=document.getElementById('migWiz'); if(w&&w.scrollIntoView) w.scrollIntoView({behavior:'smooth',block:'start'}); },70); }catch(e){} }
   $('userSel').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
@@ -3099,7 +3162,7 @@ document.addEventListener('click', e=>{
   if(ngh){ const id=ngh.dataset.navgroup; S.navOpen=S.navOpen||{}; S.navOpen[id]=!S.navOpen[id]; syncNavOpen(); return; }
   const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; document.body.classList.remove('nav-open'); render(); return; }
   if(e.target.closest('[data-migrate]')){ S.view='settings'; S.setTab='migrate'; S._scrollMig=1; document.body.classList.remove('nav-open'); render(); return; }
-  if(e.target.closest('[data-team]')){ S.view='settings'; S.setTab='users'; document.body.classList.remove('nav-open'); render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
+  if(e.target.closest('[data-team]')){ S.view='team'; document.body.classList.remove('nav-open'); render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
   const stab = e.target.closest('[data-settab]');
   if(stab){ S.setTab=stab.dataset.settab; render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
   const cont = e.target.closest('[data-contour]');
