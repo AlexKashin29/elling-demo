@@ -305,6 +305,8 @@
   @media(max-width:640px){.bm-cmp-foot{flex-direction:column;align-items:stretch}}
   .wl-ship{display:block;width:min(300px,72%);height:auto;stroke:var(--accent);fill:none;stroke-width:1.5;opacity:.92;margin:10px 0 2px;stroke-linecap:round;stroke-linejoin:round}
   /* v1.44: фоновый силуэт судна на заднем плане продукта (по референсу траулера) */
+.note-flat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:12px 14px;margin-top:12px;font-size:12.5px;color:var(--ink2)}
   /* Поля форм создания */
   .fld{display:flex;flex-direction:column;gap:5px}
   .fld > span{font-size:11px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
@@ -2490,7 +2492,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.87';
+const APP_VER = '1.88';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2803,17 +2805,7 @@ function vSettings(){
       ${S.autoMsg?`<div class="ai-box" style="margin-top:8px">${esc(S.autoMsg)}</div>`:''}
       <p style="font-size:12px;color:var(--muted);margin-top:8px">Просрочка проверяется автоматически каждую минуту. В демо есть просроченная задача СТ-2465 — правило уже включено, нажмите «Прогнать» и смотрите колокол 🔔.</p>
     </div></section>
-    <section class="set-sec" data-sec="notify" ${tab==='notify'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Каналы уведомлений вне приложения <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· заводы живут в почте и мессенджерах</span></h3>
-      <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Уведомления (@упоминания, просрочки, статусы) дублируются туда, где человек уже есть — не нужно заходить в систему, чтобы узнать. В демо доставка имитируется; в проде — почтовый шлюз и Telegram-бот.</p>
-      ${[['mail','Электронная почта','дублировать на Outlook / SMTP'],['tg','Telegram','бот присылает в личку или групповой чат отдела']].map(([k,t,d])=>`
-        <div class="loadrow" style="align-items:center;gap:12px">
-          <div style="flex:1"><div style="font-weight:640;color:var(--ink);font-size:13.5px">${t}</div>
-            <div style="font-size:11.5px;color:var(--muted)">${d}</div></div>
-          <button class="toggle ${(S.notifCh||{})[k]?'on':''}" data-notifch="${k}" aria-label="${t}" aria-pressed="${!!(S.notifCh||{})[k]}"></button>
-        </div>`).join('')}
-      <button class="btn ghost" id="notifTest" style="margin-top:10px">Отправить тестовое уведомление</button>
-      ${S.notifMsg?`<div class="ai-box" style="margin-top:10px">${esc(S.notifMsg)}</div>`:''}
-    </div></section>
+    <section class="set-sec" data-sec="notify" ${tab==='notify'?'':'hidden'}>${vNotify()}</section>
     <section class="set-sec" data-sec="integrations" ${tab==='integrations'?'':'hidden'}>${vAgent()}</section>
     <section class="set-sec" data-sec="api" ${tab==='api'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Публичный REST API <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· v1 · встраивание и миграция</span></h3>
       <div style="font-size:13px;color:var(--ink2);line-height:1.8">
@@ -2845,6 +2837,62 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
 }
 const RSTAGES = ['Техпроект (П)','РКД','Закупка / Тендер','Контракт'];
 const PST = {ok:['var(--good)','заложено'],warn:['var(--warn)','под угрозой'],lost:['var(--risk)','перезаложено']};
+
+/* Каналы уведомлений НАРУЖУ. Раньше здесь были переключатели, не подключённые ни
+   к чему: почта включена по умолчанию, «тест» рапортовал «продублировано в почту
+   (демо)», хотя ничего не отправлялось. Это активная ложь: боль №2 продукта —
+   «о срыве срока узнаю последним», а уведомление, не покидающее приложение, её не
+   решает. Статус теперь реальный — с сервера (NST_SRV), настройка на бэкенде. */
+let NST_SRV = null;                    // статус каналов с сервера
+function vNotify(){
+  const me=PEOPLE[S.currentUser]; const isDir=canAdmin();
+  if(!SRV.on){
+    return `<div class="panel"><h3>Каналы уведомлений вне приложения</h3>
+      <p style="font-size:13px;color:var(--ink2)">Это публичное демо без сервера — почта и Telegram настраиваются в установленной системе. Здесь показано, как выглядит настройка.</p>
+      <div class="note-flat">Уведомления о просрочках и @упоминаниях дойдут на почту и в Telegram, чтобы не заходить в систему ради проверки.</div></div>`;
+  }
+  const s=NST_SRV;
+  if(!s){ loadNotify(); return `<div class="panel"><div class="empty">загружаю статус каналов…</div></div>`; }
+  const row=(key,title,st,fields)=>`<div class="panel" style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="flex:1"><h3 style="margin:0">${title}</h3>
+        <div style="font-size:12px;margin-top:3px;color:${st.on?'var(--good)':st.ready?'var(--warn)':'var(--muted)'}">
+          ${st.on?'● включено и настроено — доставка работает':st.ready?'○ настроено, но выключено':'○ '+esc(st.hint)}</div></div>
+      ${isDir?`<button class="toggle ${st.on?'on':''}" data-noton="${key}" aria-pressed="${st.on}" ${st.ready?'':'disabled title="сначала настройте"'}></button>`:''}
+    </div>
+    ${isDir&&S.notifEdit===key?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px">
+      ${fields.map(f=>`<label class="fld"><span>${f.t}</span><input id="${f.id}" ${f.type?`type="${f.type}"`:''} placeholder="${esc(f.ph||'')}" value="${esc(f.v||'')}"></label>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" data-notsave="${key}">Сохранить</button>
+        <button class="btn ghost" data-notcancel="1">Отмена</button></div>`
+    :isDir?`<button class="btn ghost" data-notedit="${key}" style="margin-top:10px">Настроить</button>`:''}
+  </div>`;
+  return `<div style="margin-bottom:6px"><h3 style="margin:0">Каналы уведомлений вне приложения</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin:6px 0 14px">Просрочки и @упоминания уходят туда, где человек уже есть — чтобы не заходить в систему ради проверки. Настраивает директор.</p></div>
+    ${row('mail','Электронная почта',s.mail,[
+      {id:'nfmHost',t:'SMTP-сервер',ph:'mail.zavod.local',v:s.mail.host},
+      {id:'nfmFrom',t:'От кого',ph:'elling@zavod.ru',v:s.mail.from},
+      {id:'nfmPort',t:'Порт',ph:'25',v:''},
+      {id:'nfmUser',t:'Логин (если нужен)',ph:'',v:''},
+      {id:'nfmPass',t:'Пароль',type:'password',ph:'',v:''}])}
+    ${row('tg','Telegram',s.tg,[
+      {id:'nftToken',t:'Токен бота',type:'password',ph:'123456:ABC-...',v:''},
+      {id:'nftApi',t:'API (для своего сервера)',ph:'https://api.telegram.org',v:''}])}
+    <div class="panel"><h3>Проверить доставку</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin:6px 0 10px">Отправим тестовое уведомление на указанные адреса — до того, как настоящее уйдёт в никуда.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+        <label class="fld" style="flex:1;min-width:170px"><span>Ваша почта</span><input id="ntEmail" placeholder="you@zavod.ru"></label>
+        <label class="fld" style="flex:1;min-width:170px"><span>Ваш Telegram chat_id</span><input id="ntTg" placeholder="напр. 123456789"></label>
+        <button class="btn" id="notifTest">Отправить тест</button>
+      </div>
+      ${S.notifMsg?`<div class="ai-box" style="margin-top:10px">${S.notifMsg}</div>`:''}
+    </div>`;
+}
+async function loadNotify(){
+  if(!SRV.on) return;
+  try{ NST_SRV = await (await fetch('/api/notify/status',{cache:'no-store',headers:AH()})).json();
+    if(S.view==='settings') renderBg(); }catch(e){ NST_SRV={mail:{},tg:{}}; }
+}
 
 /* Заведение проектов и позиций. Их НЕ БЫЛО: радар жил только на демо-данных, и на
    живом заводе оставался пустым навсегда — при том, что «радар закладок» вынесен
@@ -4241,12 +4289,40 @@ document.addEventListener('click', e=>{
       save(); render(); openTask(t.key);
     } return;
   }
-  const ntc = e.target.closest('[data-notifch]');
-  if(ntc){ const k=ntc.dataset.notifch; S.notifCh=S.notifCh||{}; S.notifCh[k]=!S.notifCh[k]; save(); render(); return; }
-  if(e.target.id==='notifTest'){ const nc=S.notifCh||{}; const ch=[nc.mail&&'почту',nc.tg&&'Telegram'].filter(Boolean);
-    notify([S.currentUser],'Тестовое уведомление — канал доставки проверен',null);
-    S.notifMsg = ch.length?('Уведомление отправлено в приложение и продублировано в '+ch.join(' и ')+' (демо). Откройте колокол вверху.'):'Уведомление отправлено в приложение. Внешние каналы выключены — включите почту или Telegram выше.';
-    save(); render(); toast(ch.length?('Уведомление отправлено · '+ch.join(' + ')):'Уведомление отправлено в приложение','ok'); return; }
+  /* Каналы уведомлений наружу. Настройка и переключатель — только на сервере;
+     фронт лишь показывает реальный статус, никаких «демо, продублировано». */
+  const nedit = e.target.closest('[data-notedit]');
+  if(nedit){ S.notifEdit=nedit.dataset.notedit; render(); return; }
+  if(e.target.closest('[data-notcancel]')){ S.notifEdit=''; render(); return; }
+  const nsave = e.target.closest('[data-notsave]');
+  if(nsave){ const k=nsave.dataset.notsave; const g=id=>(($(id)||{}).value||'').trim();
+    const body = k==='mail'
+      ? {smtp_host:g('nfmHost'), smtp_from:g('nfmFrom'), smtp_port:+g('nfmPort')||25,
+         smtp_user:g('nfmUser'), smtp_pass:g('nfmPass')}
+      : {tg_token:g('nftToken'), tg_api:g('nftApi')||'https://api.telegram.org'};
+    fetch('/api/notify/config',{method:'POST',headers:AH({'Content-Type':'application/json'}),
+      body:JSON.stringify(body)}).then(r=>r.json()).then(st=>{
+        NST_SRV=st; S.notifEdit=''; render();
+        toast(st[k]&&st[k].ready?'Канал настроен — включите переключатель':'Проверьте поля','ok');
+      }).catch(()=>toast('Не сохранилось — только директор настраивает каналы')); return; }
+  const noton = e.target.closest('[data-noton]');
+  if(noton){ const k=noton.dataset.noton; const cur=NST_SRV&&NST_SRV[k]&&NST_SRV[k].on;
+    fetch('/api/notify/config',{method:'POST',headers:AH({'Content-Type':'application/json'}),
+      body:JSON.stringify(k==='mail'?{mail_on:cur?0:1}:{tg_on:cur?0:1})}).then(r=>r.json()).then(st=>{
+        NST_SRV=st; render(); }).catch(()=>toast('Не удалось')); return; }
+  if(e.target.id==='notifTest'){
+    const email=(($('ntEmail')||{}).value||'').trim(), tg=(($('ntTg')||{}).value||'').trim();
+    if(!email && !tg){ S.notifMsg='Укажите почту или Telegram chat_id — куда слать тест.'; render(); return; }
+    S.notifMsg='Отправляю…'; render();
+    fetch('/api/notify/test',{method:'POST',headers:AH({'Content-Type':'application/json'}),
+      body:JSON.stringify({email,tg})}).then(r=>r.json()).then(r=>{
+        const sent=(r.sent||[]).map(x=>x.channel==='mail'?'почта':'Telegram');
+        const failed=(r.failed||[]).map(x=>`${x.channel==='mail'?'почта':'Telegram'}: ${esc(x.why)}`);
+        S.notifMsg = (sent.length?`<b style="color:var(--good)">✓ доставлено:</b> ${sent.join(', ')}. `:'')
+          + (failed.length?`<b style="color:var(--risk)">✕ не дошло:</b> ${failed.join(' · ')}. `:'')
+          + (r.skipped?esc(r.skipped):'');
+        render();
+      }).catch(()=>{ S.notifMsg='Сервер недоступен.'; render(); }); return; }
   if(e.target.id==='expCSV'){ exportReportCSV(); toast('Отчёт выгружен в CSV','ok'); return; }
   if(e.target.id==='expPrint'){ window.print(); return; }
   const sha = e.target.closest('[data-shipact]');
