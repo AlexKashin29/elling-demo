@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.71 «План↔Доска» — рабочий MVP</title>
+﻿<title>Эллинг v1.72 «Логотип→сайт» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -61,7 +61,10 @@
   /* ===== sidebar ===== */
   aside{width:216px;flex:none;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;
     padding:16px 12px;gap:2px;position:sticky;top:0;height:100vh;border-right:1px solid rgba(255,255,255,.05)}
-  aside .logo{display:flex;align-items:center;gap:11px;font-weight:750;color:#fff;font-size:17px;padding:6px 8px 18px;letter-spacing:-.02em}
+  aside .logo{display:flex;align-items:center;gap:11px;font-weight:750;color:#fff;font-size:17px;padding:6px 8px 18px;letter-spacing:-.02em;
+    text-decoration:none;border-radius:10px;transition:opacity .15s}
+  aside a.logo:hover{opacity:.82}
+  aside a.logo:hover .dot{box-shadow:0 0 0 3px color-mix(in srgb,var(--side-act) 35%,transparent)}
   aside .logo .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);flex:none;position:relative}
   aside .logo .dot::after{content:"";position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,transparent 52%,var(--side) 52%,var(--side) 68%,transparent 68%)}
   aside .logo small{font-family:var(--mono);font-size:8.5px;color:var(--side-ink);font-weight:400;margin-left:auto;letter-spacing:0;opacity:.7}
@@ -822,7 +825,7 @@
   </symbol>
 </svg>
 <aside>
-  <div class="logo"><span class="dot"></span> Эллинг <small id="verTag">ОС заказа</small></div>
+  <a class="logo" href="https://alexkashin29.github.io/elling/" target="_blank" rel="noopener" title="Открыть сайт Эллинга"><span class="dot"></span> Эллинг <small id="verTag">ОС заказа</small></a>
   <nav id="nav"><!-- строится buildNav() под роль --></nav>
   <div class="create"><button id="createBtn" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg class="ic" style="stroke-width:2.2"><use href="#i-plus"/></svg>Создать задачу</button></div>
   <div class="bottom"><span id="srvState">локальный режим</span><br><button id="resetBtn" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;padding:0;font:inherit">сбросить демо</button></div>
@@ -2036,7 +2039,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.71';
+const APP_VER = '1.72';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
