@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.70 «Планирование» — рабочий MVP</title>
+﻿<title>Эллинг v1.71 «План↔Доска» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2036,7 +2036,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.70';
+const APP_VER = '1.71';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2511,8 +2511,8 @@ function vPlan(){
       <div class="stat"><div class="v" style="${cc(overN?'var(--risk)':'var(--good)')}">${overN}</div><div class="l">перегружено людей</div></div>
       <div class="stat"><div class="v" style="${cc(atRisk?'var(--warn)':'var(--good)')}">${atRisk}</div><div class="l">вех под риском срока</div></div>
     </div>
-    <div class="panel" style="margin-bottom:14px"><h3>Загрузка инженерного центра <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· спринт 14 · ёмкость ${CAP} н/ч на человека</span></h3>
-      ${load.map(x=>`<div class="loadrow" style="align-items:center;gap:12px">
+    <div class="panel" style="margin-bottom:14px"><h3>Загрузка инженерного центра <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· спринт 14 · ёмкость ${CAP} н/ч на человека${canView('board')?' · клик — задачи человека':''}</span></h3>
+      ${load.map(x=>`<div class="loadrow" style="align-items:center;gap:12px${canView('board')?';cursor:pointer':''}" ${canView('board')?`data-teamboard="${x.uid}"`:''}>
         <span class="nm" style="flex:0 0 178px;min-width:0">${av(x.uid)} ${esc(PEOPLE[x.uid].full)}</span>
         <span class="tm-bar" style="flex:1;margin:0"><i style="width:${Math.min(100,x.pct)}%;background:${pcol(x.pct)}"></i></span>
         <span style="flex:none;width:104px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">${x.h} н/ч · ${x.n} зад.</span>
