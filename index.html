@@ -305,6 +305,12 @@
   @media(max-width:640px){.bm-cmp-foot{flex-direction:column;align-items:stretch}}
   .wl-ship{display:block;width:min(300px,72%);height:auto;stroke:var(--accent);fill:none;stroke-width:1.5;opacity:.92;margin:10px 0 2px;stroke-linecap:round;stroke-linejoin:round}
   /* v1.44: фоновый силуэт судна на заднем плане продукта (по референсу траулера) */
+  /* Поля форм создания */
+  .fld{display:flex;flex-direction:column;gap:5px}
+  .fld > span{font-size:11px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .fld input, .fld select{padding:9px 11px;font:inherit;font-size:13.5px;color:var(--ink);
+    background:var(--panel2);border:1px solid var(--line);border-radius:8px;outline:none;width:100%;box-sizing:border-box}
+  .fld input:focus, .fld select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
   /* Предупреждение о пределе хранилища */
   .stwarn{position:sticky;top:0;z-index:8000;display:flex;align-items:center;gap:10px;
     padding:9px 16px;font-size:12.5px;line-height:1.45;color:#5A3E00;
@@ -2367,7 +2373,26 @@ function vDeals(){
       <div class="stat"><div class="v">${canMoney?fmtSum(forecast):'≈≈≈'}</div><div class="l">честный прогноз (взвешен по стадиям)</div></div>
       <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--good);color:var(--good)">${canMoney?fmtSum(won):'≈≈≈'}</div><div class="l">в контракте</div></div>
     </div>
-    <p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">Прогноз считается из стадий и вероятностей, а не из ручного ввода менеджера. Перетащите карточку между стадиями. Клик — открыть сделку.</p>
+    <div style="display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap">
+      <button class="btn" data-dealnew="1">+ Новая сделка</button>
+      <p style="font-size:12.5px;color:var(--muted);margin:0;flex:1;min-width:240px">Прогноз считается из стадий и вероятностей, а не из ручного ввода менеджера. Перетащите карточку между стадиями. Клик — открыть сделку.</p>
+    </div>
+    ${S.dealForm?`<div class="panel" style="margin-bottom:14px">
+      <h3>Новая сделка</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:10px">
+        <label class="fld"><span>Что продаём</span><input id="dfTitle" placeholder="Электронасосы для серии пр. 23550"></label>
+        <label class="fld"><span>Заказчик</span><input id="dfCompany" placeholder="Адмиралтейские верфи"></label>
+        <label class="fld"><span>Судно / проект</span><input id="dfVessel" placeholder="пр. 23550 · 2 судна"></label>
+        <label class="fld"><span>Сумма, ₽</span><input id="dfSum" inputmode="numeric" placeholder="18 400 000"></label>
+        <label class="fld"><span>Стадия</span><select id="dfStage">${DEAL_STAGES.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select></label>
+        <label class="fld"><span>ГОЗ</span><select id="dfGoz"><option value="0">нет</option><option value="1">да · 275-ФЗ</option></select></label>
+      </div>
+      ${S.dealFormErr?`<div class="lg-err" style="margin-top:10px">${esc(S.dealFormErr)}</div>`:''}
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" data-dealsave="1">Создать</button>
+        <button class="btn ghost" data-dealcancel="1">Отмена</button>
+      </div>
+    </div>`:''}
     <div class="board-wrap"><div class="board" style="grid-template-columns:repeat(5,minmax(210px,1fr));min-width:1080px">
     ${DEAL_STAGES.map(([sk,sn,sc])=>{
       const ds=active.filter(d=>d.stage===sk);
@@ -2417,7 +2442,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.84';
+const APP_VER = '1.85';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -3855,6 +3880,32 @@ document.addEventListener('click', e=>{
   }
   const dc = e.target.closest('[data-deal]');
   if(dc && dc !== $('drawer')){ openDeal(dc.dataset.deal); return; }  // ревью v1.11: data-deal на самом drawer — состояние, не кнопка (иначе перехватывает dealassess/dealwin/dealNoteAdd)
+  /* Создание сделки. Его НЕ БЫЛО: сделки жили только в демо-данных, и на живом
+     заводе CRM оставалась пустой навсегда — завести в неё было нечем. Это при
+     том, что «CRM проектных продаж» — первое, что продукт обещает. */
+  if(e.target.closest('[data-dealnew]')){ S.dealForm=1; S.dealFormErr=''; render();
+    setTimeout(()=>{ const el=$('dfTitle'); if(el) el.focus(); },0); return; }
+  if(e.target.closest('[data-dealcancel]')){ S.dealForm=0; S.dealFormErr=''; render(); return; }
+  if(e.target.closest('[data-dealsave]')){
+    const g=id=>($(id)||{}).value||'';
+    const title=g('dfTitle').trim(), company=g('dfCompany').trim();
+    if(!title || !company){ S.dealFormErr='Заполните «что продаём» и заказчика — без них сделку не найти в воронке.'; render(); return; }
+    // Сумму принимаем как её пишут люди: «18 400 000», «18400000», «18,4 млн»
+    const raw=g('dfSum').replace(/\s| /g,'').replace(',','.');
+    let sum = /млн/i.test(g('dfSum')) ? Math.round(parseFloat(raw)*1e6) : Math.round(parseFloat(raw)||0);
+    if(!isFinite(sum) || sum<0) sum=0;
+    const stage=g('dfStage')||'lead';
+    S.seq=(S.seq||2470)+1;
+    S.deals=S.deals||[];
+    S.deals.unshift({id:'D'+S.seq, title, company, vessel:g('dfVessel').trim()||'—',
+      stage, sum, prob:DEAL_PROB[stage]!=null?DEAL_PROB[stage]:20, who:S.currentUser,
+      goz:+g('dfGoz')||0, next:'Уточнить ТЗ и передать в просчёт',
+      acts:[['сейчас','Сделка заведена вручную ('+PEOPLE[S.currentUser].full+')']]});
+    ACTS.push(`новая сделка: ${title} · ${company}`);
+    S.dealForm=0; S.dealFormErr='';
+    save(); render(); toast('Сделка создана','ok');
+    return;
+  }
   const da = e.target.closest('[data-dealassess]');
   if(da){ const d=dealById(da.dataset.dealassess);
     if(d){ S.seq=(S.seq||2470)+1; const eid='PR-'+S.seq; S.estimates=S.estimates||[];
