@@ -1601,6 +1601,43 @@ function esign(s){ let h=0; s=String(s); for(let i=0;i<s.length;i++){ h=(h*31 + 
    Экспорт скачивает подписанный .elx-файл, импорт принимает такой файл —
    это и есть реальный маршрут через воздушный зазор (ЭДО / диод / носитель). */
 /* ---- v1.76: контрагенты Моста ---- */
+// --- Агент: реальные источники (1С и папки обмена). Витрина коннекторов ниже
+// в этом же экране осталась демонстрационной — не смешиваем, чтобы на заводе
+// не решили, что уже всё подключено.
+const AG_KIND = {odata:'1С 8.3 · OData', file:'папка обмена · CSV/XML', com:'1С 7.7 · COM', imap:'почта'};
+async function loadAgentSources(){
+  const box=$('agSrc'); if(!box||!SRV.on) return;
+  try{
+    const j = await (await fetch('/api/agent/sources',{cache:'no-store',headers:AH()})).json();
+    const ss = j.sources||[];
+    if(!ss.length){ box.innerHTML='<div class="empty">источники не заведены</div>'; return; }
+    box.innerHTML = ss.map(s=>`<div class="loadrow" style="align-items:center;gap:12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:640;color:var(--ink);font-size:13.5px">${esc(s.name)}
+          <span class="xown sup">${esc(AG_KIND[s.kind]||s.kind)}</span></div>
+        <div style="font-size:11.5px;color:var(--muted)">${s.target?esc(s.target):'адрес не задан'}${s.has_auth?' · авторизация настроена':''}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.last_run?'последний обмен: '+esc(s.last_run.slice(11,19))+' · '+esc(s.last_result):'обмена ещё не было'}</div>
+      </div>
+      <span class="stchip" style="font-size:9px;white-space:nowrap;color:${s.enabled?'var(--good)':'var(--muted)'};border:1px solid ${s.enabled?'var(--good)':'var(--line)'}">${s.enabled?'включён':'выключен'}</span>
+      <button class="chip" data-agtoggle="${esc(s.id)}" data-on="${s.enabled?0:1}" style="white-space:nowrap">${s.enabled?'Выключить':'Включить'}</button>
+      <button class="chip" data-agpull="${esc(s.id)}" style="white-space:nowrap"${s.enabled?'':' disabled'}>⟳ Забрать заказы</button>
+    </div>`).join('');
+  }catch(e){ box.innerHTML='<div class="empty">источники недоступны</div>'; }
+}
+
+async function agentPull(sid){
+  toast('Агент: обращаюсь к системе завода…');
+  try{
+    const r = await fetch('/api/agent/pull?source='+encodeURIComponent(sid),{method:'POST',headers:AH()});
+    const j = await r.json();
+    if(!j.ok){ toast('Источник «'+sid+'»: '+(j.error||'ошибка')); loadAgentSources(); return; }
+    // Импорт правит состояние на сервере — забираем его, иначе экран покажет старое.
+    await pullState();
+    toast(`Принято из «${sid}»: новых ${j.created}, обновлено ${j.updated}, без изменений ${j.skipped}`);
+    render(); loadAgentSources();
+  }catch(e){ toast('Агент недоступен'); }
+}
+
 async function loadFedPeers(){
   const box=$('fedPeers'); if(!box||!SRV.on) return;
   try{
@@ -2170,7 +2207,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.77';
+const APP_VER = '1.78';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2264,13 +2301,18 @@ function doImport(){
 
 /* ---- Эллинг Агент: коннекторы к 1С/почте/ЕИС/ЭДО, журнал обмена, маппинг полей ---- */
 const CONN_ST={ok:['подключён','var(--good)'],setup:['настройка','var(--warn)'],error:['ошибка','var(--risk)']};
+// Реквизиты — как в agent.py (AGENT_MAP_1C). Через «/» перечислены запасные
+// имена: в УПП «Номер», в ERP бывает «НомерЗаказа». Одного имени не хватает —
+// у каждого завода своя конфигурация, и это настройка, а не правка кода.
 const AGENT_MAP=[
-  ['Номер заказа','ЗаказНаряд.Номер','№ заказа'],
-  ['Заказчик','Контрагент.Наименование','Заказчик'],
-  ['Изделие','Номенклатура.Наименование','Название'],
-  ['Плановый срок','ЗаказНаряд.ДатаОтгрузки','Срок'],
-  ['Сумма','ЗаказНаряд.СуммаДокумента','Сумма (скрыта ролью)'],
-  ['ИГК (ГОЗ)','Гособоронзаказ.ИГК','ИГК'],
+  ['Номер заказа','Номер / НомерЗаказа / Code','№ заказа (ключ)'],
+  ['Заказчик','Контрагент / Покупатель / Заказчик','Заказчик'],
+  ['Изделие','Наименование / Номенклатура / Предмет','Название'],
+  ['Судно','Судно / Проект','Проект судна'],
+  ['Плановый срок','ДатаОтгрузки / СрокПоставки','Срок'],
+  ['Сумма','СуммаДокумента / Сумма','Сумма (скрыта ролью)'],
+  ['ИГК (ГОЗ)','ИГК / ИдентификаторГосконтракта','ИГК'],
+  ['Себестоимость','—','не забираем: учёт остаётся в 1С'],
 ];
 function resCol(r){ return r==='ok'?'var(--good)':r==='warn'?'var(--warn)':'var(--risk)'; }
 function vAgent(){
@@ -2278,6 +2320,8 @@ function vAgent(){
   return `<div class="panel" style="margin-bottom:14px"><h3>Эллинг Агент · коннекторы <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· встраивается в ландшафт завода, не заменяет его</span></h3>
     <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Агент подключается к тому, что уже стоит на заводе: 1С (от 7.7 до ERP), КОМПАС/ЛОЦМАН:PLM, любой Outlook, ЕИС, ЭДО. Мы читаем ваши заказы, чертежи и состав изделий — <b>не заставляем переезжать и не заменяем САПР</b>. Нажмите «Синхронизировать» у 1С или ЛОЦМАН — данные появятся в «Заказах» и «Базе знаний».</p>
     ${S.agentMsg?`<div class="ai-box" style="margin:0 0 12px">✓ ${esc(S.agentMsg)}</div>`:''}
+    ${SRV.on?`<div id="agSrc" style="margin-bottom:6px"><div class="empty">загружаю источники…</div></div>
+      <div style="font-size:11.5px;color:var(--muted);margin:0 0 12px">● Источники ниже — <b>настоящие</b>: агент ходит в вашу 1С и приносит заказы. Ниже по странице — витрина остальных коннекторов.</div>`:''}
     ${conns.map(c=>{ const st=CONN_ST[c.status]||CONN_ST.error;
       return `<div class="loadrow" style="align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0">
@@ -3364,7 +3408,7 @@ function render(){
   $('userSel').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
   renderBell();
   if(S.view==='reports' && canAudit()) loadAudit();   // журнал аудита не грузим тем, кому он закрыт
-  if(S.view==='settings' && S.setTab==='integrations' && SRV.on) loadFedPeers();
+  if(S.view==='settings' && S.setTab==='integrations' && SRV.on){ loadFedPeers(); loadAgentSources(); }
   save();
 }
 /* фоновый рендер (SSE/поллинг/таймер автоматизаций): не рвём фокус и текст,
@@ -3768,6 +3812,11 @@ document.addEventListener('click', e=>{
       else if(act==='done'){ s.status='done'; ACTS.push('доставлено: '+s.id); toast('Доставлено и принято','ok'); }
       save(); render();
     } return; }
+  const agp = e.target.closest('[data-agpull]');
+  if(agp){ agentPull(agp.dataset.agpull); return; }
+  const agt = e.target.closest('[data-agtoggle]');
+  if(agt){ fetch('/api/agent/toggle?source='+encodeURIComponent(agt.dataset.agtoggle)+'&on='+agt.dataset.on,
+                 {method:'POST',headers:AH()}).then(()=>loadAgentSources()); return; }
   const fsy = e.target.closest('[data-fedsync]');
   if(fsy){ fedSyncNow(fsy.dataset.fedsync); return; }
   if(e.target.closest('[data-elxout]') && SRV.on){ elxExportReal(); return; }
