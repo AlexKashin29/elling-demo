@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.66 «Команда↔Доска» — рабочий MVP</title>
+﻿<title>Эллинг v1.67 «Тур» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -243,6 +243,17 @@
   .tm-badges{display:flex;gap:7px;flex-wrap:wrap}
   .tm-badge{background:var(--panel2);border-radius:8px;padding:3px 9px;color:var(--ink2);font-weight:600;font-size:11.5px;white-space:nowrap;flex:none}
   .tm-badge.over{background:var(--risk-soft);color:var(--risk)}
+  /* v1.67: онбординг-тур — прожектор + подсказка */
+  .tour-hi{position:relative;z-index:1001;border-radius:12px;
+    box-shadow:0 0 0 3px var(--accent),0 0 0 9999px rgba(6,14,20,.62)!important;transition:box-shadow .3s cubic-bezier(.16,1,.3,1)}
+  .tour-tip{position:fixed;z-index:1002;visibility:hidden;width:min(340px,92vw);background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;box-shadow:var(--sh-lg);padding:16px 18px;animation:cardIn .28s cubic-bezier(.16,1,.3,1)}
+  .tt-n{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .tt-t{font-size:15.5px;font-weight:750;letter-spacing:-.01em;margin:4px 0 6px}
+  .tt-x{font-size:13px;color:var(--ink2);line-height:1.5}
+  .tt-act{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+  .tt-act .btn{padding:6px 13px;font-size:12.5px}
+  @media (prefers-reduced-motion:reduce){.tour-hi,.tour-tip{transition:none;animation:none}}
   @media(max-width:860px){.set-wrap{grid-template-columns:1fr}.set-rail{position:static;flex-direction:row;overflow-x:auto;flex-wrap:nowrap;top:0}.set-cat{white-space:nowrap}.set-cat.on::before{display:none}}
   .bench-dealpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
   .bench-dealpick label{font-size:13px;font-weight:600;color:var(--ink2)}
@@ -2011,7 +2022,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.66';
+const APP_VER = '1.67';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -3082,6 +3093,7 @@ function render(){
     S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='estimates'?vEstimates(): S.view==='notices'?vNotices(): S.view==='portal'?vPortal(): S.view==='bench'?vBench(): S.view==='team'?vTeam(): S.view==='settings'?vSettings(): vReports();
   if(S.view!==S._prevView){ const c=$('content'); c.classList.remove('view-in'); void c.offsetWidth; c.classList.add('view-in'); S._prevView=S.view; animateCounters(); }
   if(S._scrollMig){ S._scrollMig=0; try{ setTimeout(()=>{ const w=document.getElementById('migWiz'); if(w&&w.scrollIntoView) w.scrollIntoView({behavior:'smooth',block:'start'}); },70); }catch(e){} }
+  if(S.tour&&S.tour.on){ try{ setTimeout(paintTour,60); }catch(e){} }
   $('userSel').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
   renderBell();
   if(S.view==='reports') loadAudit();
@@ -3126,9 +3138,57 @@ function openWelcome(){
     ${WL_STEPS.map(([v,t],n)=>`<div class="wl-step" data-wlgo="${v}"><span class="num">${n+1}</span><span>${t}</span></div>`).join('')}
     <div class="wl-act">
       <button class="btn ghost" id="wlClose">Закрыть</button>
+      <button class="btn ghost" id="tourStart">▶ Пройти тур</button>
       <button class="btn" data-wlgo="today">Начать →</button>
     </div>`;
   $('welcome').classList.add('open');
+}
+/* ---- v1.67: интерактивный онбординг-тур ---- */
+const TOUR = [
+  {view:'today', sel:'.hub', t:'Ваш хаб', x:'Главная подстроена под роль: 2–3 клика до нужного. У руководителя здесь пульт с рисками, у инженера — его очередь задач.'},
+  {view:'today', sel:'aside nav', t:'Меню под вашу роль', x:'В меню только те модули, к которым у роли есть доступ — лишнего нет. Ветка вашего отдела раскрыта, чужие свёрнуты.'},
+  {view:'today', sel:'.userbox', t:'Переключение ролей', x:'Смените роль — изменятся меню, доступы, финансы и набор функций. Попробуйте директора, потом инженера: разница видна сразу.'},
+  {view:'board', sel:'.board-wrap', t:'Доска инженерного центра', x:'Канбан ИЦ: перетащите карточку между статусами — статус увидят все роли без единого звонка.'},
+  {view:'kb', sel:'#content', t:'База знаний с ИИ', x:'Поиск аналогов по ТЗ: система извлекает параметры (давление, подача, материал) и объясняет, почему проект похож.'},
+  {view:'portal', sel:'.xorg', t:'Кросс-орг: взгляд верфи', x:'Так заказ видят верфь и военная приёмка — только вехи, документы и приёмка. Цена, маржа и поставщики скрыты.'},
+  {view:'team', sel:'.tm-grid', t:'Команда', x:'Руководитель видит загрузку подчинённых и узкие места. Клик по человеку — его задачи на Доске.'},
+  {view:'settings', sel:'.set-rail', t:'Настройки', x:'Админка по категориям: организация, роли и доступы, интеграции, миграция. Управленческие разделы видны только руководству.'},
+];
+function tourSteps(){ return TOUR.filter(s=>canView(s.view)); }
+function startTour(){ closeWelcome(); S.tour={on:true,i:0}; applyTour(); }
+function endTour(){ S.tour={on:false,i:0};
+  try{ document.querySelectorAll('.tour-hi').forEach(el=>el.classList.remove('tour-hi')); const tip=document.getElementById('tourTip'); if(tip) tip.remove(); }catch(e){}
+}
+function applyTour(){
+  const steps=tourSteps(); if(!S.tour||!S.tour.on||!steps.length) return endTour();
+  if(S.tour.i>=steps.length) return endTour();
+  const st=steps[S.tour.i];
+  if(S.view!==st.view){ S.view=st.view; render(); }
+  paintTour();
+}
+function paintTour(){
+  try{
+    const steps=tourSteps(); if(!S.tour||!S.tour.on||S.tour.i>=steps.length) return;
+    const st=steps[S.tour.i];
+    document.querySelectorAll('.tour-hi').forEach(el=>el.classList.remove('tour-hi'));
+    let tip=document.getElementById('tourTip');
+    if(!tip){ tip=document.createElement('div'); tip.id='tourTip'; tip.className='tour-tip'; document.body.appendChild(tip); }
+    const last=S.tour.i===steps.length-1;
+    tip.innerHTML=`<div class="tt-n">Шаг ${S.tour.i+1} из ${steps.length}</div>
+      <div class="tt-t">${esc(st.t)}</div><div class="tt-x">${esc(st.x)}</div>
+      <div class="tt-act"><button class="btn ghost" data-tour="end">Пропустить</button>
+        ${S.tour.i?'<button class="btn ghost" data-tour="prev">Назад</button>':''}
+        <button class="btn" data-tour="${last?'end':'next'}">${last?'Готово':'Далее →'}</button></div>`;
+    const el=document.querySelector(st.sel);
+    if(el && el.getBoundingClientRect){
+      el.classList.add('tour-hi');
+      const r=el.getBoundingClientRect(); const th=tip.offsetHeight||190, tw=tip.offsetWidth||330;
+      let top=r.bottom+12; if(top+th>window.innerHeight-8) top=Math.max(8,r.top-th-12);
+      let left=Math.min(Math.max(8,r.left), window.innerWidth-tw-8);
+      tip.style.top=top+'px'; tip.style.left=left+'px'; tip.style.visibility='visible';
+      try{ el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(x){}
+    } else { tip.style.top='50%'; tip.style.left='50%'; tip.style.transform='translate(-50%,-50%)'; tip.style.visibility='visible'; }
+  }catch(e){}
 }
 function closeWelcome(){ $('welcome').classList.remove('open'); try{ localStorage.setItem(WELCOME_KEY,'1'); }catch(e){} }
 
@@ -3348,6 +3408,12 @@ document.addEventListener('click', e=>{
   if(e.target.id==='nt_save'){ createTask(); return; }
   if(e.target.id==='resetBtn'||e.target.id==='resetBtn2'){ if(confirm('Сбросить демо-данные?')){ S=seed(); ACTS.push('сброс демо-данных'); render(); pushState(); } return; }
   if(e.target.id==='helpBtn'){ openWelcome(); return; }
+  if(e.target.id==='tourStart'){ startTour(); return; }
+  const tr = e.target.closest('[data-tour]');
+  if(tr){ const a=tr.dataset.tour;
+    if(a==='end') endTour();
+    else { S.tour.i += (a==='next'?1:-1); if(S.tour.i<0) S.tour.i=0; applyTour(); }
+    return; }
   if(e.target.id==='wlClose'||e.target===$('welcome')){ closeWelcome(); return; }
   const wg = e.target.closest('[data-wlgo]');
   if(wg){ closeWelcome(); S.view=wg.dataset.wlgo; S.kbTab='search'; render(); return; }
