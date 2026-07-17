@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.74 «UI→нить» — рабочий MVP</title>
+﻿<title>Эллинг v1.75 «Т2 живой» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -191,7 +191,10 @@
   .wiz-step.ok{color:var(--good)}
   /* v1.58: двухпанельные настройки (рубрикатор слева) — как Ozon/Яндекс/Bitrix */
   .set-wrap{display:grid;grid-template-columns:236px 1fr;gap:20px;align-items:start}
-  .set-rail{position:sticky;top:78px;display:flex;flex-direction:column;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--sh)}
+  /* Липнем к верху СКОЛЛ-КОНТЕЙНЕРА (.content), а не окна: шапка вне него и не
+     прокручивается. Прежние top:78px давали пустой отступ и «скачок» рельса
+     между короткими и длинными разделами. */
+  .set-rail{position:sticky;top:2px;display:flex;flex-direction:column;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--sh)}
   .set-cat{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;background:none;border:none;cursor:pointer;text-align:left;width:100%;font:inherit;font-size:13.5px;font-weight:600;color:var(--ink2);transition:background .15s,color .15s;position:relative}
   .set-cat:hover{background:var(--panel2);color:var(--ink)}
   .set-cat.on{background:var(--accent-soft);color:var(--accent)}
@@ -2101,7 +2104,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.74';
+const APP_VER = '1.75';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
