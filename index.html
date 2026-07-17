@@ -1387,7 +1387,44 @@ const SHARED = ['orders','epics','seq','tasks','deals','suppliers','certs','noti
 // Дедуп автоматизаций живёт на самой задаче (t.autoFired) — задачи синкаются, поэтому
 // повторное срабатывание в другой вкладке/клиенте не задваивает комментарии и лог (ревью v1.15)
 function sharedData(){ const o={}; SHARED.forEach(k=>o[k]=S[k]); return o; }
-function adoptShared(d){ if(!d) return; SHARED.forEach(k=>{ if(d[k]!==undefined) S[k]=d[k]; }); }
+function adoptShared(d){ if(!d) return; SHARED.forEach(k=>{ if(d[k]!==undefined) S[k]=d[k]; }); BASE = snap(sharedData()); }
+
+/* ---- отправка изменений, а не всего состояния ----
+   Раньше фронт слал ВЕСЬ блок на каждое нажатие. Замер (test/state_bench.py):
+   ~171 заказ с годовой лентой — и PUT упирается в лимит 1 МБ, после чего
+   приложение не сохраняет НИЧЕГО и НИКОМУ. 171 заказ для завода — не «через год».
+
+   Дельта убирает эту стену без переезда на другую БД, потому что сервер УЖЕ умеет
+   принимать частичное состояние: merge_state сливает списки по id, а ключи,
+   которых нет во входящем, оставляет как есть. Проверено: шлём один заказ —
+   остальные заказы, задачи и seq на сервере не страдают.
+
+   Что дельта НЕ решает: удаление сущностей (merge_state не умеет удалять — как и
+   раньше) и рост самого состояния на сервере. Она убирает только предел ПЕРЕДАЧИ,
+   а он и был стеной. */
+let BASE = null;                      // состояние, которое, как мы знаем, есть у сервера
+const snap = o => JSON.parse(JSON.stringify(o));
+const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+const ID_FIELDS = ['key','id','nm'];
+const idOf = x => { for(const f of ID_FIELDS) if(x && x[f]!==undefined) return String(x[f]); return null; };
+
+function deltaShared(){
+  const cur = sharedData();
+  if(!BASE) return cur;               // базы нет (первый вход) — шлём всё целиком
+  const d = {};
+  for(const k of SHARED){
+    const c = cur[k], b = BASE[k];
+    if(same(c,b)) continue;           // не менялось — не шлём
+    if(Array.isArray(c) && Array.isArray(b) && c.length && idOf(c[0])){
+      // Список сущностей: шлём только изменившиеся и новые. Сервер сольёт их по id,
+      // не тронув остальные — именно так merge_state и работает.
+      const was = new Map(b.map(x=>[idOf(x), x]));
+      const changed = c.filter(x=>{ const i=idOf(x); return i===null || !was.has(i) || !same(x, was.get(i)); });
+      if(changed.length) d[k] = changed;
+    } else d[k] = c;                  // скаляр или список без id — целиком
+  }
+  return d;
+}
 function setSrv(on){ SRV.on = on; const el = $('srvState');
   if(el) el.textContent = on ? `сервер: live · rev ${SRV.rev}` : 'локальный режим (без сервера)'; }
 let pushT = null;
@@ -1396,16 +1433,29 @@ function queuePush(){ if(!SRV.on || SYNCING) return; clearTimeout(pushT); pushT 
 async function pushState(){
   clearTimeout(pushT); pushT = null;
   const acts = ACTS; ACTS = [];
+  const sent = snap(sharedData());        // снимок ДО сети: пока летит запрос, состояние живёт
+  const delta = deltaShared();
+  if(!Object.keys(delta).length){
+    ACTS = acts.concat(ACTS);             // ничего не отправили — описания действий вернуть,
+    return;                               // иначе они пропадут из аудита при следующем push
+  }
   try{
     const r = await fetch('/api/state', {method:'PUT', headers:AH({'Content-Type':'application/json'}),
-      body: JSON.stringify({rev:SRV.rev, data:sharedData(),
+      body: JSON.stringify({rev:SRV.rev, data:delta,
         user: PEOPLE[S.currentUser].full + ' · ' + PEOPLE[S.currentUser].role,
         action: acts.join('; ') || 'изменение данных'})});
     if(r.status===409){ const j = await r.json();
       // наш push отклонён (устаревший rev) — НЕ теряем локальные правки (напр. аннотацию):
       // обновляем rev и повторяем отправку, сервер сольёт наши правки по сущностям (ревью v1.1)
       SRV.rev = j.rev; ACTS = acts.concat(ACTS); setSrv(true); queuePush(); return; }
-    if(r.ok){ const j = await r.json(); SRV.rev = j.rev; setSrv(true); }
+    if(r.status===413){ const j = await r.json().catch(()=>({}));
+      ACTS = acts.concat(ACTS);
+      toast(j.error || 'Изменения не сохранены: превышен предел хранилища');
+      checkStateSize(); return; }
+    if(r.ok){ const j = await r.json(); SRV.rev = j.rev; setSrv(true);
+      // База — то, что мы ОТПРАВИЛИ, а не то, что в S сейчас: за время запроса
+      // человек мог напечатать ещё, и эти правки обязаны уехать следующей дельтой.
+      BASE = sent; }
     else ACTS = acts.concat(ACTS);
   }catch(e){ ACTS = acts.concat(ACTS); setSrv(false); }
 }
@@ -2328,7 +2378,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.80';
+const APP_VER = '1.81';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
