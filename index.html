@@ -2229,8 +2229,20 @@ function vPortal(){
 const EST_SRC={tender:'тендер ЕИС',mail:'почтовый шлюз',deal:'из сделки',call:'звонок'};
 const EST_ST={new:['В очереди','var(--warn)'],wip:['В работе','var(--steel)'],done:['Просчитано','var(--good)'],declined:['Отклонено','var(--muted)']};
 function estById(id){ return (S.estimates||[]).find(e=>e.id===id); }
-function estAckLeft(e){ return e.ackSlaMin - e.ageMin; }
-function estDueLeft(e){ return e.estSlaMin - e.ageMin; }
+/* Возраст заявки — от времени создания, а не поле в данных.
+   Было: новый просчёт создавался с ageMin:0, и ЭТО ЧИСЛО НИКТО НЕ УВЕЛИЧИВАЛ.
+   Часы SLA не шли: заявка, поданная сегодня, вечно показывала «0 минут в очереди»,
+   счётчик «просрочен отклик» видел только демо-данные, а на живом заводе SLA не
+   сработал бы ни разу. При этом «сделки умирают в очереди на просчёт» — боль №1,
+   ради которой продукт и покупают.
+   ageMin у демо-записей оставлен как запасной вариант: без него витрина
+   показывала бы нули вместо живой очереди. */
+function estAge(e){
+  if(e && e.created){ return Math.max(0, Math.round((Date.now() - e.created)/60000)); }
+  return (e && e.ageMin) || 0;
+}
+function estAckLeft(e){ return e.ackSlaMin - estAge(e); }
+function estDueLeft(e){ return e.estSlaMin - estAge(e); }
 function estAckOverdue(e){ return e.status==='new' && estAckLeft(e)<0; }
 function estDueOverdue(e){ return (e.status==='new'||e.status==='wip') && estDueLeft(e)<0; }
 function estOverdue(e){ return estAckOverdue(e)||estDueOverdue(e); }
@@ -2271,7 +2283,7 @@ function vEstimates(){
       <div class="ana-top">
         <div><div class="ana-name">${esc(e.id)} · ${esc(e.title)}${e.goz?' <span class="stchip" style="color:var(--accent);border:1px solid var(--accent);font-size:9px">ГОЗ</span>':''}</div>
           <div class="ana-meta">${esc(e.company)} · ${esc(e.vessel)} · ${EST_SRC[e.source]||e.source}${e.who?' · '+esc(PEOPLE[e.who]?PEOPLE[e.who].full:e.who):''}</div></div>
-        <span class="stchip" style="color:${st[1]};border:1px solid ${st[1]}">${st[0]}${e.status==='new'?' · '+fmtDur(e.ageMin):''}</span>
+        <span class="stchip" style="color:${st[1]};border:1px solid ${st[1]}">${st[0]}${e.status==='new'?' · '+fmtDur(estAge(e)):''}</span>
       </div>
       <div style="font-size:13px;color:var(--ink2);margin:10px 0">${esc(e.note)}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:10px;border-top:1px solid var(--line2)">
@@ -2405,7 +2417,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.83';
+const APP_VER = '1.84';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2809,7 +2821,7 @@ function vToday(){
     const ords=S.orders||[];
     const cOk=ords.filter(o=>o.risk==='ok').length, cWarn=ords.filter(o=>o.risk==='warn').length, cRisk=ords.filter(o=>o.risk==='risk').length;
     const forecast=(S.deals||[]).filter(d=>d.stage!=='lost').reduce((a,d)=>a+d.sum*((DEAL_PROB[d.stage]||0)/100),0);
-    const estAll=S.estimates||[]; const ackOver=estAll.filter(e=>e.status==='new'&&(e.ackSlaMin-e.ageMin)<0).length;
+    const estAll=S.estimates||[]; const ackOver=estAll.filter(e=>e.status==='new'&&estAckLeft(e)<0).length;
     const slaPct=estAll.length?Math.round((estAll.length-ackOver)/estAll.length*100):100;
     const cc=c=>`color:${c};-webkit-text-fill-color:${c}`;
     const attn=[
@@ -3223,10 +3235,10 @@ function chartEstFunnel(){
   const es=S.estimates||[]; const tot=es.length;
   const responded=es.filter(e=>e.status==='wip'||e.status==='done').length;
   const completed=es.filter(e=>e.status==='done').length;
-  const ackOver=es.filter(e=>e.status==='new'&&(e.ackSlaMin-e.ageMin)<0).length;
+  const ackOver=es.filter(e=>e.status==='new'&&estAckLeft(e)<0).length;
   const slaPct=tot?Math.round((tot-ackOver)/tot*100):100;
   const newOnes=es.filter(e=>e.status==='new');
-  const avgQ=newOnes.length?Math.round(newOnes.reduce((a,e)=>a+e.ageMin,0)/newOnes.length):0;
+  const avgQ=newOnes.length?Math.round(newOnes.reduce((a,e)=>a+estAge(e),0)/newOnes.length):0;
   const steps=[['Поступило',tot,'var(--steel)'],['Взято в работу',responded,'var(--navy)'],['Просчитано',completed,'var(--good)']];
   const mx=Math.max(1,tot);
   return `<div class="chart-head"><h3>Конверсия просчёта <span class="ch-sub">путь заявки на оценку ТЗ + SLA</span></h3></div>
@@ -3245,7 +3257,7 @@ function chartEstFunnel(){
 }
 function vReports(){
   const cnt = c => S.tasks.filter(t=>t.col===c).length;
-  const estAll = S.estimates||[]; const ackOver=estAll.filter(e=>e.status==='new'&&(e.ackSlaMin-e.ageMin)<0).length;
+  const estAll = S.estimates||[]; const ackOver=estAll.filter(e=>e.status==='new'&&estAckLeft(e)<0).length;
   const slaPct = estAll.length?Math.round((estAll.length-ackOver)/estAll.length*100):100;
   const dForecast = (S.deals||[]).filter(d=>d.stage!=='lost').reduce((a,d)=>a+d.sum*((DEAL_PROB[d.stage]||0)/100),0);
   const savedCalls = S.orders.reduce((a,o)=>a+o.feed.filter(f=>f[2]).length,0);
@@ -3847,7 +3859,8 @@ document.addEventListener('click', e=>{
   if(da){ const d=dealById(da.dataset.dealassess);
     if(d){ S.seq=(S.seq||2470)+1; const eid='PR-'+S.seq; S.estimates=S.estimates||[];
       S.estimates.unshift({id:eid, title:d.title, company:d.company, vessel:d.vessel||'—', source:'deal',
-        ageMin:0, status:'new', who:null, ackSlaMin:240, estSlaMin:4320, resHours:null, resSum:null,
+        created:Date.now(), ageMin:0, status:'new', who:null, ackSlaMin:240, estSlaMin:4320,
+        resHours:null, resSum:null,
         dealId:d.id, goz:d.goz, note:'Запрос из сделки '+d.id+'. Нужен просчёт трудоёмкости и срока для ТКП.'});
       moveDeal(d,'assess'); d.next='Дождаться оценки ТЗ от ИЦ (SLA: отклик 4 ч, просчёт 3 дн)';
       d.acts=d.acts||[]; d.acts.push(['сейчас','Заявка отправлена в очередь «Просчёт»']);
