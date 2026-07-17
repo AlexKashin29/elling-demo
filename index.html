@@ -305,6 +305,24 @@
   @media(max-width:640px){.bm-cmp-foot{flex-direction:column;align-items:stretch}}
   .wl-ship{display:block;width:min(300px,72%);height:auto;stroke:var(--accent);fill:none;stroke-width:1.5;opacity:.92;margin:10px 0 2px;stroke-linecap:round;stroke-linejoin:round}
   /* v1.44: фоновый силуэт судна на заднем плане продукта (по референсу траулера) */
+  /* Экран входа */
+  .lg-wrap{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;
+    background:radial-gradient(120% 90% at 70% 10%, var(--panel2) 0%, var(--bg) 60%);padding:20px}
+  .lg-card{width:min(92vw,380px);background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:32px 30px 26px;box-shadow:0 18px 60px rgba(0,0,0,.14)}
+  .lg-brand{font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+  .lg-sub{font-size:13px;color:var(--muted);margin:2px 0 22px}
+  .lg-lab{display:block;font-size:11px;font-weight:650;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--muted);margin:14px 0 5px}
+  .lg-inp{width:100%;box-sizing:border-box;padding:11px 13px;font:inherit;font-size:14px;
+    color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:9px;outline:none}
+  .lg-inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .lg-btn{width:100%;margin-top:22px;padding:12px;font:inherit;font-size:14px;font-weight:650;
+    color:#fff;background:var(--accent);border:0;border-radius:9px;cursor:pointer}
+  .lg-btn:hover{filter:brightness(1.08)} .lg-btn:disabled{opacity:.6;cursor:default}
+  .lg-err{background:var(--risk-soft,#FBE9E7);color:var(--risk);border:1px solid var(--risk);
+    border-radius:8px;padding:9px 11px;font-size:12.5px;margin-bottom:4px}
+  .lg-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:18px}
   .appship{position:fixed;right:-26px;bottom:-14px;width:min(44vw,540px);height:auto;z-index:0;pointer-events:none;
     stroke:var(--ink);fill:none;stroke-width:1.3;opacity:.05;stroke-linecap:round;stroke-linejoin:round}
   :root[data-theme="dark"] .appship{opacity:.07}
@@ -1341,8 +1359,15 @@ function save(){ try{ localStorage.setItem(LSKEY, JSON.stringify(S)); }catch(e){
 
 /* ---- серверная синхронизация (v0.5): SSE-пуш, журнал аудита, подпись действий ---- */
 const SRV = { on:false, rev:0, es:null };
-const TOK = () => (window.__ELLING_TOKEN || '');   // токен инъектируется сервером в same-origin index.html
-const AH = extra => Object.assign({'X-API-Token': TOK()}, extra||{});
+// Токен сервером БОЛЬШЕ НЕ ИНЖЕКТИТСЯ: он лежал в index.html, которую отдавали
+// анонимно, — `curl http://host/` возвращал ключ ко всему API. Человек ходит по
+// сессии в HttpOnly-куке (её JS не прочитает, значит и XSS не украдёт), браузер
+// шлёт её сам. Заголовок с токеном остаётся только для служб и для стенда,
+// где токен задали вручную через консоль.
+const TOK = () => (window.__ELLING_TOKEN || '');
+const AH = extra => { const h = Object.assign({}, extra||{}); const t = TOK();
+                      if(t) h['X-API-Token'] = t; return h; };
+let ME = null;            // кто вошёл (с сервера); null в демо без сервера
 let ACTS = [];            // накопитель описаний действий (ревью v0.5: не терять при дебаунсе)
 let SYNCING = false;      // рендер по данным с сервера не должен порождать обратный пуш (эхо-цикл)
 const SHARED = ['orders','epics','seq','tasks','deals','suppliers','certs','notices','estimates','portalDocs','portalQA','connectors','agentLog','docs','projects','kbProjects','checklists','drawings','rules','notes','savedFilters','portalAccept','notifCh','elxLog'];
@@ -1395,8 +1420,68 @@ function startStream(){
     };
   }catch(e){ setInterval(pullState, 8000); }
 }
+// Экран входа. Показывается только когда сервер есть и требует авторизации:
+// публичное демо на статике живёт без сервера и работает как раньше.
+function paintLogin(err){
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="lg-wrap" id="lgWrap">
+      <form class="lg-card" id="lgForm">
+        <div class="lg-brand">Эллинг</div>
+        <div class="lg-sub">Вход в систему</div>
+        ${err?`<div class="lg-err" id="lgErr">${esc(err)}</div>`:'<div class="lg-err" id="lgErr" hidden></div>'}
+        <label class="lg-lab">Логин</label>
+        <input class="lg-inp" id="lgUser" autocomplete="username" autofocus>
+        <label class="lg-lab">Пароль</label>
+        <input class="lg-inp" id="lgPass" type="password" autocomplete="current-password">
+        <button class="lg-btn" type="submit" id="lgGo">Войти</button>
+        <div class="lg-note">Доступ выдаёт администратор вашего предприятия.
+          Действия в системе записываются в журнал под вашим именем.</div>
+      </form>
+    </div>`);
+  const f = $('lgForm');
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('lgGo'), box = $('lgErr');
+    btn.disabled = true; btn.textContent = 'Проверяю…';
+    try{
+      const r = await fetch('/api/auth/login', {method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({login: $('lgUser').value, password: $('lgPass').value})});
+      const j = await r.json().catch(()=>({}));
+      if(r.ok){ location.reload(); return; }       // кука уже стоит — стартуем начисто
+      box.hidden = false; box.textContent = j.error || 'Не удалось войти';
+    }catch(_){ $('lgErr').hidden = false; $('lgErr').textContent = 'Сервер недоступен'; }
+    btn.disabled = false; btn.textContent = 'Войти';
+    $('lgPass').value = ''; $('lgPass').focus();
+  });
+}
+
+// Роль вошедшего задаёт сервер, а не переключатель. Переключатель ролей — вещь
+// демо: показать заводу, что видит логист и чего не видит. С настоящим входом
+// человек обязан видеть ровно свои доступы, иначе RBAC — украшение.
+function applyMe(u){
+  const key = Object.keys(PEOPLE).find(k => k === u.login
+              || (PEOPLE[k].role === u.role && PEOPLE[k].lvl === u.lvl));
+  if(key){ S.currentUser = key; }
+  else {
+    // Учётки нет в демо-справочнике (реальный завод) — заводим на лету, чтобы
+    // доступы считались по её роли, а не по чужой.
+    PEOPLE[u.login] = {n:(u.name||'?').slice(0,2), full:u.name, role:u.role,
+                       c:'#1F3A50', lvl:u.lvl, mgr:null, dept:'—'};
+    S.currentUser = u.login;
+  }
+  S.demoRoleSwitch = false;      // с настоящим входом роль не выбирают
+}
+
 async function bootstrapSrv(){
   if(!/^https?:$/.test(location.protocol)) return;
+  try{
+    // Сначала «кто я» — этот роут анонимный, он и отвечает, нужен ли вход вообще.
+    const who = await (await fetch('/api/auth/me', {cache:'no-store'})).json();
+    if(who.auth && !who.user){ paintLogin(); return; }   // сервер требует вход
+    ME = who.user || null;
+    if(ME) applyMe(ME);
+  }catch(e){ /* сервера нет — демо работает как раньше */ }
   try{
     const r = await fetch('/api/state', {cache:'no-store', headers:AH()});
     if(!r.ok) return;
@@ -2207,7 +2292,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.78';
+const APP_VER = '1.79';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
