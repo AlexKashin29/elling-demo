@@ -2442,7 +2442,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.85';
+const APP_VER = '1.86';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2798,10 +2798,35 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
 const RSTAGES = ['Техпроект (П)','РКД','Закупка / Тендер','Контракт'];
 const PST = {ok:['var(--good)','заложено'],warn:['var(--warn)','под угрозой'],lost:['var(--risk)','перезаложено']};
 
+/* Заведение проектов и позиций. Их НЕ БЫЛО: радар жил только на демо-данных, и на
+   живом заводе оставался пустым навсегда — при том, что «радар закладок» вынесен
+   на лендинг как дифференциатор. Демо этого не показывало: витрина выглядела
+   полной системой. */
+function radarForm(){
+  if(!S.radarForm) return `<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn" data-radarnew="1">+ Проект под наблюдение</button>
+      <span style="font-size:12.5px;color:var(--muted)">Заводим проект судна и свои позиции в нём — дальше радар следит за их статусом.</span>
+    </div>`;
+  return `<div class="panel" style="margin-bottom:14px">
+    <h3>Новый проект судна</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:10px">
+      <label class="fld"><span>Проект</span><input id="rfName" placeholder="Проект 23550 · арктический траулер"></label>
+      <label class="fld"><span>Бюро-проектант</span><input id="rfBureau" placeholder="ЦКБ «Восток»"></label>
+      <label class="fld"><span>Суда / верфь</span><input id="rfVessels" placeholder="2 судна · Адмиралтейские верфи"></label>
+      <label class="fld"><span>Стадия</span><select id="rfStage">${RSTAGES.map((s,i)=>`<option value="${i}">${s}</option>`).join('')}</select></label>
+    </div>
+    ${S.radarFormErr?`<div class="lg-err" style="margin-top:10px">${esc(S.radarFormErr)}</div>`:''}
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" data-radarsave="1">Создать</button>
+      <button class="btn ghost" data-radarcancel="1">Отмена</button>
+    </div></div>`;
+}
+
 function vRadar(){
   const all = S.projects.flatMap(p=>p.positions);
   const alerts = all.filter(x=>x.st!=='ok').length;
-  return `<div class="stats" style="margin-bottom:16px">
+  return `${radarForm()}
+    <div class="stats" style="margin-bottom:16px">
       <div class="stat"><div class="v">${S.projects.length}</div><div class="l">проектов судов под наблюдением</div></div>
       <div class="stat"><div class="v">${all.length}</div><div class="l">наших позиций в закладках</div></div>
       <div class="stat"><div class="v" style="color:${alerts?'var(--risk)':'var(--good)'}">${alerts}</div><div class="l">требуют действий продаж</div></div>
@@ -2821,7 +2846,17 @@ function vRadar(){
         ${x.st!=='ok'?`<button class="btn" style="padding:5px 12px;font-size:12px" data-mktask="${esc(p.name)}|${esc(x.nm)}">→ Задача продажам</button>`:''}
         <span style="flex-basis:100%;font-size:12.5px;color:var(--ink2)">${esc(x.note)}</span>
       </div>`).join('')}
+      ${p.positions.length?'':'<div class="empty" style="margin:8px 0">позиций пока нет — добавьте те, что заложены проектантом</div>'}
+      <div class="addline" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+        <input id="pf-${esc(p.id)}" placeholder="Наша позиция: Электронасос ЦВС-400/40" style="flex:2;min-width:200px">
+        <select id="pfst-${esc(p.id)}" style="flex:0 0 auto;padding:8px 10px;font:inherit;font-size:13px;
+          background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px">
+          ${Object.entries(PST).map(([k,v])=>`<option value="${k}">${v[1]}</option>`).join('')}</select>
+        <input id="pfn-${esc(p.id)}" placeholder="Откуда сигнал: ИТТ проектанта / звонок ГИПу / тендер" style="flex:2;min-width:200px">
+        <button class="btn" data-posadd="${esc(p.id)}">+ позиция</button>
+      </div>
     </div>`).join('')}
+    ${S.projects.length?'':'<div class="empty">проектов под наблюдением пока нет — заведите первый, и радар начнёт следить за вашими позициями</div>'}
     <p class="flow-hint">Радар следит за проектами судов от техпроекта до тендера: позицию, заложенную проектантом, могут тихо заменить на стадии РКД — без пересмотра техпроекта. Сигналы приходят из извещений РКД, тендерных документов и контактов с бюро. Жёлтое и красное — повод для звонка ГИПу сегодня, а не на тендере.</p>`;
 }
 
@@ -3799,6 +3834,34 @@ function renderBell(){
 
 /* ================= events ================= */
 document.addEventListener('click', e=>{
+  /* Радар: заведение проекта и позиций — раньше их было нечем создать */
+  if(e.target.closest('[data-radarnew]')){ S.radarForm=1; S.radarFormErr=''; render();
+    setTimeout(()=>{ const el=$('rfName'); if(el) el.focus(); },0); return; }
+  if(e.target.closest('[data-radarcancel]')){ S.radarForm=0; S.radarFormErr=''; render(); return; }
+  if(e.target.closest('[data-radarsave]')){
+    const g=id=>(($(id)||{}).value||'').trim();
+    const name=g('rfName');
+    if(!name){ S.radarFormErr='Назовите проект — иначе его не найти среди других.'; render(); return; }
+    S.seq=(S.seq||2470)+1;
+    S.projects=S.projects||[];
+    S.projects.unshift({id:'P'+S.seq, name, bureau:g('rfBureau')||'—',
+      vessels:g('rfVessels')||'—', stage:+g('rfStage')||0, positions:[]});
+    ACTS.push(`радар: проект «${name}» под наблюдение`);
+    S.radarForm=0; S.radarFormErr=''; save(); render(); toast('Проект под наблюдением','ok');
+    return;
+  }
+  const padd = e.target.closest('[data-posadd]');
+  if(padd){ const pid=padd.dataset.posadd; const p=(S.projects||[]).find(x=>x.id===pid);
+    const nm=(($('pf-'+pid)||{}).value||'').trim();
+    if(!p || !nm){ toast('Укажите позицию — что именно заложено'); return; }
+    const st=(($('pfst-'+pid)||{}).value||'ok');
+    const note=(($('pfn-'+pid)||{}).value||'').trim() || 'заведено вручную';
+    p.positions.push({nm, st, note});
+    ACTS.push(`радар: позиция «${nm}» в проекте «${p.name}» — ${PST[st][1]}`);
+    save(); render();
+    toast(st==='ok'?'Позиция под наблюдением':'Позиция добавлена — радар подсветит риск','ok');
+    return;
+  }
   const mk = e.target.closest('[data-mktask]');
   if(mk){ const [proj,pos]=mk.dataset.mktask.split('|'); S.seq++;
     S.tasks.unshift({key:'СТ-'+S.seq, ttl:`Закладка под угрозой: ${pos} — ${proj}`, epic:'E6', who:'sokolova',
