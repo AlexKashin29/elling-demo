@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.65 «Команда» — рабочий MVP</title>
+﻿<title>Эллинг v1.66 «Команда↔Доска» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -229,7 +229,10 @@
   .on-sub.muted{color:var(--muted);background:var(--panel2)}
   /* v1.65: дашборд руководителя «Команда» */
   .tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-  .tm-card{border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--sh);padding:14px 16px;transition:transform .15s,box-shadow .15s,border-color .15s}
+  .tm-card{border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--sh);padding:14px 16px;transition:transform .15s,box-shadow .15s,border-color .15s;
+    text-align:left;font:inherit;color:inherit;width:100%;display:block}
+  button.tm-card{cursor:pointer}
+  button.tm-card:active{transform:translateY(-1px)}
   .tm-card:hover{transform:translateY(-2px);box-shadow:var(--sh-lg);border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
   .tm-top{display:flex;align-items:center;gap:11px;margin-bottom:4px}
   .tm-top .av{flex:none}
@@ -1617,6 +1620,7 @@ function task(key){ return S.tasks.find(t=>t.key===key); }
 function orderOfTask(t){ const e=epic(t.epic); return e&&e.orderId ? S.orders.find(o=>o.id===e.orderId) : null; }
 function visible(t){
   if(S.chips.mine && t.who!==S.currentUser) return false;
+  if(S.chips.who && t.who!==S.chips.who) return false;   // фильтр по конкретному исполнителю (из «Команды»)
   if(S.chips.hi && t.prio!=='hi') return false;
   if(S.chips.epic && t.epic!==S.chips.epic) return false;
   if(S.q && !(t.ttl+' '+t.key).toLowerCase().includes(S.q.toLowerCase())) return false;
@@ -2007,7 +2011,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.65';
+const APP_VER = '1.66';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2432,6 +2436,7 @@ function chipsHTML(){
     <span class="lbl">Фильтры</span>
     <button class="chip" data-chip="mine" aria-pressed="${S.chips.mine}">Я исполнитель</button>
     <button class="chip" data-chip="hi" aria-pressed="${S.chips.hi}">Высокий приоритет</button>
+    ${S.chips.who&&PEOPLE[S.chips.who]?`<button class="chip on" data-chipwho="1" title="снять фильтр по исполнителю">Исполнитель: ${esc(PEOPLE[S.chips.who].full)} ✕</button>`:''}
     <span class="lbl" style="margin-left:8px">Эпик</span>
     ${S.epics.map(e=>`<button class="chip" data-chipepic="${e.id}" aria-pressed="${S.chips.epic===e.id}">${e.id}</button>`).join('')}
     <span class="lbl" style="margin-left:12px">Сохранённые</span>
@@ -2970,8 +2975,8 @@ function vTeam(){
           ${x.over?`<span class="tm-badge over">${x.over} просроч.</span>`:'<span class="tm-badge">в графике</span>'}
         </div>`; }).join('')}
     </div>`:''}
-    <h4 class="psec">Сотрудники · по остроте</h4>
-    <div class="tm-grid">${rows.map(r=>`<div class="tm-card">
+    <h4 class="psec">Сотрудники · по остроте${canView('board')?' <span style="font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:400">· клик — задачи человека на Доске</span>':''}</h4>
+    <div class="tm-grid">${rows.map(r=>`<${canView('board')?`button class="tm-card" data-teamboard="${r.uid}"`:'div class="tm-card"'}>
       <div class="tm-top">${av(r.uid)}
         <div style="flex:1;min-width:0"><div class="tm-name">${esc(r.u.full)}</div>
           <div class="tm-role">${esc(r.u.role)}${r.sub?` · ведёт ${r.sub}`:''}</div></div>
@@ -2981,7 +2986,7 @@ function vTeam(){
         <span class="tm-badge">${r.wip} в работе</span>
         ${r.rev?`<span class="tm-badge">${r.rev} на согласовании</span>`:''}
         ${r.open===0?'<span class="tm-badge" style="color:var(--good)">свободен</span>':''}</div>
-    </div>`).join('')}</div>`;
+    </${canView('board')?'button':'div'}>`).join('')}</div>`;
 }
 function vBench(){
   const bm = S.benchmarks||[];
@@ -3163,6 +3168,10 @@ document.addEventListener('click', e=>{
   const nav = e.target.closest('[data-nav]');   if(nav){ S.view=nav.dataset.nav; document.body.classList.remove('nav-open'); render(); return; }
   if(e.target.closest('[data-migrate]')){ S.view='settings'; S.setTab='migrate'; S._scrollMig=1; document.body.classList.remove('nav-open'); render(); return; }
   if(e.target.closest('[data-team]')){ S.view='team'; document.body.classList.remove('nav-open'); render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
+  const tbd = e.target.closest('[data-teamboard]');
+  if(tbd){ const uid=tbd.dataset.teamboard; S.chips.who=uid; S.chips.mine=false; S.view='board'; render();
+    toast('Доска: задачи — '+((PEOPLE[uid]||{}).full||''),'ok'); return; }
+  if(e.target.closest('[data-chipwho]')){ S.chips.who=null; render(); return; }
   const stab = e.target.closest('[data-settab]');
   if(stab){ S.setTab=stab.dataset.settab; render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
   const cont = e.target.closest('[data-contour]');
