@@ -305,6 +305,19 @@
   @media(max-width:640px){.bm-cmp-foot{flex-direction:column;align-items:stretch}}
   .wl-ship{display:block;width:min(300px,72%);height:auto;stroke:var(--accent);fill:none;stroke-width:1.5;opacity:.92;margin:10px 0 2px;stroke-linecap:round;stroke-linejoin:round}
   /* v1.44: фоновый силуэт судна на заднем плане продукта (по референсу траулера) */
+  /* Предупреждение о пределе хранилища */
+  .stwarn{position:sticky;top:0;z-index:8000;display:flex;align-items:center;gap:10px;
+    padding:9px 16px;font-size:12.5px;line-height:1.45;color:#5A3E00;
+    background:#FFF3D6;border-bottom:1px solid #E8C97A}
+  .stwarn.alarm{color:#7A1B12;background:#FDE7E4;border-bottom-color:#E9A79E}
+  .stwarn b{font-weight:680}
+  .stwarn-x{margin-left:auto;flex:none;border:0;background:transparent;cursor:pointer;
+    font-size:14px;color:inherit;opacity:.65;padding:2px 6px}
+  .stwarn-x:hover{opacity:1}
+  @media (prefers-color-scheme: dark){
+    .stwarn{color:#F0D79A;background:#3A2E10;border-bottom-color:#6B5520}
+    .stwarn.alarm{color:#F6C3BB;background:#3D1A15;border-bottom-color:#7A3229}
+  }
   /* Экран входа */
   .lg-wrap{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;
     background:radial-gradient(120% 90% at 70% 10%, var(--panel2) 0%, var(--bg) 60%);padding:20px}
@@ -1473,6 +1486,27 @@ function applyMe(u){
   S.demoRoleSwitch = false;      // с настоящим входом роль не выбирают
 }
 
+// Предупреждение о размере состояния. Замер: ~171 заказ с годовой лентой — и PUT
+// начинает отдавать 413, после чего приложение не сохраняет НИЧЕГО и НИКОМУ.
+// Запись в журнале аудита такое не остановит: её никто не читает до инцидента.
+async function checkStateSize(){
+  if(!SRV.on) return;
+  try{
+    const h = await (await fetch('/api/health', {cache:'no-store'})).json();
+    const g = h.state; if(!g || g.level === 'ok'){ const b=$('stWarn'); if(b) b.remove(); return; }
+    if($('stWarn')) return;
+    const alarm = g.level === 'alarm';
+    document.body.insertAdjacentHTML('afterbegin', `
+      <div id="stWarn" class="stwarn ${alarm?'alarm':''}">
+        <b>${alarm?'Скоро остановится сохранение':'Хранилище заполняется'}</b> —
+        ${Math.round(g.bytes/1024)} КБ из ${Math.round(g.limit/1024)} КБ (${g.pct}%).
+        При достижении предела изменения перестанут сохраняться у всех.
+        Сообщите разработчику — нужен переезд на нормальное хранение.
+        <button class="stwarn-x" data-stwarn-close="1" aria-label="Скрыть">✕</button>
+      </div>`);
+  }catch(e){ /* сервер недоступен — не наша забота здесь */ }
+}
+
 async function bootstrapSrv(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -1491,6 +1525,8 @@ async function bootstrapSrv(){
     else { SRV.on = true; ACTS.push('первичная загрузка демо-данных'); await pushState(); }
     setSrv(true); render();
     startStream();
+    checkStateSize();                       // предел хранилища — узнать заранее, а не стеной
+    setInterval(checkStateSize, 300000);
     setInterval(pullState, 30000); // страховочный редкий поллинг
   }catch(e){ setSrv(false); }
 }
@@ -2292,7 +2328,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.79';
+const APP_VER = '1.80';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -3897,6 +3933,7 @@ document.addEventListener('click', e=>{
       else if(act==='done'){ s.status='done'; ACTS.push('доставлено: '+s.id); toast('Доставлено и принято','ok'); }
       save(); render();
     } return; }
+  if(e.target.closest('[data-stwarn-close]')){ const b=$('stWarn'); if(b) b.remove(); return; }
   const agp = e.target.closest('[data-agpull]');
   if(agp){ agentPull(agp.dataset.agpull); return; }
   const agt = e.target.closest('[data-agtoggle]');
