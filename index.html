@@ -2405,7 +2405,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.82';
+const APP_VER = '1.83';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2436,10 +2436,36 @@ function cycleTheme(){
 /* ---- v1.5: онбординг — импорт реестра заказов (CSV/Excel) ---- */
 function parseCSV(text){
   text = String(text).replace(/\r\n?/g,'\n').replace(/\n+$/,'');
-  if(!text.trim()) return {headers:[], rows:[]};
-  const first = text.split('\n')[0];
-  const delim = (first.match(/;/g)||[]).length > (first.match(/,/g)||[]).length ? ';'
-    : (first.includes('\t') ? '\t' : ',');
+  if(!text.trim()) return {headers:[], rows:[], skipped:0};
+  const lines0 = text.split('\n').filter(l=>l.trim());
+  const cut = (line, d) => {
+    const out=[]; let cur='', q=false;
+    for(let i=0;i<line.length;i++){ const c=line[i];
+      if(q){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+      else { if(c==='"') q=true; else if(c===d){ out.push(cur); cur=''; } else cur+=c; } }
+    out.push(cur); return out.map(s=>s.trim());
+  };
+  // Разделитель определяем по ВСЕМУ файлу, а не по первой строке: первая строка у
+  // заводского реестра — «Реестр заказов на 2027 год», точки с запятой в ней нет,
+  // и файл разбирался запятыми.
+  //
+  // Победитель — по «ширина × согласованность», а не по одной согласованности.
+  // В реестре с разделителем «;» запятая всё равно встречается — в «Сумма, руб.»
+  // и в «12 400 000,00» — и даёт по 2 колонки в БОЛЬШЕМ числе строк, чем «;» даёт
+  // по 6. По голой согласованности побеждала запятая, и таблица рассыпалась.
+  // Настоящая таблица — широкая: 6 колонок в 3 строках весомее 2 колонок в 4.
+  // Требуем минимум две согласованные строки, иначе одна строка со случайными
+  // разделителями выдаёт себя за таблицу.
+  let delim = ';', width = 1, score = 0;
+  for(const d of [';', '\t', ',']){
+    const counts = {};
+    lines0.forEach(l => { const n = cut(l, d).length; if(n>1) counts[n] = (counts[n]||0)+1; });
+    for(const k of Object.keys(counts)){
+      const w = +k, c = counts[k];
+      if(c < 2) continue;
+      if(w * c > score){ delim = d; width = w; score = w * c; }
+    }
+  }
   const parseLine = line => {
     const out=[]; let cur='', q=false;
     for(let i=0;i<line.length;i++){ const c=line[i];
@@ -2447,10 +2473,17 @@ function parseCSV(text){
       else { if(c==='"') q=true; else if(c===delim){ out.push(cur); cur=''; } else cur+=c; } }
     out.push(cur); return out.map(s=>s.trim());
   };
-  const lines = text.split('\n').filter(l=>l.trim());
-  const headers = parseLine(lines[0]);
-  const rows = lines.slice(1).map(parseLine).filter(r=>r.some(c=>c));
-  return {headers, rows};
+  const lines = lines0;
+  // Настоящая строка заголовков — первая, у которой столько же колонок, сколько у
+  // строк данных. Реестр из Excel почти всегда начинается со строк вроде «Реестр
+  // заказов на 2027 год». Беря первую строку за шапку, мы получали одну колонку,
+  // а автомаппинг находил в ней слово «заказ» и назначал её номером заказа —
+  // импорт молча грузил мусор, и человек узнавал об этом в «Заказах».
+  let hi = lines.findIndex(l => parseLine(l).length === width);
+  if(hi < 0) hi = 0;
+  const headers = parseLine(lines[hi]);
+  const rows = lines.slice(hi+1).map(parseLine).filter(r=>r.some(c=>c));
+  return {headers, rows, skipped: hi};
 }
 const IMPORT_FIELDS = [['num','Номер заказа'],['title','Изделие / наименование'],['customer','Заказчик'],
   ['vessel','Судно / проект'],['due','Срок'],['sum','Сумма']];
@@ -2481,19 +2514,27 @@ function doImport(){
   const {rows}=S.imp; const map=S.imp.map;
   if(!rows.length){ S.imp.msg='Нет строк для импорта.'; return; }
   const col=k=> map[k]!==''&&map[k]!=null ? +map[k] : -1;
-  let n=0;
+  // Идемпотентность, как у Агента: человек нажимает «Импортировать» дважды всегда —
+  // не понял, загрузилось ли. Без этого второй заход удваивает портфель, и первое
+  // впечатление от продукта — «оно сломало мне данные».
+  const byNum = new Map((S.orders||[]).map(o=>[String(o.num), o]));
+  let n=0, upd=0;
   rows.forEach(r=>{
     const num=(col('num')>=0?r[col('num')]:'')|| String(2600+n);
     const title=(col('title')>=0?r[col('title')]:'')||'Заказ '+num;
     if(!title.trim()) return;
-    S.orders.push({id:'IMP'+(++S.seq), num:String(num), title, customer:(col('customer')>=0?r[col('customer')]:'')||'—',
-      vessel:(col('vessel')>=0?r[col('vessel')]:'')||'—', goz:0, due:(col('due')>=0?r[col('due')]:'')||'—',
-      sum:(col('sum')>=0?r[col('sum')]:'')||'—', stage:0, risk:'ok',
-      feed:[['импорт','<b>Заказ загружен из реестра</b> при онбординге',0]]});
-    n++;
+    const fields={num:String(num), title, customer:(col('customer')>=0?r[col('customer')]:'')||'—',
+      vessel:(col('vessel')>=0?r[col('vessel')]:'')||'—', due:(col('due')>=0?r[col('due')]:'')||'—',
+      sum:(col('sum')>=0?r[col('sum')]:'')||'—'};
+    const has=byNum.get(String(num));
+    if(has){ Object.assign(has, fields); upd++; return; }   // тот же номер — обновляем
+    const o={id:'IMP'+(++S.seq), ...fields, goz:0, stage:0, risk:'ok',
+      feed:[['импорт','<b>Заказ загружен из реестра</b> при онбординге',0]]};
+    S.orders.push(o); byNum.set(String(num), o); n++;
   });
-  ACTS.push(`импорт реестра: ${n} заказов`);
-  S.imp={text:'',rows:[],headers:[],map:{},msg:`✓ Импортировано ${n} заказов. Откройте «Заказы».`};
+  ACTS.push(`импорт реестра: ${n} новых, ${upd} обновлено`);
+  S.imp={text:'',rows:[],headers:[],map:{},
+    msg:`✓ Импортировано: ${n} новых${upd?`, обновлено ${upd} (номера уже были)`:''}. Откройте «Заказы».`};
   save();
 }
 
@@ -2629,7 +2670,7 @@ function vSettings(){
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
         <button class="btn" id="impParse">Разобрать</button>
         <button class="btn ghost" id="impFileBtn">Загрузить CSV</button>
-        <input type="file" id="impFile" accept=".csv,.txt" style="display:none">
+        <input type="file" id="impFile" accept=".csv,.txt,.xlsx,.xls" style="display:none">
       </div>
       ${imp.msg?`<div class="ai-box" style="margin-top:10px">${esc(imp.msg)}</div>`:''}
       ${imp.rows.length?`<div style="margin-top:14px">
@@ -4163,8 +4204,19 @@ async function uploadDoc(f){
 document.addEventListener('change', e=>{
   if(e.target.id==='upFile'){ const f=e.target.files[0]; e.target.value=''; if(f) uploadDoc(f); return; }
   if(e.target.id==='impFile'){ const f=e.target.files[0]; e.target.value=''; if(f){
-    const done=(txt,enc)=>{ const {headers,rows}=parseCSV(txt); S.imp={text:'',headers,rows,map:autoMap(headers),
-      msg:rows.length?`Файл «${f.name}» разобран${enc?' ('+enc+')':''}.`:'Файл пуст или не распознан.'}; render(); };
+    // .xlsx — это zip-архив. Скормить его разбору CSV значит показать человеку
+    // мусор вместо реестра и заставить гадать, что не так. Говорим прямо.
+    if(/\.xlsx?$/i.test(f.name)){
+      S.imp={text:'',headers:[],rows:[],map:{},
+        msg:`Файл «${f.name}» — книга Excel, а не таблица с разделителями. `
+          + `В Excel: Файл → Сохранить как → «CSV (разделители — запятые)», и загрузите его. `
+          + `Кириллицу и точку с запятой мы понимаем.`};
+      render(); return;
+    }
+    const done=(txt,enc)=>{ const {headers,rows,skipped}=parseCSV(txt); S.imp={text:'',headers,rows,map:autoMap(headers),
+      msg:rows.length?`Файл «${f.name}» разобран${enc?' ('+enc+')':''}`
+          + (skipped?`, пропущено строк шапки: ${skipped}`:'') + '.'
+        :'Файл пуст или не распознан.'}; render(); };
     const rd=new FileReader();
     rd.onload=()=>{ const utf=rd.result;
       // реальные Excel-CSV на RU-Windows часто в cp1251 → детект кракозябр и перечитка (ревью v1.5)
