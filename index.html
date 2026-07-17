@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.76 «Контрагенты» — рабочий MVP</title>
+﻿<title>Эллинг v1.77 «Отгрузки» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -250,6 +250,12 @@
   .tm-badges{display:flex;gap:7px;flex-wrap:wrap}
   .tm-badge{background:var(--panel2);border-radius:8px;padding:3px 9px;color:var(--ink2);font-weight:600;font-size:11.5px;white-space:nowrap;flex:none}
   .tm-badge.over{background:var(--risk-soft);color:var(--risk)}
+  /* v1.77: отгрузки */
+  .sh-row{display:flex;align-items:center;gap:12px;margin:12px 0 8px}
+  .sh-lbl{flex:0 0 110px;font-size:12px;color:var(--muted)}
+  .sh-num{flex:none;width:44px;text-align:right;font-family:var(--mono);font-size:11.5px;color:var(--ink2)}
+  .sh-meta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--ink2);margin-bottom:8px}
+  .sh-note{font-size:12.3px;color:var(--ink2);background:var(--panel2);border-radius:9px;padding:7px 11px;margin-bottom:4px}
   /* v1.67: онбординг-тур — прожектор + подсказка */
   .tour-hi{position:relative;z-index:1001;border-radius:12px;
     box-shadow:0 0 0 3px var(--accent),0 0 0 9999px rgba(6,14,20,.62)!important;transition:box-shadow .3s cubic-bezier(.16,1,.3,1)}
@@ -937,17 +943,17 @@ const ACC = {
   'логист':        ['—','✓','○','—','—','—','—','—'],
 };
 /* доступные экраны по роли (реальное скрытие модулей в навигации) */
-const ALL_VIEWS = ['today','deals','radar','estimates','flow','supply','portal','board','kb','notices','plan','reports','bench','team','settings'];
+const ALL_VIEWS = ['today','deals','radar','estimates','flow','supply','ship','portal','board','kb','notices','plan','reports','bench','team','settings'];
 const ROLE_VIEWS = {
   'директор': ALL_VIEWS, 'зам. директора': ALL_VIEWS,
   'рук. ИЦ':        ['today','board','kb','notices','plan','estimates','flow','reports','bench','team','settings'],
   'рук. продаж':    ['today','deals','radar','estimates','portal','flow','reports','bench','team','settings'],
-  'рук. закупок':   ['today','supply','flow','portal','reports','team','settings'],
-  'рук. логистики': ['today','flow','supply','portal','reports','team','settings'],
+  'рук. закупок':   ['today','supply','flow','ship','portal','reports','team','settings'],
+  'рук. логистики': ['today','ship','flow','supply','portal','reports','team','settings'],
   'инженер':        ['today','board','kb','notices','plan','estimates','flow','settings'],
   'продажи':        ['today','deals','radar','estimates','portal','flow','settings'],
-  'закупки':        ['today','supply','flow','portal','settings'],
-  'логист':         ['today','flow','supply','portal','settings'],
+  'закупки':        ['today','supply','ship','flow','portal','settings'],
+  'логист':         ['today','ship','flow','supply','portal','settings'],
 };
 function canView(v){ const role=(PEOPLE[S.currentUser]||{}).role; const a=ROLE_VIEWS[role]||ALL_VIEWS; return (v==='order'?a.indexOf('flow'):a.indexOf(v))>=0; }
 /* финансовая видимость (маржа, суммы, ТКП): дирекция + продажи; остальным скрыто */
@@ -1304,6 +1310,27 @@ function seed(){
        won:'Автоматизированный ярусный комплекс — импортозамещение норвежского аналога',
        lesson:'Прямая замена ушедшего западного бренда с сервисом в РФ — сильнейший аргумент 2024–2026',
        src:'реестр РМРС + пресс-релизы'},
+    ],
+    /* Отгрузки — реальная работа логиста: комплектация, пропуск на верфь,
+       транспорт, документы. Пропуск на режимный объект — отдельная боль:
+       без него фура стоит у ворот, а срок горит. */
+    shipments:[
+      {id:'SH1',order:'2417',title:'Электронасос ЦВС-400 · партия 1/2',customer:'Адмиралтейские верфи',
+       vessel:'пр. 23550',who:'loginov',ready:100,status:'ready',date:'22.07.2026',
+       transport:'Фура 20 т · негабарит по высоте',pass:'need',
+       docs:['УПД','Паспорт изделия','Сертификат РМРС'],
+       note:'Негабарит — въезд согласовать заранее, иначе развернут на КПП'},
+      {id:'SH2',order:'2431',title:'Арматура высокого давления · комплект',customer:'Выборгский ССЗ',
+       vessel:'пр. KMT01',who:'loginov',ready:60,status:'pick',date:'05.08.2026',
+       transport:'—',pass:'none',docs:['УПД'],
+       note:'Ждём 2 позиции от смежника, комплектность 60%'},
+      {id:'SH3',order:'2389',title:'Теплообменник ТВГ-12',customer:'Северная верфь',
+       vessel:'пр. 22350',who:'loginov',ready:100,status:'transit',date:'12.07.2026',
+       transport:'Транспортная компания · 3 дн',pass:'ok',
+       docs:['УПД','Паспорт изделия','Акт приёмки'],note:'В пути, прибытие 15.07'},
+      {id:'SH4',order:'2204',title:'Комплект арматуры ДУ-50',customer:'Окская судоверфь',
+       vessel:'пр. RSD59',who:'loginov',ready:100,status:'done',date:'02.06.2026',
+       transport:'Своя газель',pass:'ok',docs:['УПД','Паспорт изделия'],note:'Доставлено, принято ОТК верфи'},
     ],
     notes:[], fired:[], savedFilters:[], notifCh:{mail:true,tg:false},
   };
@@ -1839,10 +1866,10 @@ function moveTask(t,to,how){
 }
 
 /* ================= views ================= */
-const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Ось заказа',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',bench:'Бенчмарки флота',team:'Команда',settings:'Настройки',order:'Заказ'};
+const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Ось заказа',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',ship:'Отгрузки',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',bench:'Бенчмарки флота',team:'Команда',settings:'Настройки',order:'Заказ'};
 const CRUMBS = {today:'ваш рабочий день', flow:'весь портфель одним взглядом', deals:'воронка проектных продаж', radar:'закладки в проектах судов: П → РКД → тендер',
   estimates:'очередь оценки ТЗ в ИЦ · SLA 4 ч / 3 дн', board:'инженерный центр · спринт 14', plan:'загрузка ИЦ и вехи', kb:'поиск по архиву: шифр + смысл',
-  supply:'снабжение и реестровость ПП 719', notices:'изменения КД по ГОСТ 2.503', portal:'внешний вид заказа для верфи и ВП', reports:'воронка, конверсия, поток',
+  supply:'снабжение и реестровость ПП 719', ship:'комплектация, пропуска, транспорт', notices:'изменения КД по ГОСТ 2.503', portal:'внешний вид заказа для верфи и ВП', reports:'воронка, конверсия, поток',
   bench:'эталонные серии флота: на что равняться', team:'загрузка подчинённых и узкие места', settings:'импорт, автоматизации, коннекторы', order:'карточка заказа'};
 
 /* ---- Снабжение: память о поставщиках + ПП 719 + сертификаты РМРС ---- */
@@ -2143,7 +2170,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.76';
+const APP_VER = '1.77';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -3031,6 +3058,7 @@ const NAVGROUPS = [
   {id:'orders', icon:'i-supply', label:'Заказы и снабжение', items:[
     {view:'flow', icon:'i-flow', label:'Ось заказа'},
     {view:'supply', icon:'i-supply', label:'Снабжение', badge:'supplyN'},
+    {view:'ship', icon:'i-ship', label:'Отгрузки', badge:'shipN'},
     {view:'portal', icon:'i-portal', label:'Портал заказчика', badge:'portalN'},
   ]},
   {id:'ic', icon:'i-board', label:'Инженерный центр', items:[
@@ -3082,12 +3110,12 @@ const ROLE_TILES = {
   'рук. ИЦ':[['board','i-board','Доска ИЦ'],['estimates','i-est','Очередь просчёта'],['team','i-deals','Моя команда'],['plan','i-plan','Планирование']],
   'продажи':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['estimates','i-est','Просчёт ТКП'],['portal','i-portal','Портал заказчика']],
   'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика']],
-  'логист':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика']],
+  'логист':[['ship','i-ship','Отгрузки'],['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика']],
   'директор':[['reports','i-reports','Отчёты'],['team','i-deals','Моя команда'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа']],
   'зам. директора':[['reports','i-reports','Отчёты'],['team','i-deals','Моя команда'],['bench','i-bench','Бенчмарки флота'],['flow','i-flow','Ось заказа']],
   'рук. продаж':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['team','i-deals','Моя команда'],['reports','i-reports','Отчёты']],
   'рук. закупок':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['team','i-deals','Моя команда'],['reports','i-reports','Отчёты']],
-  'рук. логистики':[['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['team','i-deals','Моя команда'],['portal','i-portal','Портал заказчика']],
+  'рук. логистики':[['ship','i-ship','Отгрузки'],['flow','i-flow','Ось заказа'],['team','i-deals','Моя команда'],['supply','i-supply','Снабжение']],
 };
 function navCount(v){ try{
   if(v==='estimates') return estAlerts();
@@ -3096,6 +3124,7 @@ function navCount(v){ try{
   if(v==='portal') return portalPending();
   if(v==='radar') return (S.projects||[]).flatMap(p=>p.positions).filter(x=>x.st!=='ok').length;
   if(v==='board') return S.tasks.filter(t=>t.who===S.currentUser&&t.col!=='done').length;
+  if(v==='ship') return shipAlerts();
   if(v==='team') return directReports(S.currentUser).length;
 }catch(e){} return 0; }
 function hubTiles(){
@@ -3118,6 +3147,53 @@ function dealMatchBench(d){
   for(const [kw,id] of codes){ if(hay.indexOf(kw)>=0){ const b=bm.find(x=>x.id===id); if(b) return {b,kw}; } }
   return null;
 }
+const SHIP_ST = {pick:['комплектация','var(--warn)'],ready:['готово к отгрузке','var(--steel)'],
+                 transit:['в пути','var(--accent)'],done:['доставлено','var(--good)']};
+const PASS_ST = {none:['пропуск не нужен','var(--muted)'],need:['ПРОПУСК НЕ ОФОРМЛЕН','var(--risk)'],
+                 ok:['пропуск оформлен','var(--good)']};
+function shipAlerts(){ return (S.shipments||[]).filter(s=>s.status!=='done'&&s.pass==='need').length; }
+function vShip(){
+  const all = S.shipments||[];
+  const act = all.filter(s=>s.status!=='done');
+  const noPass = act.filter(s=>s.pass==='need').length;
+  const ready = all.filter(s=>s.status==='ready').length;
+  const transit = all.filter(s=>s.status==='transit').length;
+  const cc=c=>`color:${c};-webkit-text-fill-color:${c}`;
+  if(!all.length) return emptyBox('i-supply','Отгрузок нет','Здесь появятся отгрузки по заказам: комплектация, пропуск на верфь, транспорт и документы.');
+  return `<div class="hello hello-ship">Отгрузки<small>комплектация · пропуск на верфь · транспорт · документы
+      <svg class="hello-ship-art" viewBox="0 0 240 90" aria-hidden="true"><use href="#i-ship-hero"/></svg></small></div>
+    <div class="stats" style="margin:8px 0 16px">
+      <div class="stat"><div class="v">${act.length}</div><div class="l">в работе</div></div>
+      <div class="stat"><div class="v" style="${cc('var(--steel)')}">${ready}</div><div class="l">готовы к отгрузке</div></div>
+      <div class="stat"><div class="v" style="${cc('var(--accent)')}">${transit}</div><div class="l">в пути</div></div>
+      <div class="stat"><div class="v" style="${cc(noPass?'var(--risk)':'var(--good)')}">${noPass}</div><div class="l">без пропуска — фура встанет на КПП</div></div>
+    </div>
+    ${all.map(s=>{ const st=SHIP_ST[s.status]||SHIP_ST.pick; const ps=PASS_ST[s.pass]||PASS_ST.none;
+      const blocked = s.status==='ready' && s.pass==='need';
+      return `<div class="anacard" style="cursor:default">
+      <div class="ana-top"><div><div class="ana-name">${esc(s.title)}</div>
+          <div class="ana-meta">заказ №${esc(s.order)} · ${esc(s.customer)} · ${esc(s.vessel)} · срок ${esc(s.date)}</div></div>
+        <span class="stchip" style="color:${st[1]};border:1px solid ${st[1]}">${st[0]}</span></div>
+      <div class="sh-row">
+        <span class="sh-lbl">комплектность</span>
+        <span class="tm-bar" style="flex:1;margin:0"><i style="width:${s.ready}%;background:${s.ready>=100?'var(--good)':'var(--warn)'}"></i></span>
+        <span class="sh-num">${s.ready}%</span>
+      </div>
+      <div class="sh-meta">
+        <span class="stchip" style="color:${ps[1]};border:1px solid ${ps[1]};font-size:9px">${ps[0]}</span>
+        <span>🚚 ${esc(s.transport)}</span>
+        <span>📄 ${(s.docs||[]).map(esc).join(' · ')||'документов нет'}</span>
+      </div>
+      ${s.note?`<div class="sh-note">${esc(s.note)}</div>`:''}
+      <div class="bm-foot"><span class="bm-src">${blocked?'⚠ готово, но без пропуска — на верфь не пустят':'исполнитель: '+esc((PEOPLE[s.who]||{}).full||'—')}</span>
+        <span class="bm-btns">
+          ${s.pass==='need'?`<button class="btn ghost" data-shipact="${s.id}|pass">Пропуск оформлен ✓</button>`:''}
+          ${s.status==='pick'?`<button class="btn ghost" data-shipact="${s.id}|ready">Комплектация завершена →</button>`:''}
+          ${s.status==='ready'&&s.pass!=='need'?`<button class="btn" data-shipact="${s.id}|transit">Отгрузить →</button>`:''}
+          ${s.status==='transit'?`<button class="btn" data-shipact="${s.id}|done">Доставлено ✓</button>`:''}
+        </span></div>
+    </div>`; }).join('')}`;
+}
 function vTeam(){
   const me=S.currentUser, p=PEOPLE[me]||{};
   const team=subordinates(me);
@@ -3125,13 +3201,35 @@ function vTeam(){
   const head=`<div class="hello hello-ship">Команда<small>${esc(p.role)} · ${esc(scope)} — загрузка подчинённых и узкие места</small>
       <svg class="hello-ship-art" viewBox="0 0 240 90" aria-hidden="true"><use href="#i-ship-hero"/></svg></div>`;
   if(!team.length) return head+emptyBox('i-deals','У вас нет подчинённых','Экран «Команда» показывает загрузку сотрудников в вашем подчинении. Переключите роль на директора или руководителя отдела вверху справа.');
+  // Загрузка меряется РАБОТОЙ ОТДЕЛА, а не задачами ИЦ у всех: у продавца работа —
+  // сделки, у логиста — отгрузки. Иначе руководитель продаж видит «свободна»
+  // у менеджера с пятью сделками.
   const rows=team.map(uid=>{
-    const u=PEOPLE[uid]; const ts=S.tasks.filter(t=>t.who===uid);
-    const open=ts.filter(t=>t.col!=='done').length;
-    const wip=ts.filter(t=>t.col==='wip').length;
-    const rev=ts.filter(t=>t.col==='rev').length;
-    let over=0; ts.forEach(t=>{ try{ const di=dueInfo(t); if(di&&di.over) over++; }catch(x){} });
-    return {uid,u,open,wip,rev,over,sub:subordinates(uid).length};
+    const u=PEOPLE[uid]; const r=u.role||'';
+    let open=0, wip=0, rev=0, over=0, unit='задач';
+    if(r.indexOf('продаж')>=0){
+      const ds=(S.deals||[]).filter(d=>d.who===uid&&d.stage!=='lost');
+      open=ds.length; wip=ds.filter(d=>d.stage==='nego'||d.stage==='kp').length;
+      rev=ds.filter(d=>d.stage==='assess').length;
+      over=ds.filter(d=>d.stage==='assess').length; unit='сделок';
+    } else if(r.indexOf('логист')>=0){
+      const sh=(S.shipments||[]).filter(x=>x.who===uid);
+      open=sh.filter(x=>x.status!=='done').length;
+      wip=sh.filter(x=>x.status==='transit').length;
+      rev=sh.filter(x=>x.status==='pick').length;
+      over=sh.filter(x=>x.status!=='done'&&x.pass==='need').length; unit='отгрузок';
+    } else if(r.indexOf('закуп')>=0){
+      const sp=(S.suppliers||[]);
+      open=sp.length; over=sp.filter(x=>x.reg!=='ok').length;
+      wip=sp.filter(x=>x.repl&&x.repl!=='—').length; unit='позиций';
+    } else {
+      const ts=S.tasks.filter(t=>t.who===uid);
+      open=ts.filter(t=>t.col!=='done').length;
+      wip=ts.filter(t=>t.col==='wip').length;
+      rev=ts.filter(t=>t.col==='rev').length;
+      ts.forEach(t=>{ try{ const di=dueInfo(t); if(di&&di.over) over++; }catch(x){} });
+    }
+    return {uid,u,open,wip,rev,over,unit,sub:subordinates(uid).length};
   }).sort((a,b)=>b.over-a.over||b.open-a.open);
   const totOpen=rows.reduce((a,r)=>a+r.open,0), totOver=rows.reduce((a,r)=>a+r.over,0);
   const heads=rows.filter(r=>r.sub>0).length;
@@ -3161,9 +3259,9 @@ function vTeam(){
           <div class="tm-role">${esc(r.u.role)}${r.sub?` · ведёт ${r.sub}`:''}</div></div>
         ${r.over?`<span class="tm-badge over">⚠ ${r.over}</span>`:''}</div>
       <span class="tm-bar"><i style="width:${Math.round(r.open/maxOpen*100)}%;${r.over?'background:var(--risk)':''}"></i></span>
-      <div class="tm-badges"><span class="tm-badge">${r.open} открытых</span>
+      <div class="tm-badges"><span class="tm-badge">${r.open} ${r.unit}</span>
         <span class="tm-badge">${r.wip} в работе</span>
-        ${r.rev?`<span class="tm-badge">${r.rev} на согласовании</span>`:''}
+        ${r.rev?`<span class="tm-badge">${r.rev} ${r.unit==='сделок'?'ждут просчёта':r.unit==='отгрузок'?'на комплектации':'на согласовании'}</span>`:''}
         ${r.open===0?'<span class="tm-badge" style="color:var(--good)">свободен</span>':''}</div>
     </${canView('board')?'button':'div'}>`).join('')}</div>`;
 }
@@ -3256,8 +3354,9 @@ function render(){
   const sa=supplyAlerts(); const sn=$('supplyN'); if(sn){ sn.textContent=sa||''; sn.style.display=sa?'':'none'; }
   const na=noticesAlerts(); const nn=$('noticesN'); if(nn){ nn.textContent=na||''; nn.style.display=na?'':'none'; }
   const ea=estAlerts(); const en=$('estN'); if(en){ en.textContent=ea||''; en.style.display=ea?'':'none'; }
+  const sh=shipAlerts(); const shn=$('shipN'); if(shn){ shn.textContent=sh||''; shn.style.display=sh?'':'none'; }
   const pq=portalPending(); const pn=$('portalN'); if(pn){ pn.textContent=pq||''; pn.style.display=pq?'':'none'; }
-  $('content').innerHTML = S.view==='today'?vToday(): S.view==='deals'?vDeals(): S.view==='supply'?vSupply(): S.view==='flow'?vFlow(): S.view==='radar'?vRadar(): S.view==='board'?vBoard():
+  $('content').innerHTML = S.view==='today'?vToday(): S.view==='deals'?vDeals(): S.view==='supply'?vSupply(): S.view==='ship'?vShip(): S.view==='flow'?vFlow(): S.view==='radar'?vRadar(): S.view==='board'?vBoard():
     S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='estimates'?vEstimates(): S.view==='notices'?vNotices(): S.view==='portal'?vPortal(): S.view==='bench'?vBench(): S.view==='team'?vTeam(): S.view==='settings'?vSettings(): vReports();
   if(S.view!==S._prevView){ const c=$('content'); c.classList.remove('view-in'); void c.offsetWidth; c.classList.add('view-in'); S._prevView=S.view; animateCounters(); }
   if(S._scrollMig){ S._scrollMig=0; try{ setTimeout(()=>{ const w=document.getElementById('migWiz'); if(w&&w.scrollIntoView) w.scrollIntoView({behavior:'smooth',block:'start'}); },70); }catch(e){} }
@@ -3652,6 +3751,23 @@ document.addEventListener('click', e=>{
     save(); render(); toast(ch.length?('Уведомление отправлено · '+ch.join(' + ')):'Уведомление отправлено в приложение','ok'); return; }
   if(e.target.id==='expCSV'){ exportReportCSV(); toast('Отчёт выгружен в CSV','ok'); return; }
   if(e.target.id==='expPrint'){ window.print(); return; }
+  const sha = e.target.closest('[data-shipact]');
+  if(sha){ const [id,act]=sha.dataset.shipact.split('|');
+    const s=(S.shipments||[]).find(x=>x.id===id);
+    if(s){
+      if(act==='pass'){ s.pass='ok'; ACTS.push('пропуск оформлен: отгрузка '+s.id); toast('Пропуск на верфь оформлен','ok'); }
+      else if(act==='ready'){ s.ready=100; s.status='ready'; ACTS.push('комплектация завершена: '+s.id);
+        toast('Комплектация завершена — можно отгружать','ok'); }
+      else if(act==='transit'){ s.status='transit'; ACTS.push('отгружено: '+s.id);
+        // готовность к отгрузке — наше поле по контракту: верфь узнаёт сразу
+        fedEmit('ready_to_ship', 'Отгружено: '+s.title, PEOPLE[S.currentUser].full, s.order);
+        const o=(S.orders||[]).find(x=>String(x.num)===String(s.order));
+        if(o){ o.feed=o.feed||[]; o.feed.unshift(['сейчас',`<b>Отгрузка:</b> ${esc(s.title)} — ${esc(s.transport)}`,1]); }
+        notify(['sokolova','orlov'],'отгружено: '+s.title.slice(0,40),null);
+        toast('Отгружено — верфь уведомлена','ok'); }
+      else if(act==='done'){ s.status='done'; ACTS.push('доставлено: '+s.id); toast('Доставлено и принято','ok'); }
+      save(); render();
+    } return; }
   const fsy = e.target.closest('[data-fedsync]');
   if(fsy){ fedSyncNow(fsy.dataset.fedsync); return; }
   if(e.target.closest('[data-elxout]') && SRV.on){ elxExportReal(); return; }
