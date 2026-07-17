@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.72 «Логотип→сайт» — рабочий MVP</title>
+﻿<title>Эллинг v1.73 «Мост вживую» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -172,7 +172,8 @@
   .xtoggle{display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-size:11.5px;color:var(--ink2);cursor:pointer;user-select:none}
   .xtoggle input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
   .xfeed-note{font-size:11.5px;color:var(--muted);margin:2px 0 10px;line-height:1.5}
-  .elx-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .elx-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  .elx-mode{font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
   .elx-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line2);flex-wrap:wrap;font-size:12.3px}
   .elx-dir{font-weight:700;font-size:10.5px;border-radius:6px;padding:2px 8px;white-space:nowrap;flex:none}
   .elx-dir.out{background:var(--accent-soft);color:var(--accent)}
@@ -1566,6 +1567,48 @@ function kbSkeleton(){
   return `<div class="sk-head"><span class="sk-dot"></span>Ищу аналоги: разбираю ТЗ, сопоставляю по шифрам и смыслу…</div>${card()}${card()}${card()}`;
 }
 function esign(s){ let h=0; s=String(s); for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))>>>0; } return ('00000000'+h.toString(16)).slice(-8).toUpperCase(); }
+/* ---- v1.73: настоящий обмен пакетами через бэкенд (Мост, Т3) ----
+   Экспорт скачивает подписанный .elx-файл, импорт принимает такой файл —
+   это и есть реальный маршрут через воздушный зазор (ЭДО / диод / носитель). */
+async function elxExportReal(){
+  try{
+    const r = await fetch('/api/fed/export?peer=yard1&mark=1', {cache:'no-store', headers:AH()});
+    if(!r.ok){ toast('Сервер отклонил выгрузку ('+r.status+')','warn'); return; }
+    const pkg = await r.json();
+    const evs = (pkg.body && pkg.body.events) || [];
+    if(!evs.length){ toast('Новых событий для верфи нет — всё уже выгружено','ok'); return; }
+    const threads = new Set(evs.map(x=>x.thread));
+    const blob = new Blob([JSON.stringify(pkg,null,1)], {type:'application/json'});
+    const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download = 'Эллинг_пакет_верфь.elx'; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 100);
+    S.elxLog = S.elxLog||[];
+    S.elxLog.unshift({id:'ELX-'+String(pkg.body.created||'').slice(11,19).replace(/:/g,''),
+      dir:'out', ts:'сейчас', events:evs.length, sig:(pkg.sig||'').slice(0,8).toUpperCase(),
+      note:'подписан сервером · нитей: '+threads.size+' → файл скачан'});
+    ACTS.push('исходящий пакет .elx (сервер)'); save(); render();
+    toast('Пакет скачан: '+evs.length+' событий, подпись '+(pkg.sig||'').slice(0,8).toUpperCase(),'ok');
+  }catch(err){ toast('Не удалось выгрузить пакет','warn'); }
+}
+async function elxImportReal(file){
+  try{
+    const text = await file.text();
+    let pkg; try{ pkg = JSON.parse(text); }catch(x){ toast('Файл не разобран — это не .elx пакет','warn'); return; }
+    const r = await fetch('/api/fed/import?peer=yard1', {method:'POST',
+      headers:AH({'Content-Type':'application/json'}), body:JSON.stringify(pkg)});
+    const res = await r.json();
+    if(!res.ok){ toast('Пакет отклонён: '+(res.error||'ошибка'),'warn');
+      S.elxLog=S.elxLog||[]; S.elxLog.unshift({id:'ELX-отклонён',dir:'in',ts:'сейчас',events:0,
+        sig:'—', note:'ОТКЛОНЁН: '+(res.error||'ошибка')}); save(); render(); return; }
+    const why = (res.rejects||[]).map(x=>x.field+': '+x.reason).slice(0,2).join('; ');
+    S.elxLog=S.elxLog||[];
+    S.elxLog.unshift({id:'ELX-вх-'+new Date().toISOString().slice(11,19).replace(/:/g,''),
+      dir:'in', ts:'сейчас', events:res.applied,
+      sig:'проверена', note:'применено '+res.applied+', дублей '+res.duplicates+', отклонено '+res.rejected+(why?' ('+why+')':'')});
+    ACTS.push('входящий пакет .elx (сервер)'); save(); render();
+    toast('Принято: '+res.applied+' · дублей '+res.duplicates+' · отклонено '+res.rejected, res.rejected?'warn':'ok');
+  }catch(err){ toast('Не удалось принять пакет','warn'); }
+}
 function toast(msg, type){
   try{
     let box=document.getElementById('toasts');
@@ -2039,7 +2082,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.72';
+const APP_VER = '1.73';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2168,7 +2211,9 @@ function vAgent(){
     </div>
     <div class="panel" style="margin-bottom:14px"><h3>Закрытый контур · обмен пакетами <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· для КИИ / воздушного зазора</span></h3>
       <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Когда верфь в закрытом контуре и прямой сети нет, Мост работает асинхронно: выгружаете <b>подписанный пакет .elx</b> с событиями нити заказа, переносите через ЭДО / диод данных / носитель, вторая сторона принимает. Применение идемпотентно — повтор пакета не плодит дубли. Экономика и внутренние задачи в пакет не попадают.</p>
-      <div class="elx-actions"><button class="btn" data-elxout="1">⇪ Выгрузить пакет для верфи (.elx)</button><button class="btn ghost" data-elxin="1">⇩ Принять пакет от верфи</button></div>
+      <div class="elx-actions"><button class="btn" data-elxout="1">⇪ Выгрузить пакет для верфи (.elx)</button><button class="btn ghost" data-elxin="1">⇩ Принять пакет от верфи</button>
+        <input type="file" id="elxFile" accept=".elx,.json,application/json" style="display:none">
+        <span class="elx-mode">${SRV.on?'● сервер: пакеты подписываются и проверяются по-настоящему':'○ демо без сервера: обмен имитируется'}</span></div>
       ${(S.elxLog||[]).slice(0,6).map(p=>`<div class="elx-row">
         <span class="elx-dir ${p.dir}">${p.dir==='out'?'⇪ исходящий':'⇩ входящий'}</span>
         <span class="elx-id">${esc(p.id)}</span>
@@ -3532,6 +3577,8 @@ document.addEventListener('click', e=>{
     save(); render(); toast(ch.length?('Уведомление отправлено · '+ch.join(' + ')):'Уведомление отправлено в приложение','ok'); return; }
   if(e.target.id==='expCSV'){ exportReportCSV(); toast('Отчёт выгружен в CSV','ok'); return; }
   if(e.target.id==='expPrint'){ window.print(); return; }
+  if(e.target.closest('[data-elxout]') && SRV.on){ elxExportReal(); return; }
+  if(e.target.closest('[data-elxin]') && SRV.on){ const f=$('elxFile'); if(f) f.click(); return; }
   if(e.target.closest('[data-elxout]')){ const goz=(S.orders||[]).filter(o=>o.goz);
     const ev=goz.reduce((a,o)=>a+((o.feed||[]).length),0); S.seq=(S.seq||2470)+1; const pid='ELX-'+S.seq; const sig=esign(pid+'|'+ev+'|out');
     S.elxLog=S.elxLog||[]; S.elxLog.unshift({id:pid,dir:'out',ts:'сейчас',events:ev,sig,note:'статусы и документы по '+goz.length+' нитям → верфи'});
@@ -3687,6 +3734,7 @@ document.addEventListener('change', e=>{
   const im=e.target.closest('[data-impmap]');
   if(im){ S.imp.map[im.dataset.impmap]=e.target.value; return; }
   if(e.target.id==='userSel'){ S.currentUser=e.target.value; S.navOpen=navOpenForRole(S.currentUser); if(!canView(S.view)) S.view='today'; render(); return; }
+  if(e.target.id==='elxFile'){ const f=e.target.files[0]; e.target.value=''; if(f) elxImportReal(f); return; }
   if(e.target.id==='benchDealSel'){ const id=e.target.value; S.benchDeal=id||null;
     if(id){ const m=dealMatchBench(dealById(id)); S.benchCmp=m?m.b.id:null; } else { S.benchCmp=null; }
     render(); return; }
