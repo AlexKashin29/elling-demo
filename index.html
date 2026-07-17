@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.75 «Т2 живой» — рабочий MVP</title>
+﻿<title>Эллинг v1.76 «Контрагенты» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1573,6 +1573,45 @@ function esign(s){ let h=0; s=String(s); for(let i=0;i<s.length;i++){ h=(h*31 + 
 /* ---- v1.73: настоящий обмен пакетами через бэкенд (Мост, Т3) ----
    Экспорт скачивает подписанный .elx-файл, импорт принимает такой файл —
    это и есть реальный маршрут через воздушный зазор (ЭДО / диод / носитель). */
+/* ---- v1.76: контрагенты Моста ---- */
+async function loadFedPeers(){
+  const box=$('fedPeers'); if(!box||!SRV.on) return;
+  try{
+    const j = await (await fetch('/api/fed/peers',{cache:'no-store',headers:AH()})).json();
+    const ps = j.peers||[];
+    if(!ps.length){ box.innerHTML='<div class="empty">контрагенты не заведены</div>'; return; }
+    box.innerHTML = ps.map(p=>{
+      const live = p.mode==='live' && p.url;
+      return `<div class="loadrow" style="align-items:center;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:640;color:var(--ink);font-size:13.5px">${esc(p.name)}
+            <span class="xown ${p.side==='yard'?'yard':'sup'}">${p.side==='yard'?'верфь':'поставщик'}</span></div>
+          <div style="font-size:11.5px;color:var(--muted)">${live?'живой обмен · '+esc(p.url):'закрытый контур · пакеты .elx вручную'}
+            · нитей: ${p.threads}${p.last_in?' · входящее: '+esc(p.last_in.slice(11,19)):''}</div>
+        </div>
+        ${p.pending?`<span class="tm-badge over">${p.pending} к отправке</span>`:'<span class="tm-badge" style="color:var(--good)">всё отдано</span>'}
+        ${live?`<button class="chip" data-fedsync="${esc(p.id)}">⟳ Синхронизировать</button>`
+              :'<span class="stchip" style="font-size:9px">носителем</span>'}
+      </div>`;}).join('')
+      + `<p style="font-size:12px;color:var(--muted);margin-top:10px">Живые контрагенты синхронизируются автоматически каждые ${j.autosync_sec||60} c. Контур с воздушным зазором — только пакетами.</p>`;
+  }catch(e){ box.innerHTML='<div class="empty">не удалось загрузить контрагентов</div>'; }
+}
+async function fedSyncNow(peer){
+  toast('Синхронизация с контрагентом…','ok');
+  try{
+    const r = await fetch('/api/fed/sync?peer='+encodeURIComponent(peer), {method:'POST', headers:AH()});
+    const j = await r.json();
+    if(!j.ok){ toast('Обмен не прошёл: '+(j.error||'ошибка'),'warn'); return; }
+    const bits=[];
+    if(j.pushed) bits.push('отдано '+j.pushed);
+    if(j.pulled) bits.push('принято '+j.pulled);
+    if(j.rejected) bits.push('отклонено '+j.rejected);
+    if(j.projected) bits.push('в интерфейс '+j.projected);
+    toast(bits.length?('Мост: '+bits.join(' · ')):'Мост: новых событий нет','ok');
+    if(j.push_error||j.pull_error) toast('Связь частично: '+(j.push_error||j.pull_error),'warn');
+    await pullState(); loadFedPeers();
+  }catch(e){ toast('Контрагент недоступен','warn'); }
+}
 /* Действие в UI → событие нити заказа. Уходит только то, что разрешено
    контрактом Моста; сервер проверяет владение полем и может отказать. */
 async function fedEmit(field, value, actor, orderNum){
@@ -2104,7 +2143,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.75';
+const APP_VER = '1.76';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
@@ -2231,6 +2270,9 @@ function vAgent(){
         <span class="stchip" style="font-size:9px;color:${resCol(l.res)};border:1px solid ${resCol(l.res)};white-space:nowrap">${l.res==='ok'?'успех':l.res==='warn'?'внимание':'ошибка'}</span>
       </div>`).join('')||'<div class="empty">обмена ещё не было</div>'}
     </div>
+    ${SRV.on?`<div class="panel" style="margin-bottom:14px"><h3>Контрагенты Моста <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· с кем синхронизируются нити заказа</span></h3>
+      <div id="fedPeers"><div class="empty">загружаю…</div></div>
+    </div>`:''}
     <div class="panel" style="margin-bottom:14px"><h3>Закрытый контур · обмен пакетами <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· для КИИ / воздушного зазора</span></h3>
       <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Когда верфь в закрытом контуре и прямой сети нет, Мост работает асинхронно: выгружаете <b>подписанный пакет .elx</b> с событиями нити заказа, переносите через ЭДО / диод данных / носитель, вторая сторона принимает. Применение идемпотентно — повтор пакета не плодит дубли. Экономика и внутренние задачи в пакет не попадают.</p>
       <div class="elx-actions"><button class="btn" data-elxout="1">⇪ Выгрузить пакет для верфи (.elx)</button><button class="btn ghost" data-elxin="1">⇩ Принять пакет от верфи</button>
@@ -3223,6 +3265,7 @@ function render(){
   $('userSel').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
   renderBell();
   if(S.view==='reports' && canAudit()) loadAudit();   // журнал аудита не грузим тем, кому он закрыт
+  if(S.view==='settings' && S.setTab==='integrations' && SRV.on) loadFedPeers();
   save();
 }
 /* фоновый рендер (SSE/поллинг/таймер автоматизаций): не рвём фокус и текст,
@@ -3609,6 +3652,8 @@ document.addEventListener('click', e=>{
     save(); render(); toast(ch.length?('Уведомление отправлено · '+ch.join(' + ')):'Уведомление отправлено в приложение','ok'); return; }
   if(e.target.id==='expCSV'){ exportReportCSV(); toast('Отчёт выгружен в CSV','ok'); return; }
   if(e.target.id==='expPrint'){ window.print(); return; }
+  const fsy = e.target.closest('[data-fedsync]');
+  if(fsy){ fedSyncNow(fsy.dataset.fedsync); return; }
   if(e.target.closest('[data-elxout]') && SRV.on){ elxExportReal(); return; }
   if(e.target.closest('[data-elxin]') && SRV.on){ const f=$('elxFile'); if(f) f.click(); return; }
   if(e.target.closest('[data-elxout]')){ const goz=(S.orders||[]).filter(o=>o.goz);
