@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.67 «Тур» — рабочий MVP</title>
+﻿<title>Эллинг v1.68 «Мобильный» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -761,6 +761,18 @@
     .topbar{padding:12px 16px}
   }
   @media(max-width:600px){ .search-wrap{display:none} .topbar h1{font-size:18px} }
+  /* v1.68: телефон (цех / шефмонтаж) — узкие сетки не обрезаются */
+  @media(max-width:600px){
+    .content{padding:18px 16px 56px}
+    .bm-grid,.tm-grid{grid-template-columns:1fr}
+    .wl{padding:22px 18px}
+    .psec{font-size:14px}
+    .bm-cmp,.panel{padding-left:14px;padding-right:14px}
+    .loc-row>span{width:104px;font-size:11.5px}
+    .org-plan{flex-direction:column;align-items:flex-start;gap:10px}
+    .tt-act{justify-content:stretch}
+    .tt-act .btn{flex:1;text-align:center}
+  }
   @media print{
     aside,.nav-backdrop,.topbar .spacer,.search-wrap,.bell-wrap,#helpBtn,#themeBtn,.hamburger,.exp-bar,.userbox{display:none!important}
     main{width:100%}.content{padding:0;max-width:none}
@@ -2022,7 +2034,7 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.67';
+const APP_VER = '1.68';
 try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
