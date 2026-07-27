@@ -965,6 +965,8 @@
   .ns-goz-badge{font-size:10px;font-weight:700;letter-spacing:.03em;color:#8a6d1f;background:color-mix(in srgb,#c8a63e 15%,transparent);border:1px solid color-mix(in srgb,#c8a63e 45%,transparent);border-radius:6px;padding:2px 7px;white-space:nowrap}
   .ns-pf-goz{color:#8a6d1f;font-weight:700}
   .ns-add-menu.center .ns-add-t{border:1px solid var(--line);border-radius:20px;text-align:center}
+  .ns-intro{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;padding:10px 13px;border-radius:11px;font-size:12px;line-height:1.5;color:var(--ink2);background:color-mix(in srgb,var(--accent,#2E6E8E) 7%,transparent);border:1px solid color-mix(in srgb,var(--accent,#2E6E8E) 22%,transparent)}
+  .ns-intro-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;flex:none}.ns-intro-x:hover{color:var(--ink)}
   .ns-vf{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:9px 13px;border-radius:11px;font-size:12.5px;font-weight:600}
   .ns-vf.ok{color:var(--good);background:color-mix(in srgb,var(--good) 10%,transparent);border:1px solid color-mix(in srgb,var(--good) 35%,transparent)}
   .ns-vf.bad{color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent);border:1px solid color-mix(in srgb,var(--bad) 35%,transparent)}
@@ -2852,6 +2854,7 @@ function vNS(){
   const addBtn=`<button class="btn ghost" data-nsverify="1" title="загрузить полученный подписанный снимок проработки и проверить подлинность">🛡 Проверить снимок</button><div class="ns-add-wrap"><button class="btn" data-nsadd="1">+ Станция</button>${S._nsAddOpen?nsTypeMenu():''}</div>`;
   const vf=S._nsVerify;
   const verifyBanner = vf ? `<div class="ns-vf ${vf.valid?'ok':'bad'}"><div>${vf.valid?'✔ Снимок подлинный':'✖ Подпись не прошла — пакет изменён'} · станция «${esc((vf.body.station||{}).name||'')}» · ${(vf.body.counts||{}).done||0}/${(vf.body.counts||{}).total||0} готово${(vf.body.station||{}).goz?' · ГОЗ':''} · digest ${esc((vf.digest||'').slice(0,12))}</div><div style="display:flex;gap:6px">${vf.valid?`<button class="btn ghost" data-nsvfreport="1" style="font-size:11px">🖨 Справка из снимка</button>`:''}<button class="btn ghost" data-nsvfclose="1" style="font-size:11px">закрыть</button></div></div>` : '';
+  const intro = S._nsIntroHid ? '' : `<div class="ns-intro"><div><b>Проработка насосных станций</b> — инженерная проработка изделия: статусы критериев, зависимости (кто на кого ждёт), сроки и комплект КД. Виды: <b>Список</b> — детально по станции · <b>График</b> — сроки на оси · <b>Нагрузка</b> — по инженерам · <b>Портфель</b> — все станции с риском.</div><button class="ns-intro-x" data-nsintroclose="1" title="скрыть">×</button></div>`;
   if(view==='timeline') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${vNSTimeline()}</div>`;
   if(view==='load') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${vNSLoad()}</div>`;
   if(view==='portfolio') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${vNSPortfolio()}</div>`;
@@ -2902,6 +2905,7 @@ function vNS(){
       ${toggle}
       ${addBtn}
     </div>
+    ${intro}
     ${verifyBanner}
     <div class="an-panel">
       <div class="ns-title-row">
@@ -6398,6 +6402,7 @@ document.addEventListener('click', e=>{
   if(e.target.closest('[data-nsverify]')){ nsVerifyPrompt(); return; }
   if(e.target.closest('[data-nsvfreport]')){ const v=S._nsVerify; if(v&&v.body) printDoc(nsReportFromSnapshot(v.body, v.digest, v.valid)); return; }
   if(e.target.closest('[data-nsvfclose]')){ S._nsVerify=null; render(); return; }
+  if(e.target.closest('[data-nsintroclose]')){ S._nsIntroHid=1; render(); return; }
   { const el=e.target.closest('[data-nsopen]'); if(el){ S.view='ns'; S.nsView='list'; S.nsActive=el.dataset.nsopen; render(); return; } }
   { const el=e.target.closest('[data-nsgoorder]'); if(el){ S.view='order'; S.orderId=el.dataset.nsgoorder; render(); return; } }
   { const el=e.target.closest('[data-nslog]'); if(el){ const k=el.dataset.nslog; S._nsLog = S._nsLog===k?null:k; render(); return; } }
