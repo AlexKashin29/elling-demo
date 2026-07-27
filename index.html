@@ -1262,6 +1262,7 @@ const COLS = [ {id:'open',name:'Очередь'},{id:'wip',name:'В работе
 const STNAME = {open:'Очередь',wip:'В работе',rev:'Согласование',done:'Готово'};
 const RISK = {ok:['var(--good)','в графике'],warn:['var(--warn)','риск срока'],risk:['var(--risk)','срыв срока'],done:['var(--muted)','закрыт']};
 
+const NS_SEED_VER = 3;   // бампать при изменении сида проработки → авто-рефреш демо-данных НС у вернувшихся
 // Сид станций проработки с ОТНОСИТЕЛЬНЫМИ к сегодня датами (иначе демо зависит от часов
 // посетителя: всё «в будущем» или всё «просрочено»). Даёт живой спектр: НС-1 «в графике»,
 // НС-2 «срыв» (просроченный критерий), НС-3 ГОЗ-пожарная «риск». nsDay/nsISO/todayISO —
@@ -1309,7 +1310,7 @@ function seed(){
       log:[`создана · назначена: ${PEOPLE[who].full}`]};
   }
   return {
-    currentUser:'petrov', view:'today', chips:{mine:false,hi:false,epic:null}, q:'', kbq:'', kbAI:null,
+    currentUser:'petrov', view:'today', nsSeedVer:NS_SEED_VER, chips:{mine:false,hi:false,epic:null}, q:'', kbq:'', kbAI:null,
     orders:[
       {id:'O1',num:'2417',title:'Электронасос ЦВС-400/40',customer:'Адмиралтейские верфи',vessel:'зав. №02471 · пр. 23550',goz:1,due:'15.03.2027',sum:'18,4 млн ₽',stage:5,risk:'warn',
        feed:[['09:14','<b>Тендер загружен из ЕИС автоматически</b> — фильтр «проект 23550»',1],
@@ -1726,6 +1727,9 @@ try{ S = JSON.parse(localStorage.getItem(LSKEY)) || seed(); }catch(e){ S = seed(
 // проработки НС появился позже): подмешиваем только ОТСУТСТВУЮЩИЕ ключи, не трогая
 // уже сохранённые правки пользователя. Иначе у старого кэша S.ns=undefined → пустой модуль.
 (function(){ try{ const _sd=seed(); for(const k in _sd){ if(S[k]===undefined) S[k]=_sd[k]; } }catch(_){} })();
+// Демо-данные проработки НС иллюстративные — обновляем при смене версии сида, чтобы
+// вернувшийся с прежним ns увидел актуальный спектр станций (а не старые 2 станции).
+try{ if(S.nsSeedVer!==NS_SEED_VER){ S.ns=nsSeedStations(); S.nsSeedVer=NS_SEED_VER; } }catch(_){}
 function save(){ try{ const {_l3, ...rest}=S; localStorage.setItem(LSKEY, JSON.stringify(rest)); }catch(e){} queuePush(); }
 // _l3 (кэш узлов состава, десятки тысяч) НЕ персистится: (1) не переполняет лимит
 // localStorage, (2) после перезагрузки кэш перечитывается из таблиц через ensureL3
