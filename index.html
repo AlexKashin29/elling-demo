@@ -79,7 +79,16 @@
   aside nav button[aria-current="true"] svg.ic{opacity:1}
   aside nav button .n{margin-left:auto;font-size:10.5px;background:#E5484D;color:#fff;border-radius:99px;padding:1px 7px;font-weight:700;min-width:18px;text-align:center;box-shadow:0 1px 3px rgba(229,72,77,.5)}
   /* ---- v1.40: сгруппированное меню под роли ---- */
-  aside nav{display:flex;flex-direction:column;gap:2px}
+  /* Логотип сверху и кнопка/футер снизу закреплены; скроллится ТОЛЬКО навигация.
+     Раньше при раскрытии всех групп контент переполнял aside и «выдавливал»
+     кнопку и футер за экран — меню скакало. min-height:0 разрешает flex-ребёнку
+     сжиматься ниже своего контента и включает внутренний скролл. */
+  aside>.logo,aside>.create,aside>.bottom{flex:none}
+  aside nav{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;min-height:0;overflow-y:auto;
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.16) transparent}
+  aside nav::-webkit-scrollbar{width:8px}
+  aside nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:8px}
+  aside nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.28)}
   .navhead .gl{flex:1}
   .navhead{color:var(--side-ink)}
   .navhead .chev{margin-left:auto;width:13px;height:13px;opacity:.55;transition:transform .26s cubic-bezier(.16,1,.3,1)}
@@ -400,6 +409,17 @@
   .userbox{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
   .userbox select{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;color:var(--ink);font-size:13px;font-family:var(--sans);cursor:pointer;transition:border-color .15s}
   .userbox select:hover{border-color:var(--muted)}
+  .acct-wrap{position:relative}
+  .acct-btn{display:flex;align-items:center;gap:9px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:6px 11px 6px 6px;cursor:pointer;color:var(--ink);font:inherit;transition:border-color .15s}
+  .acct-btn:hover{border-color:var(--muted)}
+  .acct-ava{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none}
+  .acct-nm{font-size:13px;font-weight:600;line-height:1.15;text-align:left}
+  .acct-rl{font-size:10.5px;color:var(--muted);font-family:var(--mono)}
+  .acct-drop{position:absolute;top:46px;right:0;min-width:230px;background:var(--panel);border:1px solid var(--line);border-radius:13px;box-shadow:var(--sh-lg);z-index:80;overflow:hidden;padding:6px}
+  .acct-drop .ah{padding:10px 12px 8px;border-bottom:1px solid var(--line2);margin-bottom:6px}
+  .acct-drop button{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;color:var(--ink);font:inherit;font-size:13.5px;text-align:left;padding:9px 12px;border-radius:9px;cursor:pointer}
+  .acct-drop button:hover{background:var(--panel2)}
+  .acct-drop button.danger{color:var(--bad)}
   .icobtn{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);
     color:var(--ink2);display:grid;place-items:center;font-size:15px;cursor:pointer;flex:none}
   .icobtn:hover{border-color:var(--accent);color:var(--accent)}
@@ -800,6 +820,185 @@
   .desc{font-size:13.5px;color:var(--ink2);margin-bottom:8px}
   .desc b{color:var(--ink)}
 
+  /* состав изделия (BOM) */
+  .bomtree{border:1px solid var(--line2);border-radius:10px;overflow:hidden;margin-top:6px}
+  .bomrow{display:flex;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line2);font-size:13px}
+  .bomrow:last-child{border-bottom:none}
+  .bomrow:nth-child(odd){background:color-mix(in srgb,var(--panel2) 55%,transparent)}
+  .bomrow.hit{background:var(--warn-soft,rgba(224,160,60,.14));box-shadow:inset 3px 0 0 var(--warn)}
+  .bomcode{font-family:var(--mono);font-size:11.5px;color:var(--accent);white-space:nowrap;flex:none}
+  .bomname{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .bomqty{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap;flex:none}
+  .bomrev{font-family:var(--mono);font-size:10.5px;color:var(--good);background:var(--good-soft,rgba(95,208,139,.14));
+    border:1px solid color-mix(in srgb,var(--good) 30%,transparent);border-radius:6px;padding:1px 6px;white-space:nowrap;flex:none}
+  .bomrev.nodoc{color:var(--muted);background:transparent;border-color:var(--line)}
+  /* ИИ-оценка по аналогам */
+  .an-panel{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:0 0 16px;background:var(--panel2)}
+  .an-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .an-est{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:10px 0 14px;border-bottom:1px solid var(--line2);margin-bottom:10px}
+  .an-est-v{font-size:30px;font-weight:780;letter-spacing:-.02em;color:var(--accent,#C24309);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .an-est-v span{font-size:14px;font-weight:600;color:var(--muted)}
+  .an-est-l{font-size:12.5px;color:var(--ink2);flex:1;min-width:220px;line-height:1.4}
+  .anrows{display:flex;flex-direction:column;gap:7px}
+  .anrow{display:grid;grid-template-columns:44px 90px 1fr auto;gap:10px;align-items:center;cursor:pointer;padding:3px 0}
+  .anrow:hover .annm{color:var(--accent,#C24309)}
+  .anpct{font-family:var(--mono);font-size:12.5px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  .anbar{height:7px;border-radius:99px;background:var(--line2);overflow:hidden}
+  .anbar i{display:block;height:100%;border-radius:99px}
+  .annm{font-size:13px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .anh{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+  @media(max-width:640px){.anrow{grid-template-columns:40px 60px 1fr;grid-template-rows:auto auto}.anh{grid-column:1/-1;text-align:right}}
+  /* ROI-калькулятор */
+  .roi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+  .roi-f{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted)}
+  .roi-f input{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);
+    font-size:14px;padding:7px 10px;font-variant-numeric:tabular-nums}
+  .roi-out{margin-top:14px;padding-top:14px;border-top:1px solid var(--line2)}
+  .roi-total{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}
+  .roi-total-v{font-size:30px;font-weight:780;letter-spacing:-.02em;color:var(--good);font-variant-numeric:tabular-nums}
+  .roi-total-l{font-size:12.5px;color:var(--ink2)}
+  .roi-lines{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .roi-lines>div{background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:2px}
+  .roi-lines span{font-size:12px;color:var(--muted)}
+  .roi-lines b{font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .roi-lines small{font-size:10.5px;color:var(--muted);line-height:1.35}
+  @media(max-width:640px){.roi-lines{grid-template-columns:1fr}}
+  /* Проработка НС */
+  .ns-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+  .ns-tabs{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+  .ns-tab{display:flex;flex-direction:column;gap:5px;min-width:170px;text-align:left;background:var(--panel);
+    border:1px solid var(--line);border-radius:11px;padding:9px 11px;cursor:pointer;transition:border-color .15s}
+  .ns-tab:hover{border-color:var(--line2)}
+  .ns-tab.on{border-color:var(--accent,#2E6E8E);box-shadow:inset 0 0 0 1px var(--accent,#2E6E8E)}
+  .ns-tab-n{font-size:12.5px;font-weight:640;color:var(--ink);line-height:1.25}
+  .ns-tab-m{display:block;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+  .ns-tab-m i{display:block;height:100%;background:var(--good);border-radius:3px}
+  .ns-tab-s{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ns-over{color:var(--bad)}
+  .ns-title-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  .ns-name{flex:1;min-width:180px;background:transparent;border:1px solid transparent;border-radius:8px;
+    color:var(--ink);font-size:16px;font-weight:720;padding:5px 7px;letter-spacing:-.01em}
+  .ns-name:hover{border-color:var(--line)} .ns-name:focus{border-color:var(--line2);outline:none;background:var(--panel)}
+  .ns-prog{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+  .ns-del{background:transparent;border:none;cursor:pointer;font-size:14px;opacity:.6}.ns-del:hover{opacity:1}
+  .ns-progbar{height:6px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:10px}
+  .ns-progbar i{display:block;height:100%;background:var(--good);border-radius:4px;transition:width .2s}
+  .ns-eng{font-size:11.5px;color:var(--muted);margin-bottom:4px}
+  .ns-meta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+  .ns-meta label{display:flex;flex-direction:column;gap:4px;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  .ns-note{font-size:12px;color:var(--ink2);background:var(--panel);border:1px solid var(--line2);border-radius:9px;padding:8px 11px;margin-bottom:12px}
+  .ns-grid-h,.ns-row{display:grid;grid-template-columns:104px 1.4fr 130px 140px 2fr 26px;gap:9px;align-items:center}
+  .ns-grid-h{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding:0 2px 6px;border-bottom:1px solid var(--line2)}
+  .ns-row{padding:7px 2px;border-bottom:1px solid var(--line)}
+  .ns-row-over{background:linear-gradient(90deg,var(--bad)0%,transparent 2px)}
+  .ns-st{border:1px solid;border-radius:20px;padding:4px 0;font-size:11px;font-weight:640;cursor:pointer;text-align:center}
+  .ns-title{font-size:13px;color:var(--ink);line-height:1.3}
+  .ns-dep{display:inline-block;margin-left:7px;font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;vertical-align:middle;white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+  .ns-dep.ready{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent);border:1px solid color-mix(in srgb,var(--good) 40%,transparent)}
+  .ns-dep.blocked{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);border:1px solid color-mix(in srgb,var(--warn) 38%,transparent)}
+  .ns-dep.conflict{color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent);border:1px solid color-mix(in srgb,var(--bad) 40%,transparent)}
+  .ns-due-conflict{border-color:var(--bad)!important;box-shadow:0 0 0 1px var(--bad)}
+  .ns-conflict-bar{font-size:12px;color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,transparent);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent);border-radius:9px;padding:8px 11px;margin-bottom:12px}
+  .ns-crit{font-size:12px;color:var(--ink2);background:color-mix(in srgb,var(--accent,#2E6E8E) 8%,transparent);border:1px solid color-mix(in srgb,var(--accent,#2E6E8E) 26%,transparent);border-radius:9px;padding:8px 11px;margin-bottom:12px;line-height:1.4}
+  .ns-crit b{color:var(--accent,#2E6E8E)}
+  .ns-crit-star{color:var(--accent,#2E6E8E);font-size:12px}
+  .ns-art-wrap{margin-left:7px;display:inline-flex;gap:4px;align-items:center;vertical-align:middle}
+  .ns-art{font-size:10.5px;color:var(--accent,#2E6E8E);text-decoration:none;background:color-mix(in srgb,var(--accent,#2E6E8E) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent,#2E6E8E) 32%,transparent);border-radius:20px;padding:1px 8px;cursor:pointer;white-space:nowrap}
+  .ns-art:hover{background:color-mix(in srgb,var(--accent,#2E6E8E) 18%,transparent)}
+  .ns-art-ed{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 2px}
+  .ns-art-add{background:transparent;border:1px dashed var(--line2);border-radius:20px;color:var(--muted);cursor:pointer;font-size:10px;padding:1px 8px}
+  .ns-art-ed:hover,.ns-art-add:hover{color:var(--accent,#2E6E8E)}
+  .ns-art-item{display:inline-flex;align-items:center;gap:1px}
+  .ns-art-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 3px;line-height:1}.ns-art-x:hover{color:var(--bad)}
+  .ns-rev{font-size:9.5px;font-weight:700;color:#8a6d1f;background:color-mix(in srgb,#c8a63e 15%,transparent);border-radius:4px;padding:0 4px;margin-left:1px}
+  .ns-art-rev{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 2px;line-height:1}.ns-art-rev:hover{color:var(--accent,#2E6E8E)}
+  .ns-pt-crit{box-shadow:0 0 0 2px var(--accent,#2E6E8E),0 0 0 4px color-mix(in srgb,var(--accent,#2E6E8E) 30%,transparent)}
+  .ns-ld-title{font-size:14px;font-weight:680;margin-bottom:14px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .ns-ld-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .ns-ld-card{border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:var(--panel)}
+  .ns-ld-card.peak{border-color:var(--warn);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 35%,transparent)}
+  .ns-ld-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+  .ns-ld-name{font-size:14px;font-weight:660;color:var(--ink)}
+  .ns-ld-sub{font-size:11px;color:var(--muted)} .ns-ld-peak{color:var(--warn)}
+  .ns-ld-bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line);min-width:40px;margin-bottom:7px}
+  .ns-ld-seg{display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:600;min-width:14px}
+  .ns-ld-seg.od{background:var(--bad)} .ns-ld-seg.sn{background:var(--warn)} .ns-ld-seg.nx{background:var(--accent,#2E6E8E)} .ns-ld-seg.lt{background:var(--muted)}
+  .ns-ld-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10.5px;margin-bottom:8px}
+  .ns-ld-legend .od{color:var(--bad)} .ns-ld-legend .sn{color:var(--warn)} .ns-ld-legend .nx{color:var(--accent,#2E6E8E)} .ns-ld-legend .lt{color:var(--muted)}
+  .ns-ld-list{border-top:1px solid var(--line2);padding-top:8px;display:flex;flex-direction:column;gap:4px}
+  .ns-ld-it{font-size:11.5px;color:var(--ink2)} .ns-ld-st{color:var(--muted)} .ns-ld-it b{font-variant-numeric:tabular-nums}
+  .ns-pf-summary{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--muted)}
+  .ns-pf-sc b{font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:4px}
+  .ns-pf-sc.ok b{color:var(--good)} .ns-pf-sc.warn b{color:var(--warn)} .ns-pf-sc.bad b{color:var(--bad)}
+  .ns-pf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .ns-pf-card{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;transition:border-color .15s;display:flex;flex-direction:column;gap:6px}
+  .ns-pf-card:hover{border-color:var(--line2)}
+  .ns-pf-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .ns-pf-nm{font-size:13.5px;font-weight:660;color:var(--ink);line-height:1.25}
+  .ns-pf-risk{font-size:10.5px;font-weight:640;padding:2px 9px;border-radius:20px;border:1px solid;white-space:nowrap}
+  .ns-pf-type{font-size:11px;color:var(--muted)}
+  .ns-pf-bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+  .ns-pf-bar i{display:block;height:100%;border-radius:4px}
+  .ns-pf-stat{font-size:11.5px;color:var(--ink2);font-variant-numeric:tabular-nums}
+  .ns-pf-sig{display:flex;gap:6px;flex-wrap:wrap}
+  .ns-pf-b{font-size:10px;padding:1px 7px;border-radius:20px;background:var(--line);color:var(--ink2)}
+  .ns-pf-b.bad{color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
+  .ns-pf-b.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .ns-pf-eng{font-size:10.5px;color:var(--muted);border-top:1px solid var(--line2);padding-top:6px}
+  .ns-sel,.ns-due,.ns-dec{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:12px;padding:6px 8px}
+  .ns-sel:focus,.ns-due:focus,.ns-dec:focus{border-color:var(--line2);outline:none}
+  .ns-due-over{border-color:var(--bad);color:var(--bad)}
+  .ns-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px}.ns-x:hover{color:var(--bad)}
+  .ns-log-chip{display:inline-block;margin-left:7px;font-size:10px;padding:1px 7px;border-radius:20px;background:var(--line);color:var(--muted);cursor:pointer;vertical-align:middle;font-variant-numeric:tabular-nums}
+  .ns-log-chip:hover,.ns-log-chip.on{background:color-mix(in srgb,var(--accent,#2E6E8E) 16%,transparent);color:var(--accent,#2E6E8E)}
+  .ns-logrow{padding:8px 12px 10px 116px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+  .ns-loge{font-size:11px;color:var(--ink2)} .ns-loge b{color:var(--muted);font-variant-numeric:tabular-nums;font-weight:600;margin-right:4px}
+  @media(max-width:760px){.ns-logrow{padding-left:12px}}
+  .ns-add-wrap{position:relative}
+  .ns-add-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;display:flex;flex-direction:column;gap:3px;background:var(--panel);border:1px solid var(--line2);border-radius:11px;padding:6px;box-shadow:0 8px 26px rgba(0,0,0,.18);min-width:230px}
+  .ns-add-menu.center{position:static;flex-direction:row;flex-wrap:wrap;justify-content:center;box-shadow:none;background:transparent;border:none;padding:0;gap:8px;min-width:0}
+  .ns-add-t{text-align:left;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--ink);font-size:12.5px;padding:8px 11px;cursor:pointer}
+  .ns-add-t:hover{background:color-mix(in srgb,var(--accent,#2E6E8E) 12%,transparent);border-color:color-mix(in srgb,var(--accent,#2E6E8E) 30%,transparent)}
+  .ns-goz-tog{text-align:left;background:transparent;border:1px dashed var(--line2);border-radius:8px;color:var(--muted);font-size:11.5px;padding:6px 10px;cursor:pointer;margin-bottom:4px}
+  .ns-goz-tog.on{color:#8a6d1f;border-color:#c8a63e;border-style:solid;background:color-mix(in srgb,#c8a63e 12%,transparent)}
+  .ns-add-menu.center .ns-goz-tog{flex-basis:100%;text-align:center}
+  .ns-goz-badge{font-size:10px;font-weight:700;letter-spacing:.03em;color:#8a6d1f;background:color-mix(in srgb,#c8a63e 15%,transparent);border:1px solid color-mix(in srgb,#c8a63e 45%,transparent);border-radius:6px;padding:2px 7px;white-space:nowrap}
+  .ns-pf-goz{color:#8a6d1f;font-weight:700}
+  .ns-add-menu.center .ns-add-t{border:1px solid var(--line);border-radius:20px;text-align:center}
+  .ns-vf{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:9px 13px;border-radius:11px;font-size:12.5px;font-weight:600}
+  .ns-vf.ok{color:var(--good);background:color-mix(in srgb,var(--good) 10%,transparent);border:1px solid color-mix(in srgb,var(--good) 35%,transparent)}
+  .ns-vf.bad{color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent);border:1px solid color-mix(in srgb,var(--bad) 35%,transparent)}
+  .ns-viewtog{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .ns-vt{background:var(--panel);border:none;color:var(--muted);font-size:12px;padding:7px 13px;cursor:pointer}
+  .ns-vt.on{background:var(--accent,#2E6E8E);color:#fff}
+  .ns-tl-axis{display:flex;margin-bottom:6px}
+  .ns-tl-lbl-sp{width:210px;flex:none}
+  .ns-tl-scale{position:relative;flex:1;height:20px;border-bottom:1px solid var(--line2)}
+  .ns-tk{position:absolute;top:2px;transform:translateX(-50%);font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .ns-tl-today-l{position:absolute;top:2px;transform:translateX(-50%);font-size:10px;color:var(--bad);font-weight:640}
+  .ns-tl-row{display:flex;align-items:center;min-height:34px;border-bottom:1px solid var(--line)}
+  .ns-tl-lbl{width:210px;flex:none;text-align:left;background:transparent;border:none;color:var(--ink);font-size:12px;cursor:pointer;padding:4px 8px 4px 0;line-height:1.25}
+  .ns-tl-lbl:hover{color:var(--accent,#2E6E8E)} .ns-tl-lbl b{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+  .ns-tl-track{position:relative;flex:1;height:34px}
+  .ns-tl-today{position:absolute;top:0;bottom:0;width:2px;background:var(--bad);opacity:.55}
+  .ns-pt{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid var(--bg,#fff);box-shadow:0 0 0 1px rgba(0,0,0,.12);cursor:default}
+  .ns-pt-over{box-shadow:0 0 0 2px var(--bad)}
+  .ns-tl-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+  .ns-tl-legend span{display:inline-flex;align-items:center;gap:5px}
+  .ns-tl-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .ns-tl-over-lg i{background:transparent;box-shadow:0 0 0 2px var(--bad)}
+  @media(max-width:760px){.ns-tl-lbl-sp,.ns-tl-lbl{width:120px}}
+  @media(max-width:760px){.ns-grid-h{display:none}
+    .ns-row{grid-template-columns:104px 1fr;grid-auto-flow:row}
+    .ns-row .ns-sel,.ns-row .ns-due,.ns-row .ns-dec{grid-column:2}}
+  .bomlink{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .bomlink input{flex:1;min-width:120px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-size:12.5px;padding:7px 10px;font-family:var(--mono)}
+  .ncgrid{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .ncrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line2);
+    border-left:3px solid var(--warn);border-radius:8px;background:color-mix(in srgb,var(--panel2) 55%,transparent)}
+  .ncrow .ncbody{font-size:12.5px;color:var(--ink);flex:1;min-width:200px}
+
   .overlay{position:fixed;inset:0;background:rgba(10,16,22,.55);display:none;place-items:center;z-index:60;padding:20px}
   .overlay.open{display:grid}
   .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:540px;width:100%;padding:24px 26px;max-height:90vh;overflow-y:auto}
@@ -919,7 +1118,7 @@
       <div class="bell-drop" id="bellDrop"></div></div>
     <button class="icobtn" id="helpBtn" title="О продукте и тур">?</button>
     <button class="icobtn" id="themeBtn" title="Тема: авто → тёмная → светлая">◐</button>
-    <div class="userbox">Вы: <select id="userSel"></select></div>
+    <div class="userbox" id="userbox"></div>
   </div>
   <div class="content" id="content"></div>
 </main>
@@ -1008,14 +1207,14 @@ const ACC = {
   'логист':        ['—','✓','○','—','—','—','—','—'],
 };
 /* доступные экраны по роли (реальное скрытие модулей в навигации) */
-const ALL_VIEWS = ['today','deals','radar','estimates','flow','supply','ship','portal','board','kb','notices','plan','reports','bench','team','settings'];
+const ALL_VIEWS = ['today','deals','radar','estimates','flow','supply','ship','portal','board','ns','kb','notices','plan','reports','bench','team','settings'];
 const ROLE_VIEWS = {
   'директор': ALL_VIEWS, 'зам. директора': ALL_VIEWS,
-  'рук. ИЦ':        ['today','board','kb','notices','plan','estimates','flow','reports','bench','team','settings'],
+  'рук. ИЦ':        ['today','board','ns','kb','notices','plan','estimates','flow','reports','bench','team','settings'],
   'рук. продаж':    ['today','deals','radar','estimates','portal','flow','reports','bench','team','settings'],
   'рук. закупок':   ['today','supply','flow','ship','portal','reports','team','settings'],
   'рук. логистики': ['today','ship','flow','supply','portal','reports','team','settings'],
-  'инженер':        ['today','board','kb','notices','plan','estimates','flow','settings'],
+  'инженер':        ['today','board','ns','kb','notices','plan','estimates','flow','settings'],
   'продажи':        ['today','deals','radar','estimates','portal','flow','settings'],
   'закупки':        ['today','supply','ship','flow','portal','settings'],
   'логист':         ['today','ship','flow','supply','portal','settings'],
@@ -1307,14 +1506,115 @@ function seed(){
         ]},
       {id:'PR4', izdelie:'Арматура ДУ-50', code:'ДУ-50', order:'2204', year:2026, hours:120,
         customer:'Окская судоверфь', vessel:'пр. RSD59', status:'исполнен',
-        tz:'Комплект судовой трубопроводной арматуры ДУ-50, PN 25. Клапаны запорные, обратные. Материал — сталь 20. Сертификация РМРС.',
-        tags:'арматура клапан запорный обратный ду-50 сталь трубопровод',
+        tz:'Комплект судовой трубопроводной арматуры Ду 50 мм, PN 25 (рабочее давление 25 бар). Клапаны запорные и обратные. Материал корпуса — сталь 20. Класс РМРС.',
+        tags:'арматура клапан запорный обратный ду-50 сталь трубопровод давление 25 бар',
         docs:[
           {type:'ТЗ', name:'ТЗ на арматуру ДУ-50', ver:'v1 · действует', where:'Заказ №2204 · /ТЗ'},
           {type:'Чертёж', name:'СБ-2204-03 · Клапан запорный', ver:'v1.0', code:'СБ-2204-03', where:'DWG · вьюер'},
           {type:'Протокол', name:'Уроки заказа №2204', ver:'v1', where:'Заказ №2204 · БЗ'},
           {type:'Сертификат', name:'СТО №24.00931.120', ver:'действует', where:'реестр сертификатов'},
         ]},
+      {id:'PR5', izdelie:'Насос винтовой ЭМН-1000', code:'ЭМН-1000', order:'1512', year:2020, hours:610,
+        customer:'Средне-Невский СЗ', vessel:'пр. 12700', status:'исполнен',
+        tz:'Трёхвинтовой насос топливоперекачивающий. Подача 1000 л/мин, рабочее давление 25 бар, среда — дизельное топливо/мазут. Электропривод 30 кВт. Корпус — чугун. Класс РМРС.',
+        tags:'насос винтовой трёхвинтовой топливо мазут 25 бар электропривод чугун',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на насос ЭМН-1000', ver:'v1 · архив', where:'Заказ №1512 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-1512-01 · Сборочный чертёж', ver:'v1.2', code:'СБ-1512-01', where:'DWG · вьюер'},
+          {type:'Извещение', name:'ИИ-5 · замена торцевого уплотнения', ver:'проведено', where:'привязано к СБ-1512-01'},
+          {type:'Сертификат', name:'СТО №20.00514.120', ver:'до 2025', where:'реестр сертификатов'},
+        ]},
+      {id:'PR6', izdelie:'Сепаратор топлива СЦ-3', code:'СЦ-3', order:'1988', year:2022, hours:290,
+        customer:'Выборгский СЗ', vessel:'пр. 23120', status:'исполнен',
+        tz:'Сепаратор центробежный саморазгружающийся для очистки дизельного топлива. Производительность 3000 л/ч, привод электрический. Барабан — сталь 12Х18Н10Т. Сертификация РМРС.',
+        tags:'сепаратор центробежный саморазгружающийся топливо очистка нержавеющая сталь',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на сепаратор СЦ-3', ver:'v2 · действует', where:'Заказ №1988 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-1988-04 · Сборочный чертёж барабана', ver:'v1.1', code:'СБ-1988-04', where:'DWG · вьюер'},
+          {type:'Протокол', name:'ПСИ + балансировка барабана', ver:'пройдено', where:'Заказ №1988 · Приёмка'},
+          {type:'Сертификат', name:'СТО №22.00803.120', ver:'до 2027', where:'реестр сертификатов'},
+        ]},
+      {id:'PR7', izdelie:'Компрессор ЭКПА-2/150', code:'ЭКПА-2/150', order:'1671', year:2021, hours:470,
+        customer:'ССЗ «Пелла»', vessel:'пр. 03182', status:'исполнен',
+        tz:'Поршневой двухступенчатый компрессор пускового воздуха. Производительность 2 м³/мин, рабочее давление 150 бар. Воздушное охлаждение. Электропривод 15 кВт. Класс РМРС.',
+        tags:'компрессор поршневой пусковой воздух высокое давление 150 бар двухступенчатый',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на компрессор ЭКПА-2/150', ver:'v1 · действует', where:'Заказ №1671 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-1671-02 · Сборочный чертёж', ver:'v1.0', code:'СБ-1671-02', where:'DWG · вьюер'},
+          {type:'Протокол', name:'ПСИ давлением 150 бар', ver:'пройдено', where:'Заказ №1671 · Приёмка'},
+          {type:'Сертификат', name:'СТО №21.00701.120', ver:'до 2026', where:'реестр сертификатов'},
+        ]},
+      {id:'PR8', izdelie:'Щит ГРЩ-400', code:'ГРЩ-400', order:'2071', year:2023, hours:640,
+        customer:'ПСЗ «Янтарь»', vessel:'пр. 11711', status:'исполнен',
+        tz:'Главный распределительный щит на ток 400 А, напряжение 380 В, 3 секции. Морское вибростойкое исполнение. Автоматы ABB, аппаратура ввода резерва. Класс РМРС.',
+        tags:'щит грщ распределительный 400 а 380 в морское вибростойкое секции резерв',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на ГРЩ-400', ver:'v2 · действует', where:'Заказ №2071 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-2071-01 · Схема электрическая', ver:'v1.4', code:'СБ-2071-01', where:'DWG · вьюер'},
+          {type:'Извещение', name:'ИИ-8 · замена автоматов ABB → КЭАЗ (импортозамещение)', ver:'проведено', where:'привязано к СБ-2071-01'},
+          {type:'Протокол', name:'Испытания на вибростойкость', ver:'пройдено', where:'Заказ №2071 · Приёмка'},
+          {type:'Сертификат', name:'СТО №23.00918.120', ver:'действует', where:'реестр сертификатов'},
+        ]},
+      {id:'PR9', izdelie:'Подогреватель топлива ПТ-25', code:'ПТ-25', order:'1799', year:2021, hours:160,
+        customer:'Северная верфь', vessel:'пр. 20386', status:'исполнен',
+        tz:'Паровой подогреватель топлива. Поверхность 25 м², температура нагрева до 90 °C, давление пара 6 бар. Трубный пучок — сталь 20. Сертификация РМРС.',
+        tags:'подогреватель топлива паровой поверхность температура пар 6 бар сталь',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на подогреватель ПТ-25', ver:'v1 · действует', where:'Заказ №1799 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-1799-01 · Сборочный чертёж', ver:'v1.0', code:'СБ-1799-01', where:'DWG · вьюер'},
+          {type:'Сертификат', name:'СТО №21.00688.120', ver:'до 2026', where:'реестр сертификатов'},
+        ]},
+      {id:'PR10', izdelie:'Установка опреснительная УОВ-10', code:'УОВ-10', order:'2298', year:2024, hours:720,
+        customer:'ССЗ «Красное Сормово»', vessel:'пр. RST27', status:'исполнен',
+        tz:'Вакуумная опреснительная установка выпарного типа. Производительность 10 т/сут, среда — морская вода. Греющий контур — забортная вода от системы охлаждения дизеля. Класс РМРС.',
+        tags:'установка опреснительная вакуумная выпарная морская вода производительность',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на установку УОВ-10', ver:'v1 · действует', where:'Заказ №2298 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-2298-01 · Сборочный чертёж', ver:'v1.1', code:'СБ-2298-01', where:'DWG · вьюер'},
+          {type:'Протокол', name:'ПСИ производительности и солёности', ver:'пройдено', where:'Заказ №2298 · Приёмка'},
+          {type:'Сертификат', name:'СТО №24.00959.120', ver:'действует', where:'реестр сертификатов'},
+        ]},
+      {id:'PR11', izdelie:'Вентилятор осевой ВО-8', code:'ВО-8', order:'2140', year:2023, hours:130,
+        customer:'Зеленодольский ЗиГ', vessel:'пр. 22160', status:'исполнен',
+        tz:'Судовой осевой вентилятор системы вентиляции МКО. Производительность 8000 м³/ч, напор 400 Па. Электропривод, морское исполнение. Класс РМРС.',
+        tags:'вентилятор осевой судовой вентиляция производительность напор электропривод морское',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на вентилятор ВО-8', ver:'v1 · действует', where:'Заказ №2140 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-2140-02 · Сборочный чертёж', ver:'v1.0', code:'СБ-2140-02', where:'DWG · вьюер'},
+          {type:'Сертификат', name:'СТО №23.00902.120', ver:'действует', where:'реестр сертификатов'},
+        ]},
+      {id:'PR12', izdelie:'Теплообменник кожухотрубный ТКТ-300', code:'ТКТ-300', order:'1855', year:2022, hours:380,
+        customer:'Балтийский завод', vessel:'пр. 22350', status:'исполнен',
+        tz:'Кожухотрубный теплообменник охлаждения дизеля забортной водой. Поверхность 300 м², рабочее давление 10 бар. Трубки — латунь ЛО70-1. Сертификация РМРС.',
+        tags:'теплообменник кожухотрубный охлаждение дизель забортная вода латунь поверхность',
+        docs:[
+          {type:'ТЗ', name:'ТЗ на теплообменник ТКТ-300', ver:'v1 · действует', where:'Заказ №1855 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-1855-03 · Сборочный чертёж', ver:'v1.2', code:'СБ-1855-03', where:'DWG · вьюер'},
+          {type:'Протокол', name:'Гидравлические испытания 15 бар', ver:'пройдено', where:'Заказ №1855 · Приёмка'},
+          {type:'Сертификат', name:'СТО №22.00779.120', ver:'до 2027', where:'реестр сертификатов'},
+        ]},
+    ],
+    ns:[
+      {id:'NS1', name:'НС-1 Канализационная (КНС-1200)', order:'2417', proj:'petrov', asu:'ivanov', note:'Заглубление 6 м, две рабочие + резерв. Сети — самотёк.', items:[
+        {id:'d1', title:'ТЗ на подбор оборудования', role:'proj', status:'done', due:'2026-07-10', dec:'Подача 1200 м³/ч, напор 32 м — 3×насос Grundfos S2, 1 резерв.', artifact:'ТЗ-2071-НС1'},
+        {id:'d2', title:'Гидравлическая схема', role:'proj', status:'done', due:'2026-07-14', dec:'Напорный коллектор Ду400, обратные клапаны на каждом насосе.', artifact:'ГС-2071-01'},
+        {id:'d3', title:'Компоновка насосной', role:'proj', status:'check', due:'2026-07-18', dec:'Мокрая камера + сухой машзал. Кран-балка 2 т.', artifacts:[{code:'СБ-2071-03',rev:'Б'},{code:'ГЧ-2071-01',rev:'А'},{code:'Спецификация 2071-НС1',rev:''}]},
+        {id:'d4', title:'Резервуары', role:'proj', status:'wip', due:'2026-07-24', dec:'Приёмный резервуар V=180 м³, монолит.'},
+        {id:'d5', title:'Расположение на плане', role:'proj', status:'wip', due:'2026-07-25', dec:''},
+        {id:'d6', title:'Компоновка трубопроводов', role:'proj', status:'todo', due:'2026-07-30', dec:''},
+        {id:'d7', title:'3D-модель', role:'proj', status:'todo', due:'2026-08-05', dec:''},
+        {id:'d8', title:'Схемы автоматизации (АСУ ТП)', role:'asu', status:'todo', due:'2026-08-08', dec:'Ждёт компоновку и гидросхему — датчики уровня, ЧРП на 3 насоса.'},
+      ]},
+      {id:'NS2', name:'НС-2 Хозпитьевая (ВНС объект 22350)', order:'', proj:'petrov', asu:'ivanov', note:'Повысительная, 2 насоса + мембранный бак.', items:[
+        {id:'d1', title:'ТЗ на подбор оборудования', role:'proj', status:'done', due:'2026-07-12', dec:'Подача 80 м³/ч, напор 50 м, второй насос — АВР.'},
+        {id:'d2', title:'Гидравлическая схема', role:'proj', status:'wip', due:'2026-07-22', dec:'Мембранный бак 500 л, поддержание давления.'},
+        {id:'d3', title:'Компоновка насосной', role:'proj', status:'todo', due:'2026-07-28', dec:''},
+        {id:'d4', title:'Резервуары', role:'proj', status:'todo', due:'2026-07-30', dec:''},
+        {id:'d5', title:'Расположение на плане', role:'proj', status:'todo', due:'2026-08-01', dec:''},
+        {id:'d6', title:'Компоновка трубопроводов', role:'proj', status:'todo', due:'2026-08-04', dec:''},
+        {id:'d7', title:'3D-модель', role:'proj', status:'todo', due:'2026-08-08', dec:''},
+        {id:'d8', title:'Схемы автоматизации (АСУ ТП)', role:'asu', status:'todo', due:'2026-08-10', dec:''},
+      ]},
     ],
     rules:[
       {id:'R1',name:'Просрочка → комментарий + уведомить наблюдателей и исполнителя',trigger:'overdue',act:{comment:1,notify:1,prio:0},enabled:1},
@@ -1402,7 +1702,10 @@ function seed(){
 }
 let S;
 try{ S = JSON.parse(localStorage.getItem(LSKEY)) || seed(); }catch(e){ S = seed(); }
-function save(){ try{ localStorage.setItem(LSKEY, JSON.stringify(S)); }catch(e){} queuePush(); }
+function save(){ try{ const {_l3, ...rest}=S; localStorage.setItem(LSKEY, JSON.stringify(rest)); }catch(e){} queuePush(); }
+// _l3 (кэш узлов состава, десятки тысяч) НЕ персистится: (1) не переполняет лимит
+// localStorage, (2) после перезагрузки кэш перечитывается из таблиц через ensureL3
+// с актуальным digest, а не залипает устаревшим. В сеть _l3 и так не уходит (не в SHARED).
 
 /* ---- серверная синхронизация (v0.5): SSE-пуш, журнал аудита, подпись действий ---- */
 const SRV = { on:false, rev:0, es:null };
@@ -1415,9 +1718,10 @@ const TOK = () => (window.__ELLING_TOKEN || '');
 const AH = extra => { const h = Object.assign({}, extra||{}); const t = TOK();
                       if(t) h['X-API-Token'] = t; return h; };
 let ME = null;            // кто вошёл (с сервера); null в демо без сервера
+let TOTP2FA = false;      // включён ли у вошедшего второй фактор (из /api/auth/me)
 let ACTS = [];            // накопитель описаний действий (ревью v0.5: не терять при дебаунсе)
 let SYNCING = false;      // рендер по данным с сервера не должен порождать обратный пуш (эхо-цикл)
-const SHARED = ['orders','epics','seq','tasks','deals','suppliers','certs','notices','estimates','portalDocs','portalQA','connectors','agentLog','docs','projects','kbProjects','checklists','drawings','rules','notes','savedFilters','portalAccept','notifCh','elxLog','org'];
+const SHARED = ['orders','epics','seq','tasks','deals','suppliers','certs','notices','estimates','portalDocs','portalQA','connectors','agentLog','docs','projects','kbProjects','checklists','drawings','rules','notes','savedFilters','portalAccept','notifCh','elxLog','ns','org'];
 // Дедуп автоматизаций живёт на самой задаче (t.autoFired) — задачи синкаются, поэтому
 // повторное срабатывание в другой вкладке/клиенте не задваивает комментарии и лог (ревью v1.15)
 function sharedData(){ const o={}; SHARED.forEach(k=>{ if(S[k]!==undefined) o[k]=S[k]; }); return o; }
@@ -1488,6 +1792,18 @@ function setSrv(on){ SRV.on = on; const el = $('srvState');
 let pushT = null;
 let kbReqSeq = 0;
 function queuePush(){ if(!SRV.on || SYNCING) return; clearTimeout(pushT); pushT = setTimeout(pushState, 700); }
+// Жмём тело PUT состояния gzip, если браузер умеет (CompressionStream): состояние
+// сжимается ~8x, потолок хранилища поднимается со ~171 до ~1400 заказов. Fallback — как есть.
+async function gzipBody(str){
+  try{
+    if(typeof CompressionStream!=='undefined'){
+      const cs=new CompressionStream('gzip');
+      const buf=await new Response(new Blob([str]).stream().pipeThrough(cs)).arrayBuffer();
+      return {body:buf, gzip:true};
+    }
+  }catch(_){}
+  return {body:str, gzip:false};
+}
 async function pushState(){
   clearTimeout(pushT); pushT = null;
   const acts = ACTS; ACTS = [];
@@ -1501,10 +1817,12 @@ async function pushState(){
     return;                               // иначе они пропадут из аудита при следующем push
   }
   try{
-    const r = await fetch('/api/state', {method:'PUT', headers:AH({'Content-Type':'application/json'}),
-      body: JSON.stringify({rev:SRV.rev, data:delta, remove: rm,
+    const payload = JSON.stringify({rev:SRV.rev, data:delta, remove: rm,
         user: PEOPLE[S.currentUser].full + ' · ' + PEOPLE[S.currentUser].role,
-        action: acts.join('; ') || 'изменение данных'})});
+        action: acts.join('; ') || 'изменение данных'});
+    const gz = await gzipBody(payload);
+    const hdr = AH({'Content-Type':'application/json'}); if(gz.gzip) hdr['Content-Encoding']='gzip';
+    const r = await fetch('/api/state', {method:'PUT', headers:hdr, body: gz.body});
     if(r.status===409){ const j = await r.json();
       // наш push отклонён (устаревший rev) — НЕ теряем локальные правки (напр. аннотацию):
       // обновляем rev и повторяем отправку, сервер сольёт наши правки по сущностям (ревью v1.1)
@@ -1546,37 +1864,68 @@ function startStream(){
 }
 // Экран входа. Показывается только когда сервер есть и требует авторизации:
 // публичное демо на статике живёт без сервера и работает как раньше.
-function paintLogin(err){
-  document.body.insertAdjacentHTML('beforeend', `
-    <div class="lg-wrap" id="lgWrap">
-      <form class="lg-card" id="lgForm">
-        <div class="lg-brand">Эллинг</div>
-        <div class="lg-sub">Вход в систему</div>
-        ${err?`<div class="lg-err" id="lgErr">${esc(err)}</div>`:'<div class="lg-err" id="lgErr" hidden></div>'}
-        <label class="lg-lab">Логин</label>
-        <input class="lg-inp" id="lgUser" autocomplete="username" autofocus>
-        <label class="lg-lab">Пароль</label>
-        <input class="lg-inp" id="lgPass" type="password" autocomplete="current-password">
-        <button class="lg-btn" type="submit" id="lgGo">Войти</button>
-        <div class="lg-note">Доступ выдаёт администратор вашего предприятия.
-          Действия в системе записываются в журнал под вашим именем.</div>
-      </form>
-    </div>`);
-  const f = $('lgForm');
-  f.addEventListener('submit', async e => {
+// opts = {oidc, bootstrap}. Три режима: 'login' | 'register' (первый администратор,
+// доступен только на пустой системе) | 'claim' (активация приглашения по коду).
+function paintLogin(err, opts){
+  opts = opts || {};
+  if(!$('lgWrap')) document.body.insertAdjacentHTML('beforeend', '<div class="lg-wrap" id="lgWrap"></div>');
+  renderLoginMode(opts._mode || 'login', err, opts);
+}
+function renderLoginMode(mode, err, opts){
+  const errBox = err?`<div class="lg-err" id="lgErr">${esc(err)}</div>`:'<div class="lg-err" id="lgErr" hidden></div>';
+  const sub = mode==='register'?'Регистрация администратора':(mode==='claim'?'Активация приглашения':'Вход в систему');
+  let inner;
+  if(mode==='register'){
+    inner = `<label class="lg-lab">Логин</label><input class="lg-inp" id="rgUser" autocomplete="username" autofocus>
+      <label class="lg-lab">Имя и фамилия</label><input class="lg-inp" id="rgName" autocomplete="name">
+      <label class="lg-lab">Пароль (не короче 8)</label><input class="lg-inp" id="rgPass" type="password" autocomplete="new-password">
+      <button class="lg-btn" type="submit" id="lgGo">Создать администратора</button>
+      <div class="lg-note">Это первая учётная запись — она станет директором. Дальше сотрудников заводит директор приглашением.</div>`;
+  } else if(mode==='claim'){
+    inner = `<label class="lg-lab">Логин</label><input class="lg-inp" id="clUser" autocomplete="username" autofocus>
+      <label class="lg-lab">Код активации (от администратора)</label><input class="lg-inp" id="clCode" maxlength="8" style="letter-spacing:.25em;text-transform:uppercase" placeholder="8 символов">
+      <label class="lg-lab">Придумайте пароль (не короче 8)</label><input class="lg-inp" id="clPass" type="password" autocomplete="new-password">
+      <button class="lg-btn" type="submit" id="lgGo">Активировать и войти</button>
+      <div class="lg-note">Код выдаёт администратор лично. После активации входите по логину и своему паролю.</div>`;
+  } else {
+    inner = `${opts.oidc?`<button type="button" class="lg-btn" id="lgSso" style="background:var(--panel2);color:var(--ink);border:1px solid var(--line);margin-bottom:6px">Войти через корпоративный аккаунт (SSO)</button>
+      <div style="display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:4px 0 10px"><span style="flex:1;height:1px;background:var(--line)"></span>или по паролю<span style="flex:1;height:1px;background:var(--line)"></span></div>`:''}
+      <label class="lg-lab">Логин</label><input class="lg-inp" id="lgUser" autocomplete="username" autofocus>
+      <label class="lg-lab">Пароль</label><input class="lg-inp" id="lgPass" type="password" autocomplete="current-password">
+      <div id="lgTotpWrap" hidden><label class="lg-lab">Код из приложения-аутентификатора</label>
+        <input class="lg-inp" id="lgCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 цифр" style="letter-spacing:.35em;text-align:center;font-size:18px"></div>
+      <button class="lg-btn" type="submit" id="lgGo">Войти</button>
+      <div class="lg-note">Доступ выдаёт администратор вашего предприятия. Действия записываются в журнал под вашим именем.</div>`;
+  }
+  // ссылки переключения режимов
+  const links = [];
+  if(mode!=='login') links.push('<a href="#" data-lgmode="login">← Вход по паролю</a>');
+  if(mode!=='claim') links.push('<a href="#" data-lgmode="claim">У меня код приглашения</a>');
+  if(opts.bootstrap && mode!=='register') links.push('<a href="#" data-lgmode="register">Создать администратора</a>');
+  const footer = `<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:14px;font-size:12.5px">${links.map(l=>l.replace('<a ','<a style="color:var(--accent);text-decoration:none" ')).join('')}</div>`;
+  $('lgWrap').innerHTML = `<form class="lg-card" id="lgForm"><div class="lg-brand">Эллинг</div><div class="lg-sub">${sub}</div>${errBox}${inner}${footer}</form>`;
+
+  $('lgWrap').querySelectorAll('[data-lgmode]').forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); renderLoginMode(a.dataset.lgmode, '', opts); }));
+  const sso = $('lgSso'); if(sso) sso.addEventListener('click', ()=>{ location.href='/api/auth/oidc/start'; });
+  if(mode==='login'){ try{ const se=new URLSearchParams(location.search).get('sso_error'); if(se){ const b=$('lgErr'); b.hidden=false; b.textContent='SSO: '+se; } }catch(_){} }
+
+  $('lgForm').addEventListener('submit', async e => {
     e.preventDefault();
     const btn = $('lgGo'), box = $('lgErr');
-    btn.disabled = true; btn.textContent = 'Проверяю…';
+    btn.disabled = true; const label = btn.textContent; btn.textContent = 'Проверяю…';
+    const fail = m => { box.hidden=false; box.textContent=m; btn.disabled=false; btn.textContent=label; };
     try{
-      const r = await fetch('/api/auth/login', {method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({login: $('lgUser').value, password: $('lgPass').value})});
+      let url, payload;
+      if(mode==='register'){ url='/api/auth/register'; payload={login:$('rgUser').value, name:$('rgName').value, password:$('rgPass').value}; }
+      else if(mode==='claim'){ url='/api/auth/claim'; payload={login:$('clUser').value, code:($('clCode').value||'').trim(), password:$('clPass').value}; }
+      else { url='/api/auth/login'; payload={login:$('lgUser').value, password:$('lgPass').value};
+        if(!$('lgTotpWrap').hidden) payload.code=($('lgCode').value||'').trim(); }
+      const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
       const j = await r.json().catch(()=>({}));
-      if(r.ok){ location.reload(); return; }       // кука уже стоит — стартуем начисто
-      box.hidden = false; box.textContent = j.error || 'Не удалось войти';
-    }catch(_){ $('lgErr').hidden = false; $('lgErr').textContent = 'Сервер недоступен'; }
-    btn.disabled = false; btn.textContent = 'Войти';
-    $('lgPass').value = ''; $('lgPass').focus();
+      if(r.ok){ location.reload(); return; }
+      if(mode==='login' && j.totp_required){ $('lgTotpWrap').hidden=false; box.hidden=false; box.textContent=j.error||'Введите код из приложения'; btn.disabled=false; btn.textContent=label; const c=$('lgCode'); c.value=''; c.focus(); return; }
+      fail(j.error || 'Не удалось');
+    }catch(_){ fail('Сервер недоступен'); }
   });
 }
 
@@ -1623,8 +1972,13 @@ async function bootstrapSrv(){
   try{
     // Сначала «кто я» — этот роут анонимный, он и отвечает, нужен ли вход вообще.
     const who = await (await fetch('/api/auth/me', {cache:'no-store'})).json();
-    if(who.auth && !who.user){ paintLogin(); return; }   // сервер требует вход
+    if(who.auth && !who.user){
+      let bootstrap=false;
+      try{ const rs=await (await fetch('/api/auth/register-state',{cache:'no-store'})).json(); bootstrap=!!rs.bootstrap; }catch(_){}
+      paintLogin(null, {oidc: who.oidc, bootstrap}); return;   // сервер требует вход
+    }
     ME = who.user || null;
+    TOTP2FA = !!who.totp;
     if(ME) applyMe(ME);
   }catch(e){ /* сервера нет — демо работает как раньше */ }
   try{
@@ -2007,6 +2361,694 @@ const safe = s => esc(s).replace(/&lt;(\/?b)&gt;/g,'<$1>');
    где чертежи, извещения, протоколы и сколько часов ушло. */
 const DOC_ICON = {'ТЗ':'📄','Чертёж':'📐','Извещение':'📢','Протокол':'🧪','Сертификат':'📜'};
 function docIcon(t){ return DOC_ICON[t] || '📎'; }
+// ИИ-ров: серверная оценка трудоёмкости по аналогам (детерминированное ядро analog.py).
+// S.analog — несинкаемый результат (не в SHARED). spec собирается из полей проекта.
+async function analogRank(){
+  const projects=(S.kbProjects||[]).map(p=>({id:p.id, name:p.izdelie, hours:p.hours||0,
+    spec:[p.izdelie,p.code,p.tz,p.tags].filter(Boolean).join(' ')}));
+  if(!projects.length){ S.analog=null; return; }
+  if(!SRV.on){ S.analog={offline:true}; render(); return; }   // ИИ-оценка — детерминированное ядро на бэкенде
+  try{
+    const r=await fetch('/api/analog/rank',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({tz:S.kbq, projects, top:6})});
+    S.analog = r.ok ? await r.json() : null;
+  }catch(_){ S.analog=null; }
+  render();
+}
+function analogPanel(){
+  const a=S.analog; if(!a) return '';
+  if(a.offline) return `<div class="an-panel"><div class="an-title">⚙ Оценка по аналогам</div>
+    <div style="font-size:12.5px;color:var(--ink2)">ИИ-оценка трудоёмкости считается <b>детерминированным ядром на сервере</b> (офлайн, без облака — для закрытого ОПК-контура). В публичном демо без бэкенда доступен подбор аналогов по каталогу ниже; для полного цикла «параметры ТЗ → оценка н/ч» запустите локальный сервер (<span class="mono">Запустить_сервер.bat</span>).</div></div>`;
+  if(!a.analogs) return '';
+  const est=a.estimate||{};
+  const byId={}; (S.kbProjects||[]).forEach(p=>byId[p.id]=p);
+  const rows=a.analogs.filter(x=>x.score>0).map(x=>{
+    const col=x.score>=70?'var(--good)':x.score>=40?'var(--warn)':'var(--line)';
+    const parts=x.parts||{};
+    const why=[parts.type>=100?'тип':'', parts.codes>=90?'шифр':'', parts.params>=60?'параметры':'', parts.cats>=100?'категория':'', parts.materials>=50?'материал':'', parts.vector>=50?'смысл':''].filter(Boolean).join(' · ');
+    return `<div class="anrow" data-kbproj="${esc(x.id)}" title="совпало: ${esc(why||'частично')}">
+      <span class="anpct" style="color:${col}">${x.score}%</span>
+      <div class="anbar"><i style="width:${Math.max(3,x.score)}%;background:${col}"></i></div>
+      <span class="annm">${esc(x.name||(byId[x.id]||{}).izdelie||x.id)}</span>
+      <span class="anh">${x.hours} → <b>${x.est_hours}</b> н/ч</span></div>`;
+  }).join('');
+  const head = (est.best!=null)
+    ? `<div class="an-est"><div class="an-est-v">${est.low}–${est.high}<span> н/ч</span></div><div class="an-est-l">ИИ-оценка трудоёмкости по ${est.relevant} аналог${est.relevant==1?'у':'ам'}. Опора — «${esc((byId[est.basis]||{}).izdelie||est.basis)}», масштаб по ведущему параметру. Готовая цифра для ТКП за секунды вместо дней просчёта.</div></div>`
+    : `<div class="an-est"><div class="an-est-l">Близких аналогов для оценки не нашлось — уточните параметры ТЗ (подача, давление, мощность, материал, шифр).</div></div>`;
+  const cats=(a.tz&&a.tz.cats)||{}; const ptype=(a.tz&&a.tz.ptype)||'';
+  const typeChip=ptype?`<span class="tz-chip" style="border-color:var(--good);color:var(--good)">${esc(ptype)}</span>`:'';
+  const catChips=typeChip+Object.keys(cats).map(k=>`<span class="tz-chip">${esc(cats[k])}</span>`).join('');
+  const catLine=catChips?`<div class="tz-extract" style="margin:0 0 10px"><span class="tz-lbl">Распознано (тип/среда/исполнение)</span>${catChips}</div>`:'';
+  const mkOrder=(est.best!=null&&byId[est.basis])?`<div style="margin:2px 0 12px"><button class="btn" data-fromanalog="${esc(est.basis)}" style="font-size:12px">Создать заказ по аналогу «${esc((byId[est.basis]||{}).izdelie||est.basis)}»</button> <span style="font-size:11px;color:var(--muted)">— перенесёт состав аналога в новый заказ как основу</span></div>`:'';
+  return `<div class="an-panel"><div class="an-title">⚙ Оценка по аналогам <span class="mono" style="font-size:10px;color:var(--muted)">гибрид: тип + параметры + шифр + вектор-смысл + категории, БЕЗ облака</span>
+    ${est.best!=null?`<button class="btn ghost" data-estsheet="1" style="font-size:11px;margin-left:auto">🖨 Оценочный лист</button>`:''}</div>${head}${mkOrder}${catLine}<div class="anrows">${rows}</div></div>`;
+}
+// ROI-калькулятор для discovery-звонка: числа поставщика → ₽/год (детерм. roi.py).
+const ROI_FIELDS=[
+  ['tz_per_month','ТЗ/просчётов в месяц',8],
+  ['hours_before','Часов на просчёт сейчас',24],
+  ['hours_after','С аналогом (ИИ), часов',2],
+  ['eng_rate_hour','Ставка ИЦ, ₽/час',1500],
+  ['delay_cost_day','Стоимость дня просрочки поставки, ₽',900000],
+  ['delay_days_year','Сорванных дней в год (комплектация)',12],
+  ['prevented_share','Снимаем ранней видимостью, %',40],
+  ['rework_cases_year','Случаев перезакладки/дублей в год',6],
+  ['rework_hours_case','Часов на разбор одного случая',40],
+  ['prevented_rework','Ловит радар закладок, %',70],
+];
+function roiInputs(){ S.roiIn=S.roiIn||{}; const o={}; ROI_FIELDS.forEach(([k,,d])=>{ o[k]=(S.roiIn[k]!=null?S.roiIn[k]:d); }); return o; }
+async function roiCalc(){
+  try{ const r=await fetch('/api/roi',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify(roiInputs())});
+    S.roi = r.ok ? await r.json() : null;
+  }catch(_){ S.roi=null; } render();
+}
+function rub(n){ return (n||0).toLocaleString('ru-RU')+' ₽'; }
+// Замыкание цикла: создать заказ по аналогу с преднаполненным составом (BOM аналога).
+async function orderFromAnalog(analogId){
+  const p=(S.kbProjects||[]).find(x=>x.id===analogId); if(!p){ toast('Аналог не найден','bad'); return; }
+  const a=S.analog||{}; const est=a.estimate||{};
+  S.seq=(S.seq||2470)+1; const num='З-'+S.seq;
+  const o={id:'AN'+S.seq, num, title:(p.izdelie||'Изделие')+' (по ТЗ)', customer:'', vessel:'', due:'', sum:'', goz:0, igk:'', stage:0, risk:'ok',
+    feed:[['сейчас','<b>Заказ создан по аналогу</b> «'+esc(p.izdelie||analogId)+'»'+(est.best!=null?', ориентир '+est.low+'–'+est.high+' н/ч':''),1]]};
+  try{
+    const r=await fetch('/api/order/from-analog',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({analog_order:p.order||'', new_order:num})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok){ const b=j.bom||{};
+      if((b.count||0)>0){ o.bomRef={digest:b.digest||'', count:b.count||0, docs:(j.cddoc||{}).count||0}; }
+      o.feed.push(['сейчас', (b.count||0)>0?('Состав перенесён из аналога — '+b.count+' позиций, правьте под новое ТЗ'):'Состав аналога не загружен в БЗ — заполните состав вручную или из PLM', (b.count||0)>0?1:0]);
+    } else toast(j.error||'Не удалось перенести состав','bad');
+  }catch(_){ toast('Сервер недоступен — заказ создан без состава','bad'); }
+  S.orders=S.orders||[]; S.orders.unshift(o); save();
+  S.view='order'; S.orderId=o.id; render(); ensureL3(o.id);
+  toast('Заказ '+num+' создан по аналогу','ok');
+}
+
+/* ── Проработка насосных станций (custdev рук. ИЦ, 20.07.2026) ──────────────
+   Два инженера (проектировщик + инженер АСУ ТП) ведут несколько НС параллельно.
+   По каждой НС — график критериев проработки: статус / исполнитель / срок /
+   принятое решение. «Не путаться где какое решение принято» → поле «решение». */
+const NS_STATUS = {todo:['Не начато','var(--muted)'], wip:['В работе','var(--warn)'], check:['На проверке','#7A6CF0'], done:['Готово','var(--good)']};
+const NS_STATUS_ORDER = ['todo','wip','check','done'];
+const NS_ROLE = {proj:'Проектировщик', asu:'Инженер АСУ ТП', both:'Оба'};
+// Шаблон критериев по умолчанию (перечень из custdev; порядок инженерный, можно менять/дополнять).
+// Типовые шаблоны проработки под ТИП насосной станции (доменная экспертиза): у разных
+// НС разный состав критериев, длительности и зависимости. Формат критерия: [название,
+// роль, дни, [id-предшественников]]. id критериев — d1..dN по порядку. Проектировщик
+// делает основное, инженер АСУ ТП — автоматику (роль 'asu').
+const NS_TYPES = {
+  base: {label:'Типовая НС', example:'НС-3 Дренажная', items:[
+    ['ТЗ на подбор оборудования','proj',3,[]],
+    ['Гидравлическая схема','proj',3,['d1']],
+    ['Компоновка насосной','proj',5,['d1','d2']],
+    ['Резервуары','proj',3,['d2']],
+    ['Расположение на плане','proj',2,['d3','d4']],
+    ['Компоновка трубопроводов','proj',4,['d3','d2']],
+    ['3D-модель','proj',5,['d3','d6','d4']],
+    ['Схемы автоматизации (АСУ ТП)','asu',4,['d2','d3']],
+  ]},
+  kns: {label:'КНС (канализационная)', example:'КНС-1200 объект X', items:[
+    ['ТЗ на подбор оборудования','proj',3,[]],
+    ['Расчёт притока стоков','proj',2,['d1']],
+    ['Гидравлическая схема','proj',3,['d1','d2']],
+    ['Приёмный резервуар (аккумулирующий объём)','proj',4,['d2','d3']],
+    ['Решётки / измельчители','proj',2,['d3']],
+    ['Компоновка насосной','proj',5,['d3','d4','d5']],
+    ['Расположение на плане','proj',2,['d6','d4']],
+    ['Компоновка трубопроводов','proj',4,['d6','d3']],
+    ['3D-модель','proj',5,['d6','d8','d4']],
+    ['Схемы автоматизации (АСУ ТП)','asu',4,['d3','d6']],
+  ]},
+  vns: {label:'ВНС (водоснабжение хозпитьевое)', example:'ВНС объект 22350', items:[
+    ['ТЗ на подбор оборудования','proj',3,[]],
+    ['Гидравлическая схема','proj',3,['d1']],
+    ['Компоновка насосной','proj',5,['d1','d2']],
+    ['Резервуар чистой воды','proj',4,['d2']],
+    ['Мембранный бак / поддержание давления','proj',2,['d2','d3']],
+    ['Узел учёта','proj',2,['d2']],
+    ['Обеззараживание (УФ / гипохлорит)','proj',3,['d2','d4']],
+    ['Расположение на плане','proj',2,['d3','d4']],
+    ['Компоновка трубопроводов','proj',4,['d3','d6','d5']],
+    ['3D-модель','proj',5,['d3','d9','d4']],
+    ['Схемы автоматизации (АСУ ТП)','asu',4,['d2','d3','d7']],
+  ]},
+  fire: {label:'Пожарная НС (АУП)', example:'ПНС склад №4', items:[
+    ['ТЗ на подбор оборудования','proj',3,[]],
+    ['Расчёт НПВ (нормативный пожарный расход)','proj',3,['d1']],
+    ['Гидравлическая схема','proj',3,['d1','d2']],
+    ['Пожарные резервуары','proj',4,['d2','d3']],
+    ['Основные + резервный (дизельный) насосы','proj',3,['d2','d3']],
+    ['Жокей-насос поддержания давления','proj',2,['d3','d5']],
+    ['Компоновка насосной','proj',5,['d3','d4','d5','d6']],
+    ['Расположение на плане','proj',2,['d7','d4']],
+    ['Компоновка трубопроводов','proj',4,['d7','d3']],
+    ['3D-модель','proj',5,['d7','d9','d4']],
+    ['Автоматика пуска АУП (по давлению)','asu',4,['d3','d6','d5']],
+    ['Схемы автоматизации (АСУ ТП)','asu',4,['d7','d11']],
+  ]},
+  drain: {label:'Дренажная / ливневая', example:'ДНС паркинг', items:[
+    ['ТЗ на подбор оборудования','proj',3,[]],
+    ['Расчёт притока (дренаж / ливень)','proj',2,['d1']],
+    ['Гидравлическая схема','proj',3,['d1','d2']],
+    ['Песколовка / отстойник','proj',3,['d2','d3']],
+    ['Аккумулирующий резервуар','proj',4,['d2','d3']],
+    ['Компоновка насосной','proj',5,['d3','d4','d5']],
+    ['Расположение на плане','proj',2,['d6','d5']],
+    ['Компоновка трубопроводов','proj',4,['d6','d3']],
+    ['3D-модель','proj',5,['d6','d8','d5']],
+    ['Схемы автоматизации (АСУ ТП)','asu',4,['d3','d6']],
+  ]},
+};
+// Зависимости критериев по инженерной последовательности проработки НС (доменное
+// знание вшито — ноль ручной настройки): критерий «готов к старту» только когда его
+// предшественники завершены. Так инженер АСУ ТП видит, что его «Схемы автоматизации»
+// ждут гидросхему+компоновку от проектировщика — ядро совместной работы двух инженеров.
+const NS_DEP_DEFAULT = {
+  d1:[], d2:['d1'], d3:['d1','d2'], d4:['d2'],
+  d5:['d3','d4'], d6:['d3','d2'], d7:['d3','d6','d4'], d8:['d2','d3'],
+};
+function nsDepsFor(it){ return Array.isArray(it.deps) ? it.deps : (NS_DEP_DEFAULT[it.id]||[]); }
+// Состояние критерия с учётом зависимостей: done / active(в работе) / ready(готов к старту) /
+// blocked(ждёт предшественников). Отсутствующий предшественник (удалён) считается снятым.
+function nsCriterionState(st, it){
+  if(it.status==='done') return {state:'done'};
+  if(it.status==='wip'||it.status==='check') return {state:'active'};
+  const byId={}; (st.items||[]).forEach(x=>{ byId[x.id]=x; });
+  const pending = nsDepsFor(it).map(id=>byId[id]).filter(x=>x && x.status!=='done');
+  return pending.length ? {state:'blocked', waitFor:pending.map(x=>x.title||'').filter(Boolean)} : {state:'ready'};
+}
+// Ответственный за критерий (человек): проектировщик станции для proj/both, инженер АСУ для asu/both.
+function nsCriterionOwner(st, it){ const r=[]; if((it.role==='proj'||it.role==='both')&&st.proj) r.push(st.proj); if((it.role==='asu'||it.role==='both')&&st.asu) r.push(st.asu); return r; }
+// Уведомить исполнителей о критериях, которые стали «готовы к старту» из-за завершения
+// changedId (предшественника). Замыкает координацию двух инженеров на пуш, а не проверку
+// вручную: проектировщик закрыл компоновку → инженеру АСУ падает «Схемы автоматизации готовы».
+function nsNotifyReady(st, changedId){
+  (st.items||[]).forEach(it=>{
+    if(it.status!=='todo') return;
+    if(changedId && nsDepsFor(it).indexOf(changedId)<0) return;   // только зависящие от изменённого
+    if(nsCriterionState(st,it).state!=='ready') return;
+    const recips=nsCriterionOwner(st,it).filter(u=>u!==S.currentUser);   // не уведомляем себя
+    if(recips.length) notify(recips, 'Проработка «'+(st.name||'')+'»: «'+(it.title||'')+'» готов к старту — предшественники завершены', 'nsready:'+st.id+':'+it.id);
+  });
+}
+// Скан просрочки (по таймеру): критерий с прошедшим сроком и статусом ≠ готово →
+// пуш исполнителю + руководителю ИЦ. Идемпотентно: odFired хранит срок, за который уже
+// уведомили (пересрок после переноса — новое уведомление). «Следовать срокам» → активно.
+function nsScanOverdue(){
+  const t=nsDay(todayISO()); let changed=false;
+  const bosses=Object.keys(PEOPLE).filter(u=>(PEOPLE[u]||{}).role==='рук. ИЦ');
+  nsList().forEach(st=>{ (st.items||[]).forEach(it=>{
+    if(it.status==='done' || !it.due) return;
+    const d=nsDay(it.due); if(d==null || d>=t) return;      // не просрочен
+    if(it.odFired===it.due) return;                          // уже уведомляли за этот срок
+    it.odFired=it.due; changed=true;
+    const recips=[...new Set(nsCriterionOwner(st,it).concat(bosses))];
+    if(recips.length) notify(recips, 'Проработка «'+(st.name||'')+'»: «'+(it.title||'')+'» ПРОСРОЧЕН (срок '+nsFmtDay(d)+')', 'nsod:'+st.id+':'+it.id);
+  }); });
+  if(changed) save();
+  return changed;
+}
+// Проверка реалистичности сроков: критерий не может завершиться РАНЬШЕ своего
+// предшественника. Возвращает предшественника с самым поздним сроком, который
+// нарушает план этого критерия (или null). Экспертиза: ловит нереалистичный график.
+function nsItemConflict(st, it){
+  if(it.status==='done' || !it.due) return null; const di=nsDay(it.due); if(di==null) return null;
+  const byId={}; (st.items||[]).forEach(x=>{ byId[x.id]=x; });
+  let worst=null;
+  nsDepsFor(it).forEach(id=>{ const dep=byId[id]; if(!dep||dep.status==='done'||!dep.due) return;
+    const dd=nsDay(dep.due); if(dd==null||di>=dd) return;              // di<dd → критерий раньше предшественника
+    if(!worst||dd>nsDay(worst.due)) worst=dep; });
+  return worst;
+}
+function nsStationConflicts(st){ return (st.items||[]).reduce((n,it)=>n+(nsItemConflict(st,it)?1:0),0); }
+function nsConflictCount(){ try{ return nsList().reduce((n,st)=>n+nsStationConflicts(st),0); }catch(e){ return 0; } }
+// Риск станции для портфельного дашборда рук. ИЦ: срыв (просрочка/план в прошлом) →
+// риск (конфликты сроков / дедлайн ≤7 дн) → в графике. Готово — если все критерии done.
+function nsStationRisk(st){
+  const p=nsProgress(st), conf=nsStationConflicts(st), t=nsDay(todayISO());
+  const remDue=(st.items||[]).filter(it=>it.status!=='done'&&nsDay(it.due)!=null).map(it=>nsDay(it.due));
+  const finish=remDue.length?Math.max.apply(null,remDue):null;
+  let level='ok', label='В графике';
+  if(p.total>0 && p.done===p.total){ level='done'; label='Готово'; }
+  else if(p.over>0 || (finish!=null && finish<t)){ level='risk'; label='Срыв'; }
+  else if(conf>0 || (finish!=null && finish-t<=7)){ level='warn'; label='Риск'; }
+  return {level, label, finish, over:p.over, conf, pct:p.pct, done:p.done, total:p.total};
+}
+// Критический путь станции: цепочка зависимостей, определяющая дату готовности.
+// Терминал = критерий с самым поздним сроком; идём назад по предшественнику с самым
+// поздним сроком. Ускорение на этой цепочке двигает срок сдачи, вне неё — нет.
+function nsCriticalPath(st){
+  const items=st.items||[]; if(!items.length) return []; const byId={}; items.forEach(x=>{ byId[x.id]=x; });
+  // Длина пути к критерию = его длительность + макс. длина пути предшественника (учебный CPM).
+  const LP={}, inProg={};
+  function lp(id){ if(LP[id]!=null) return LP[id]; if(inProg[id]) return 0; inProg[id]=1;
+    const deps=nsDepsFor(byId[id]).map(d=>byId[d]).filter(Boolean);
+    const base=deps.length?Math.max.apply(null, deps.map(p=>lp(p.id))):0;
+    LP[id]=base+nsDurFor(byId[id]); inProg[id]=0; return LP[id]; }
+  let term=null, best=-1;
+  items.forEach(it=>{ const v=lp(it.id); if(v>best){ best=v; term=it; } });
+  if(!term) return [];
+  const path=[term]; const seen=new Set([term.id]); let cur=term;
+  while(true){
+    const deps=nsDepsFor(cur).map(id=>byId[id]).filter(x=>x && !seen.has(x.id));
+    if(!deps.length) break;
+    let pick=deps[0]; deps.forEach(x=>{ if(lp(x.id)>lp(pick.id)) pick=x; });
+    path.unshift(pick); seen.add(pick.id); cur=pick;
+  }
+  return path;
+}
+// Типовые длительности критериев (кал. дни, доменная оценка) — для авто-расстановки сроков.
+const NS_DUR_DEFAULT = { d1:3, d2:3, d3:5, d4:3, d5:2, d6:4, d7:5, d8:4 };
+function nsDurFor(it){ const d=(typeof it.dur==='number'&&it.dur>0)?it.dur:NS_DUR_DEFAULT[it.id]; return (typeof d==='number'&&d>0)?d : 3; }
+// Авто-расстановка сроков от даты сдачи станции НАЗАД по зависимостям (обратный проход
+// CPM): срок критерия = его поздний финиш = min(поздний старт наследников). Гарантирует,
+// что предшественник завершается раньше — план БЕЗ конфликтов. Экспертиза: руководитель
+// задаёт дату сдачи, система строит реалистичную сетку сроков, а не вручную по одному.
+function nsAutoSchedule(st, targetISO){
+  const items=st.items||[]; if(!items.length) return 0;
+  let T=nsDay(targetISO); if(T==null) return 0; T=nsPrevWork(T);   // сдача не в выходной
+  const byId={}; items.forEach(x=>{ byId[x.id]=x; });
+  const succ={}; items.forEach(it=>{ succ[it.id]=[]; });
+  items.forEach(it=>{ nsDepsFor(it).forEach(d=>{ if(byId[d]) succ[d].push(it.id); }); });
+  const LF={}, inProg={};
+  // Поздний финиш: min по наследникам от их позднего старта = финиш − длительность
+  // в РАБОЧИХ днях (инженер не работает в выходные) → сроки падают на будни, без выходных.
+  function lf(id){ if(LF[id]!=null) return LF[id]; if(inProg[id]) return T; inProg[id]=1;  // guard от циклов
+    const ss=succ[id]||[]; let v;
+    if(!ss.length){ v=T; } else { v=Math.min.apply(null, ss.map(sid=>nsSubWork(lf(sid), nsDurFor(byId[sid])))); }
+    LF[id]=v; inProg[id]=0; return v; }
+  let n=0;   // done-критерии не двигаем — их дата историческая; планируем оставшуюся работу
+  items.forEach(it=>{ if(it.status==='done') return; const iso=nsISO(lf(it.id)); if(it.due!==iso){ it.due=iso; nsTouch(it); n++; } });
+  return n;
+}
+// Нагрузка инженера по всем станциям: активные (не done) критерии, где он исполнитель,
+// раскладка по срочности (просрочено / ≤7д / 8–14д / позже·без даты) + число станций.
+// Custdev: два инженера ведут несколько НС параллельно — где пик, кто перегружен.
+function nsEngineerLoad(u){
+  const t=nsDay(todayISO());
+  const res={u, stations:new Set(), overdue:[], soon:[], next:[], later:[]};
+  nsList().forEach(st=>{ (st.items||[]).forEach(it=>{
+    if(it.status==='done'||!nsCriterionMine(st,it,u)) return;
+    res.stations.add(st.id); const d=nsDay(it.due); const rec={st,it,d};
+    if(d==null) res.later.push(rec);
+    else if(d<t) res.overdue.push(rec);
+    else if(d-t<=7) res.soon.push(rec);
+    else if(d-t<=14) res.next.push(rec);
+    else res.later.push(rec);
+  }); });
+  [res.overdue,res.soon,res.next,res.later].forEach(a=>a.sort((x,y)=>(x.d==null?1:y.d==null?-1:x.d-y.d)));
+  res.total=res.overdue.length+res.soon.length+res.next.length+res.later.length;
+  return res;
+}
+function nsEngineers(){ return Object.keys(PEOPLE).filter(u=>{ const p=PEOPLE[u]||{}; return /инженерн/i.test(p.dept||'') && (p.role==='инженер'||p.role==='рук. ИЦ'); }); }
+// критерий «мой»: я проектировщик станции и критерий на проектировщика/оба; либо я АСУ и критерий на АСУ/оба
+function nsCriterionMine(st,it,me){ return (st.proj===me && (it.role==='proj'||it.role==='both')) || (st.asu===me && (it.role==='asu'||it.role==='both')); }
+function nsMyDeadlines(me){ const over=[],soon=[]; const t=nsDay(todayISO());
+  nsList().forEach(st=>(st.items||[]).forEach(it=>{ if(it.status==='done'||!nsCriterionMine(st,it,me)) return; const d=nsDay(it.due); if(d==null) return;
+    if(d<t) over.push({st,it,d}); else if(d-t<=7) soon.push({st,it,d}); }));
+  over.sort((a,b)=>a.d-b.d); soon.sort((a,b)=>a.d-b.d); return {over,soon}; }
+function nsList(){ return S.ns=S.ns||[]; }
+function nsById(id){ return nsList().find(x=>x.id===id); }
+function nsActive(){ const l=nsList(); if(!l.length) return null; const a=nsById(S.nsActive); return a||l[0]; }
+function nsIsOverdue(it){ return it.status!=='done' && it.due && it.due < todayISO(); }
+function nsProgress(st){ const it=st.items||[]; const done=it.filter(x=>x.status==='done').length;
+  return {done, total:it.length, pct: it.length?Math.round(done*100/it.length):0, over: it.filter(nsIsOverdue).length}; }
+function nsOverdueCount(){ try{ return nsList().reduce((s,st)=>s+(st.items||[]).filter(nsIsOverdue).length,0); }catch(e){ return 0; } }
+function todayISO(){ try{ return new Date().toISOString().slice(0,10); }catch(e){ return '2026-07-20'; } }
+function nsAddStation(typeKey, goz){
+  const type=NS_TYPES[typeKey]||NS_TYPES.base;
+  const name=(prompt('Название — '+type.label+(goz?' · ГОЗ':'')+' (например: '+type.example+')')||'').trim();
+  if(!name){ S._nsAddOpen=false; render(); return; }
+  S.seq=(S.seq||2470)+1; const id='NS'+S.seq;
+  const items=type.items.map((t,i)=>({id:'d'+(i+1), title:t[0], role:t[1], dur:t[2], deps:t[3].slice(), status:'todo', due:'', dec:''}));
+  if(goz){
+    // ГОЗ: военпред (ВП) согласовывает ГОТОВЫЙ комплект КД — критерий зависит от всех
+    // конечных деливераблов (терминалов) и сам становится терминалом, гейтит станцию.
+    const depIds=new Set(); items.forEach(it=>it.deps.forEach(d=>depIds.add(d)));
+    const terminals=items.filter(it=>!depIds.has(it.id)).map(it=>it.id);
+    items.push({id:'d'+(items.length+1), title:'Согласование КД с военпредом (ВП)', role:'proj', dur:3, deps:terminals, status:'todo', due:'', dec:''});
+  }
+  nsList().unshift({id, name, type:typeKey||'base', goz:goz?1:0, order:'', proj:'', asu:'', note:'', items});
+  S.nsActive=id; S._nsAddOpen=false; S._nsAddGoz=false; ACTS.push('НС создана ('+type.label+(goz?', ГОЗ':'')+'): '+name); save(); render();
+  toast('Станция «'+name+'» — '+type.label+(goz?' · ГОЗ':''),'ok');
+}
+function nsAddItem(stId){ const st=nsById(stId); if(!st) return;
+  const title=(prompt('Название критерия проработки')||'').trim(); if(!title) return;
+  st.items=st.items||[]; st.items.push({id:'d'+(Date.now()%100000), title, role:'proj', status:'todo', due:'', dec:''});
+  save(); render(); }
+function nsDelItem(stId,itId){ const st=nsById(stId); if(!st) return;
+  st.items=(st.items||[]).filter(x=>x.id!==itId); save(); render(); }
+function nsDelStation(stId){ const st=nsById(stId); if(!st) return;
+  if(!confirm('Удалить станцию «'+st.name+'» со всеми критериями?')) return;
+  S.ns=nsList().filter(x=>x.id!==stId); if(S.nsActive===stId) S.nsActive=null; save(); render(); }
+function nsTouch(it){ if(it) it.updated=Date.now(); }  // метка изменения — для LWW-слияния двух инженеров
+// Аудит критерия: кто/когда сменил статус/срок/исполнителя. ГОЗ-контекст — вопрос
+// «кто сорвал срок» задают, «неизвестно» не принимается. Лог append-only, union при слиянии.
+function nsLog(it, a){ if(!it) return; it.log=it.log||[]; it.log.push({t:Date.now(), u:S.currentUser, a:String(a)}); if(it.log.length>50) it.log=it.log.slice(-50); }
+function nsLogFmt(t){ try{ const d=new Date(t); const p=n=>('0'+n).slice(-2); return p(d.getDate())+'.'+p(d.getMonth()+1)+' '+p(d.getHours())+':'+p(d.getMinutes()); }catch(e){ return ''; } }
+function nsPromptSchedule(stId){ const st=nsById(stId); if(!st) return;
+  const v=prompt('Дата сдачи станции «'+(st.name||'')+'» (ГГГГ-ММ-ДД).\nСистема расставит сроки всех критериев НАЗАД по зависимостям — план без конфликтов:', '');
+  if(v===null) return; const iso=(v||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso) || nsDay(iso)==null){ toast('Введите дату в формате ГГГГ-ММ-ДД','bad'); return; }
+  const n=nsAutoSchedule(st, iso); save(); render();
+  toast(n?('Расставлено сроков: '+n+' — план без конфликтов'):'Сроки уже соответствуют дате сдачи','ok');
+}
+// Комплект КД критерия: список документов {code, rev}. Ревизия — буквенная по ГОСТ 2.503
+// (—→А→Б→В…), меняется извещением об изменении. Миграция: старое одиночное it.artifact и
+// прошлый формат «массив строк» → массив объектов. Компоновка порождает СБ+ГЧ+спецификацию.
+const NS_REV_SEQ = ['','А','Б','В','Г','Д','Е','Ж','И','К','Л','М','Н','П','Р','С','Т','У','Ф'];  // ГОСТ 2.503 (без З,О,Ч и т.п.)
+function nsNextRev(rev){ const i=NS_REV_SEQ.indexOf(rev||''); return NS_REV_SEQ[Math.min(i+1, NS_REV_SEQ.length-1)]; }
+function nsArtNorm(a){ return (a && typeof a==='object') ? {code:String(a.code||''), rev:String(a.rev||'')} : {code:String(a||''), rev:''}; }
+function nsArtifacts(it){
+  if(Array.isArray(it.artifacts)) return it.artifacts.map(nsArtNorm);
+  const a=it.artifact&&String(it.artifact).trim(); return a?[{code:a, rev:''}]:[];
+}
+function nsArtInit(it){ if(!Array.isArray(it.artifacts) || it.artifacts.some(a=>typeof a!=='object')){ it.artifacts=nsArtifacts(it); if('artifact' in it) delete it.artifact; } return it.artifacts; }
+function nsAddArtifact(stId,itId){ const st=nsById(stId); if(!st) return;
+  const it=(st.items||[]).find(x=>x.id===itId); if(!it) return;
+  const v=(prompt('Обозначение документа комплекта КД критерия «'+(it.title||'')+'» (например СБ-2071-03, ГЧ-2071-01, спецификация):','')||'').trim();
+  if(!v) return; nsArtInit(it); if(!it.artifacts.some(a=>a.code===v)){ it.artifacts.push({code:v, rev:''}); nsLog(it,'КД + '+v); nsTouch(it); save(); render(); }
+}
+function nsDelArtifact(stId,itId,idx){ const st=nsById(stId); if(!st) return;
+  const it=(st.items||[]).find(x=>x.id===itId); if(!it) return; nsArtInit(it);
+  const removed=it.artifacts.splice(+idx,1)[0]; if(removed!==undefined){ nsLog(it,'КД − '+(removed.code||removed)); nsTouch(it); save(); render(); }
+}
+// Извещение об изменении по ГОСТ 2.503: бамп ревизии документа с причиной → в аудит.
+function nsBumpRev(stId,itId,idx){ const st=nsById(stId); if(!st) return;
+  const it=(st.items||[]).find(x=>x.id===itId); if(!it) return; nsArtInit(it);
+  const a=it.artifacts[+idx]; if(!a) return;
+  const reason=(prompt('Извещение об изменении (ГОСТ 2.503) на «'+a.code+'» рев.'+(a.rev||'—')+' → '+(nsNextRev(a.rev)||'—')+'.\nПричина изменения:','')||'').trim();
+  if(reason===null) return; const old=a.rev||'—'; a.rev=nsNextRev(a.rev);
+  nsLog(it, 'ревизия '+a.code+': '+old+' → '+(a.rev||'—')+(reason?(' · '+reason):'')); nsTouch(it); save(); render();
+}
+// Печатная справка о проработке станции — выносной документ для отчёта наверх/заказчику.
+// Собирает всё, что знает модуль: статус, критпуть, сроки, комплект КД с ревизиями, ГОЗ.
+function nsReportHTML(st){
+  const o=org(); const p=nsProgress(st); const r=nsStationRisk(st);
+  const typeLabel=(NS_TYPES[st.type]||NS_TYPES.base).label;
+  const crit=nsCriticalPath(st); const critIds=new Set(crit.map(c=>c.id)); const conf=nsStationConflicts(st);
+  const engName=u=>u?((PEOPLE[u]||{}).full||u):'—';
+  const ownerName=it=> it.role==='asu'?engName(st.asu): it.role==='both'?(engName(st.proj)+' / '+engName(st.asu)):engName(st.proj);
+  const RL={risk:'СРЫВ', warn:'РИСК', ok:'В графике', done:'Готово'};
+  const rows=(st.items||[]).map((it,i)=>{
+    const sm=NS_STATUS[it.status]||NS_STATUS.todo; const cf=nsItemConflict(st,it);
+    const kd=nsArtifacts(it).map(a=>esc(a.code)+(a.rev?(' рев.'+esc(a.rev)):'')).join(', ')||'—';
+    return `<tr><td>${i+1}</td><td>${critIds.has(it.id)?'★ ':''}${esc(it.title||'')}</td><td>${esc(ownerName(it))}</td><td>${sm[0]}</td><td class="p-r">${it.due?esc(it.due):'—'}${cf?' ⚠':''}</td><td>${kd}</td><td class="p-note">${esc(it.dec||'')}</td></tr>`;
+  }).join('');
+  const num='ПР-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'-'+esc((st.id||'').replace(/[^\w]/g,''));
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name)}</b><br>ИНН ${esc(o.inn)}${o.kpp?' · КПП '+esc(o.kpp):''} · ${esc(o.addr)}<br>${esc(o.phone)} · ${esc(o.email)}</div>
+    <div class="p-title">Справка о проработке насосной станции<br><span>№ ${num} от ${today()}</span></div>
+    <div class="p-to"><b>Станция:</b> ${esc(st.name||'')} · <b>${esc(typeLabel)}</b>${st.goz?' · <b>ГОЗ · военная приёмка</b>':''}${st.order?` · заказ №${esc(st.order)}`:''}<br>
+      <b>Проектировщик:</b> ${esc(engName(st.proj))} · <b>Инженер АСУ ТП:</b> ${esc(engName(st.asu))}</div>
+    <div style="font-size:15px;font-weight:700;margin:12px 0 4px">Готовность: ${p.done}/${p.total} критериев (${p.pct}%) · Состояние: ${RL[r.level]||'—'}${r.finish!=null?` · План готовности: ${nsFmtDay(r.finish)}`:''}</div>
+    ${conf?`<div class="p-note" style="color:#b00;margin-bottom:4px">⚠ Конфликтов сроков: ${conf} (критерий раньше предшественника — план требует пересмотра)</div>`:''}
+    ${crit.length>=2?`<div class="p-note" style="margin-bottom:10px"><b>★ Критический путь</b> (определяет срок готовности): ${crit.map(c=>esc(c.title||'')).join(' → ')}</div>`:''}
+    <table class="p-tbl">
+      <tr><th style="width:28px">№</th><th>Критерий проработки</th><th style="width:120px">Исполнитель</th><th style="width:78px">Статус</th><th style="width:84px">Срок</th><th style="width:130px">Комплект КД</th><th>Принятое решение</th></tr>
+      ${rows||'<tr><td colspan="7" class="p-r">критериев нет</td></tr>'}
+    </table>
+    <div class="p-terms">★ — критерий на критическом пути (ускорение на нём двигает срок готовности станции). ⚠ у срока — план критерия раньше его предшественника. Ревизии документов КД — по ГОСТ 2.503.${st.goz?' Станция ГОЗ: сдача — после согласования КД с военпредом (ВП).':''}</div>
+    <div class="p-sign"><div>Руководитель ИЦ<span class="p-line"></span>${esc(engName(S.currentUser))}</div><div>Проектировщик<span class="p-line"></span>${esc(engName(st.proj))}</div></div>
+    <div class="p-foot">Сформировано в системе «Эллинг» · ${today()} · статус проработки на дату формирования</div>
+  </div>`;
+}
+// Справка из ПОЛУЧЕННОГО подписанного снимка (сторона получателя): рендер из тела body
+// проверенного пакета. Критпуть/конфликты не считаем — их нет в снимке; показываем
+// заверенные факты (статус + комплект КД с ревизиями + ГОЗ) + штамп подлинности.
+function nsReportFromSnapshot(body, digest, valid){
+  const o=org(); const st=(body&&body.station)||{}; const items=(body&&body.items)||[]; const c=(body&&body.counts)||{};
+  const nm=u=>u?((PEOPLE[u]||{}).full||u):'—';
+  const ownerName=it=> it.role==='asu'?nm(st.asu): it.role==='both'?(nm(st.proj)+' / '+nm(st.asu)):nm(st.proj);
+  const rows=items.map((it,i)=>{
+    const sm=NS_STATUS[it.status]||['—',''];
+    const kd=(it.kd||[]).map(a=>esc(a.code)+(a.rev?(' рев.'+esc(a.rev)):'')).join(', ')||'—';
+    return `<tr><td>${i+1}</td><td>${esc(it.title||'')}</td><td>${esc(ownerName(it))}</td><td>${sm[0]}</td><td class="p-r">${it.due?esc(it.due):'—'}</td><td>${kd}</td><td class="p-note">${esc(it.dec||'')}</td></tr>`;
+  }).join('');
+  const stamp = valid ? '<span style="color:#0a7d0a;font-weight:700">✔ ПОДПИСЬ ПОДЛИННА (Ed25519)</span>' : '<span style="color:#b00;font-weight:700">✖ ПОДПИСЬ НЕ ПРОШЛА — ПАКЕТ ИЗМЕНЁН</span>';
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name)}</b><br>${esc(o.addr||'')}</div>
+    <div class="p-title">Справка о проработке (из подписанного снимка)<br><span>станция «${esc(st.name||'')}» · ${today()}</span></div>
+    <div class="p-to"><b>Станция:</b> ${esc(st.name||'')}${st.goz?' · <b>ГОЗ · военная приёмка</b>':''}${st.order?` · заказ №${esc(st.order)}`:''}<br>
+      <b>Проектировщик:</b> ${esc(nm(st.proj))} · <b>Инженер АСУ ТП:</b> ${esc(nm(st.asu))}</div>
+    <div style="font-size:15px;font-weight:700;margin:12px 0 4px">Готовность: ${c.done||0}/${c.total||0} критериев (${body.progress_pct||0}%)</div>
+    <div class="p-note" style="margin-bottom:10px">${stamp} · digest ${esc((digest||'').slice(0,16))} · подписано ${esc(((body.meta||{}).ts||'').slice(0,10))}</div>
+    <table class="p-tbl">
+      <tr><th style="width:28px">№</th><th>Критерий проработки</th><th style="width:120px">Исполнитель</th><th style="width:78px">Статус</th><th style="width:84px">Срок</th><th style="width:130px">Комплект КД</th><th>Принятое решение</th></tr>
+      ${rows||'<tr><td colspan="7" class="p-r">критериев нет</td></tr>'}
+    </table>
+    <div class="p-terms">Данные заверены цифровой подписью инсталляции (Ed25519). Любое изменение любого поля рушит подпись. Ревизии документов КД — по ГОСТ 2.503.</div>
+    <div class="p-foot">Проверено в системе «Эллинг» · ${today()}</div>
+  </div>`;
+}
+// Интеграция с доской ИЦ: ОДНА umbrella-задача на станцию (критерии → подзадачи subs),
+// а не задача-на-критерий (это было бы дублирование трекинга). Инженер видит проработку
+// в своей обычной очереди задач. Повторный клик — открывает уже созданную.
+function nsStationToTask(stId){ const st=nsById(stId); if(!st) return;
+  if(st.taskKey && (S.tasks||[]).some(t=>t.key===st.taskKey)){ S.view='board'; render(); toast('Задача проработки уже на доске: '+st.taskKey,'ok'); return; }
+  const who=st.proj||S.currentUser; const p=nsProgress(st); const r=nsStationRisk(st);
+  const hot=nsStationConflicts(st)>0 || (st.items||[]).some(nsIsOverdue);
+  S.seq=(S.seq||2470)+1; const key='СТ-'+S.seq;
+  S.tasks.unshift({key, ttl:'Проработка: '+(st.name||''), epic:'E2', who, col:p.done>0?'wip':'open', prio:hot?'hi':'md', est:null, sla:null,
+    due:(r.finish!=null?nsISO(r.finish):null),
+    desc:'Проработка насосной станции'+(st.order?' по заказу №'+st.order:'')+'. Критерии — в подзадачах; ведётся в модуле «Проработка станций».',
+    subs:(st.items||[]).map(it=>({t:(it.title||''), done: it.status==='done'})), comments:[], links:[], watchers:[], log:['создана из проработки НС «'+(st.name||'')+'»'], nsRef:st.id});
+  st.taskKey=key; ACTS.push('задача ИЦ из проработки: '+(st.name||'')); notify([who],'Проработка на доске ИЦ: '+(st.name||''),key);
+  save(); S.view='board'; render(); toast('Задача '+key+' на доске ИЦ — критерии в подзадачах','ok');
+}
+function nsVerifyPrompt(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,.elx,application/json';
+  inp.onchange=async()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
+    try{ const txt=await f.text(); const pkg=JSON.parse(txt);
+      const body=pkg.body||pkg, sig=pkg.sig||'', pub=pkg.pub||'';
+      if(!body||typeof body!=='object'||body.kind!=='elling-ns-snapshot'){ toast('Не похоже на снимок проработки НС','bad'); return; }
+      const r=await fetch('/api/order/snapshot/verify',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({body,sig,pub})});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok){ S._nsVerify={valid:!!j.valid, body, digest:j.digest||''}; S.view='ns'; S.nsView='list'; render();
+        toast(j.valid?'Снимок подлинный ✔':'Подпись НЕ прошла — пакет изменён','ok'); }
+      else toast(j.error||'Не удалось проверить','bad');
+    }catch(_){ toast('Файл не читается или сервер недоступен','bad'); }
+  };
+  inp.click();
+}
+function nsCycleStatus(stId,itId){ const st=nsById(stId); if(!st) return;
+  const it=(st.items||[]).find(x=>x.id===itId); if(!it) return;
+  const i=NS_STATUS_ORDER.indexOf(it.status); it.status=NS_STATUS_ORDER[(i+1)%NS_STATUS_ORDER.length];
+  nsLog(it, 'статус → '+(NS_STATUS[it.status]||['?'])[0]); nsTouch(it);
+  if(it.status==='done') nsNotifyReady(st, it.id);   // разблокировал зависящие → пуш их исполнителям
+  save(); render(); }
+const nsTypeMenu=(cls)=>`<div class="ns-add-menu ${cls||''}"><button class="ns-goz-tog ${S._nsAddGoz?'on':''}" data-nsgoztoggle title="гособоронзаказ: добавит согласование КД с военпредом">${S._nsAddGoz?'☑':'☐'} ГОЗ · военпред (ВП)</button>${Object.keys(NS_TYPES).map(k=>`<button class="ns-add-t" data-nsaddtype="${k}">${esc(NS_TYPES[k].label)}</button>`).join('')}</div>`;
+function vNS(){
+  const list=nsList();
+  if(!list.length) return `<div class="ns-wrap"><div class="an-panel" style="text-align:center;padding:34px 20px">
+    <svg class="ic" style="width:34px;height:34px;color:var(--muted)"><use href="#i-plan"/></svg>
+    <div style="font-size:15px;font-weight:640;margin:10px 0 6px">Проработка станций пуста</div>
+    <div style="font-size:12.5px;color:var(--muted);max-width:540px;margin:0 auto 16px">Выберите тип станции — получите готовый график критериев с зависимостями, длительностями и авто-расстановкой сроков. Каждый тип свой: у КНС приёмный резервуар и решётки, у пожарной — расчёт НПВ и автоматика пуска АУП.</div>
+    ${nsTypeMenu('center')}</div></div>`;
+  const view=S.nsView||'list';
+  const toggle=`<div class="ns-viewtog"><button class="ns-vt ${view==='list'?'on':''}" data-nsview="list">Список</button><button class="ns-vt ${view==='timeline'?'on':''}" data-nsview="timeline">График</button><button class="ns-vt ${view==='load'?'on':''}" data-nsview="load">Нагрузка</button><button class="ns-vt ${view==='portfolio'?'on':''}" data-nsview="portfolio">Портфель</button></div>`;
+  const addBtn=`<button class="btn ghost" data-nsverify="1" title="загрузить полученный подписанный снимок проработки и проверить подлинность">🛡 Проверить снимок</button><div class="ns-add-wrap"><button class="btn" data-nsadd="1">+ Станция</button>${S._nsAddOpen?nsTypeMenu():''}</div>`;
+  const vf=S._nsVerify;
+  const verifyBanner = vf ? `<div class="ns-vf ${vf.valid?'ok':'bad'}"><div>${vf.valid?'✔ Снимок подлинный':'✖ Подпись не прошла — пакет изменён'} · станция «${esc((vf.body.station||{}).name||'')}» · ${(vf.body.counts||{}).done||0}/${(vf.body.counts||{}).total||0} готово${(vf.body.station||{}).goz?' · ГОЗ':''} · digest ${esc((vf.digest||'').slice(0,12))}</div><div style="display:flex;gap:6px">${vf.valid?`<button class="btn ghost" data-nsvfreport="1" style="font-size:11px">🖨 Справка из снимка</button>`:''}<button class="btn ghost" data-nsvfclose="1" style="font-size:11px">закрыть</button></div></div>` : '';
+  if(view==='timeline') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${vNSTimeline()}</div>`;
+  if(view==='load') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${vNSLoad()}</div>`;
+  if(view==='portfolio') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${vNSPortfolio()}</div>`;
+  const st=nsActive();
+  // верхняя лента: все НС как мини-карточки (смотреть «что где в работе, на каком этапе»)
+  const strip=list.map(s=>{ const p=nsProgress(s); const on=s.id===st.id;
+    return `<button class="ns-tab ${on?'on':''}" data-nstab="${s.id}">
+      <span class="ns-tab-n">${esc(s.name)}</span>
+      <span class="ns-tab-m"><i style="width:${p.pct}%"></i></span>
+      <span class="ns-tab-s">${p.done}/${p.total}${p.over?` · <b class="ns-over">${p.over} просроч.</b>`:''}</span>
+    </button>`; }).join('');
+  const p=nsProgress(st);
+  const crit=nsCriticalPath(st); const critIds=new Set(crit.map(c=>c.id));
+  const rows=(st.items||[]).map(it=>{ const sm=NS_STATUS[it.status]||NS_STATUS.todo; const over=nsIsOverdue(it);
+    const cs=nsCriterionState(st,it);
+    const dep = cs.state==='ready' ? `<span class="ns-dep ready">готов к старту</span>`
+      : cs.state==='blocked' ? `<span class="ns-dep blocked" title="ждёт: ${esc(cs.waitFor.join(', '))}">⛓ ждёт: ${esc(cs.waitFor.join(', '))}</span>` : '';
+    const cf = nsItemConflict(st,it);
+    const cfTitle = cf ? `срок ${it.due} раньше предшественника «${esc(cf.title||'')}» (${esc(cf.due)}) — план нереалистичен` : '';
+    // артефакт критерия (чертёж/схема/модель): чип открывает встроенный вьюер; привязка,
+    // когда результат есть (в работе/готово) — замыкает «сделано» на проверяемый документ.
+    const arts = nsArtifacts(it);
+    const canAttach = it.status==='wip'||it.status==='check'||it.status==='done';
+    const artChips = arts.map((a,ai)=>`<span class="ns-art-item"><a class="ns-art" data-dwg="${esc(a.code)}" title="открыть «${esc(a.code)}» во вьюере">📎 ${esc(a.code)}</a>${a.rev?`<span class="ns-rev" title="ревизия по ГОСТ 2.503">рев.${esc(a.rev)}</span>`:''}<button class="ns-art-rev" data-nsartbump="${st.id}:${it.id}:${ai}" title="извещение об изменении (ГОСТ 2.503): ревизия ${a.rev||'—'} → ${nsNextRev(a.rev)||'—'}">↑</button><button class="ns-art-x" data-nsartdel="${st.id}:${it.id}:${ai}" title="убрать из комплекта">×</button></span>`).join('');
+    const art = (arts.length||canAttach)
+      ? `${artChips}${canAttach?`<button class="ns-art-add" data-nsartadd="${st.id}:${it.id}" title="добавить документ КД (СБ/ГЧ/спецификация) — результат критерия">＋ КД</button>`:''}`
+      : '';
+    const logN = (it.log||[]).length;
+    const logChip = logN ? `<span class="ns-log-chip ${S._nsLog===st.id+':'+it.id?'on':''}" data-nslog="${st.id}:${it.id}" title="история изменений">🕓 ${logN}</span>` : '';
+    const logRow = (S._nsLog===st.id+':'+it.id && logN) ? `<div class="ns-logrow">${it.log.slice().reverse().map(e=>`<div class="ns-loge"><b>${nsLogFmt(e.t)}</b> · ${esc((PEOPLE[e.u]||{}).full||e.u||'—')} · ${esc(e.a)}</div>`).join('')}</div>` : '';
+    return `<div class="ns-row ${over?'ns-row-over':''}">
+      <button class="ns-st" data-nsstatus="${st.id}:${it.id}" style="background:${sm[1]}22;color:${sm[1]};border-color:${sm[1]}55" title="Клик — следующий статус">${sm[0]}</button>
+      <div class="ns-title">${critIds.has(it.id)?'<span class="ns-crit-star" title="критический путь — определяет срок готовности">★</span> ':''}${esc(it.title||'')}${dep}${cf?`<span class="ns-dep conflict" title="${cfTitle}">⚠ раньше «${esc(cf.title||'')}»</span>`:''}${logChip}${art?`<span class="ns-art-wrap">${art}</span>`:''}</div>
+      <select class="ns-sel" data-nsrole="${st.id}:${it.id}">${Object.keys(NS_ROLE).map(r=>`<option value="${r}" ${it.role===r?'selected':''}>${NS_ROLE[r]}</option>`).join('')}</select>
+      <input class="ns-due ${over?'ns-due-over':''} ${cf?'ns-due-conflict':''}" type="date" data-nsdue="${st.id}:${it.id}" value="${esc(it.due||'')}" ${cf?`title="${cfTitle}"`:''}>
+      <input class="ns-dec" type="text" data-nsdec="${st.id}:${it.id}" value="${esc(it.dec||'')}" placeholder="принятое решение / примечание">
+      <button class="ns-x" data-nsdelitem="${st.id}:${it.id}" title="Удалить критерий">✕</button>
+    </div>${logRow}`; }).join('');
+  const engOpts=(sel)=>['<option value="">— не назначен —</option>'].concat(nsEngineers().map(u=>`<option value="${u}" ${sel===u?'selected':''}>${esc((PEOPLE[u]||{}).full||u)}</option>`)).join('');
+  const stConf=nsStationConflicts(st);
+  const remDue=(st.items||[]).filter(it=>it.status!=='done' && nsDay(it.due)!=null).map(it=>nsDay(it.due));
+  const finishDay=remDue.length?Math.max.apply(null,remDue):null;
+  const finishLate=finishDay!=null && finishDay<nsDay(todayISO());
+  const critLine = crit.length>=2 ? `<div class="ns-crit"><b>★ Критический путь</b> (определяет срок готовности): ${crit.map(c=>esc(c.title||'')).join(' → ')}</div>` : '';
+  return `<div class="ns-wrap">
+    <div class="ns-head">
+      <div class="ns-tabs">${strip}</div>
+      ${toggle}
+      ${addBtn}
+    </div>
+    ${verifyBanner}
+    <div class="an-panel">
+      <div class="ns-title-row">
+        <input class="ns-name" type="text" data-nsname="${st.id}" value="${esc(st.name)}">
+        ${st.goz?`<span class="ns-goz-badge" title="гособоронзаказ · военная приёмка">ГОЗ · ВП</span>`:''}
+        <span class="ns-prog">${p.done}/${p.total} готово · ${p.pct}%${p.over?` · <b class="ns-over">${p.over} просрочено</b>`:''}${finishDay!=null?` · план готовности ${nsFmtDay(finishDay)}${finishLate?' <b class="ns-over">(просрочен)</b>':''}`:''}</span>
+        <button class="ns-del" data-nsdelst="${st.id}" title="Удалить станцию">🗑</button>
+      </div>
+      <div class="ns-progbar"><i style="width:${p.pct}%"></i></div>
+      ${stConf?`<div class="ns-conflict-bar">⚠ Конфликтов сроков: ${stConf} — критерий стоит раньше своего предшественника (план нереалистичен). Проверьте выделенные сроки.</div>`:''}
+      ${critLine}
+      <div class="ns-meta">
+        <label>Проектировщик <select class="ns-sel" data-nsproj="${st.id}">${engOpts(st.proj)}</select></label>
+        <label>Инженер АСУ ТП <select class="ns-sel" data-nsasu="${st.id}">${engOpts(st.asu)}</select></label>
+        <label>Заказ № <span style="display:flex;gap:6px;align-items:center"><input class="ns-dec" type="text" data-nsorder="${st.id}" value="${esc(st.order||'')}" placeholder="привязка к заказу" style="max-width:110px">${(function(){ const oo=(S.orders||[]).find(x=>String(x.num)===String(st.order||'')); return oo?`<button class="chip" data-nsgoorder="${oo.id}" style="font-size:11px" title="перейти к заказу">→ №${esc(oo.num)}</button>`:''; })()}</span></label>
+      </div>
+      ${st.note?`<div class="ns-note">${esc(st.note)}</div>`:''}
+      <div class="ns-grid-h"><span>Статус</span><span>Критерий проработки</span><span>Исполнитель</span><span>Срок</span><span>Принятое решение</span><span></span></div>
+      <div class="ns-grid">${rows}</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-nsadditem="${st.id}" style="font-size:12px">+ критерий</button>
+        <button class="btn ghost" data-nssched="${st.id}" style="font-size:12px" title="задать дату сдачи станции — система расставит сроки критериев назад по зависимостям, без конфликтов">📅 Сроки от даты сдачи</button>
+        <button class="btn ghost" data-nsreport="${st.id}" style="font-size:12px" title="печатная справка о проработке — выносной документ для отчёта наверх/заказчику">🖨 Справка о проработке</button>
+        <button class="btn ghost" data-nstask="${st.id}" style="font-size:12px" title="создать задачу на доске ИЦ (критерии — подзадачами), чтобы вести проработку в обычной очереди задач">${st.taskKey?('↗ Задача '+esc(st.taskKey)):'＋ На доску ИЦ'}</button>
+        <button class="btn ghost" data-nssnap="${st.id}" style="font-size:12px" title="выгрузить подписанный снимок статуса проработки — передаваемый пруф готовности для гейта/архива">📎 Снимок проработки (подпись)</button></div>
+    </div>
+  </div>`;
+}
+function nsSnapshot(stId){ const st=nsById(stId); if(!st) return;
+  (async()=>{ try{
+    const r=await fetch('/api/ns/snapshot',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({station:st, title:st.name||''})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.body){
+      const blob=new Blob([JSON.stringify(j,null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob); const a=document.createElement('a');
+      a.href=url; a.download='elling-проработка-'+(st.name||'НС').replace(/[^\wа-яёА-ЯЁ-]+/g,'_').slice(0,40)+'.json'; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },100);
+      const c=j.body.counts||{}; ACTS.push('снимок проработки НС «'+(st.name||'')+'» подписан');
+      toast('Снимок проработки выгружен ('+(c.done||0)+'/'+(c.total||0)+', подпись Ed25519)','ok');
+    } else toast(j.error||'Не удалось сформировать снимок','bad');
+  }catch(_){ toast('Сервер недоступен — снимок формируется на бэкенде','bad'); } })();
+}
+// UTC-парс (не локальный): согласован с nsFmtDay (форматирует через getUTC*) — иначе
+// в поясе UTC+N срок показывался на день раньше (2026-07-18 → «17.07»). nsISO — обратная.
+function nsDay(iso){ if(!iso) return null; const t=Date.parse(iso+'T00:00:00Z'); return isFinite(t)?Math.floor(t/86400000):null; }
+function nsFmtDay(day){ const d=new Date(day*86400000); return ('0'+d.getUTCDate()).slice(-2)+'.'+('0'+(d.getUTCMonth()+1)).slice(-2); }
+function nsISO(day){ const d=new Date(day*86400000); return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2)+'-'+('0'+d.getUTCDate()).slice(-2); }
+// День недели номера дня (epoch day 0 = 1970-01-01 = четверг). 0=вс … 6=сб.
+function nsIsWeekend(day){ const dow=((day%7)+4+7)%7; return dow===0 || dow===6; }
+// Госпраздники РФ (нерабочие по ТК), рекуррентно MM-DD — год-агностично. Переносы
+// выходных устанавливаются ежегодным постановлением Правительства и здесь НЕ выводятся
+// (нужен официальный производственный календарь); фиксированные праздники дают ~90% эффекта.
+const NS_HOLIDAYS = new Set(['01-01','01-02','01-03','01-04','01-05','01-06','01-07','01-08','02-23','03-08','05-01','05-09','06-12','11-04']);
+function nsMMDD(day){ const d=new Date(day*86400000); return ('0'+(d.getUTCMonth()+1)).slice(-2)+'-'+('0'+d.getUTCDate()).slice(-2); }
+function nsIsNonWork(day){ return nsIsWeekend(day) || NS_HOLIDAYS.has(nsMMDD(day)); }  // выходной ИЛИ госпраздник
+function nsPrevWork(day){ let d=day; while(nsIsNonWork(d)) d--; return d; }         // ближайший рабочий назад (вкл.)
+function nsSubWork(day, n){ let d=day, left=n; while(left>0){ d--; if(!nsIsNonWork(d)) left--; } return d; }  // n рабочих дней назад
+// Вид «График»: таймлайн сроков через ВСЕ станции (кросс-станционный обзор рук. ИЦ).
+// Каждый критерий — точка на оси времени, цвет по статусу, просрочка слева от «сегодня».
+function vNSTimeline(){
+  const list=nsList();
+  const withDue=[]; list.forEach(st=>(st.items||[]).forEach(it=>{ const d=nsDay(it.due); if(d!=null) withDue.push({st,it,day:d}); }));
+  const today=nsDay(todayISO());
+  if(!withDue.length) return `<div class="an-panel"><div style="font-size:12.5px;color:var(--muted)">Ни у одного критерия не проставлен срок. Перейдите в «Список» и задайте сроки — они появятся на графике, с линией «сегодня» и подсветкой просрочки.</div></div>`;
+  let lo=Math.min(...withDue.map(x=>x.day), today), hi=Math.max(...withDue.map(x=>x.day), today);
+  if(hi-lo<7){ hi=lo+7; }            // минимум неделя ширины
+  const pad=Math.max(1,Math.round((hi-lo)*0.04)); lo-=pad; hi+=pad;
+  const span=hi-lo; const pos=d=>Math.max(0,Math.min(100,(d-lo)*100/span));
+  // недельные засечки оси
+  let ticks=''; const step=Math.max(7,Math.round(span/8/7)*7);
+  for(let d=lo; d<=hi; d+=step){ ticks+=`<span class="ns-tk" style="left:${pos(d)}%">${nsFmtDay(d)}</span>`; }
+  const todayX=pos(today);
+  const rows=list.map(st=>{ const its=(st.items||[]).filter(it=>nsDay(it.due)!=null);
+    const critIds=new Set(nsCriticalPath(st).map(c=>c.id));
+    const dots=its.map(it=>{ const d=nsDay(it.due); const sm=NS_STATUS[it.status]||NS_STATUS.todo; const over=nsIsOverdue(it); const isc=critIds.has(it.id);
+      return `<span class="ns-pt ${over?'ns-pt-over':''} ${isc?'ns-pt-crit':''}" style="left:${pos(d)}%;background:${sm[1]}" title="${esc(it.title||'')} — ${nsFmtDay(d)} · ${sm[0]}${over?' · просрочено':''}${isc?' · ★ критический путь':''}"></span>`; }).join('');
+    const p=nsProgress(st);
+    return `<div class="ns-tl-row"><button class="ns-tl-lbl" data-nstab="${st.id}" data-nsview="list" title="Открыть список">${esc(st.name)} <b>${p.done}/${p.total}</b></button>
+      <div class="ns-tl-track">${todayX>=0?`<span class="ns-tl-today" style="left:${todayX}%"></span>`:''}${dots}</div></div>`; }).join('');
+  return `<div class="an-panel">
+    <div class="ns-tl-axis"><div class="ns-tl-lbl-sp"></div><div class="ns-tl-scale"><span class="ns-tl-today-l" style="left:${todayX}%">сегодня</span>${ticks}</div></div>
+    ${rows}
+    <div class="ns-tl-legend">${NS_STATUS_ORDER.map(s=>`<span><i style="background:${NS_STATUS[s][1]}"></i>${NS_STATUS[s][0]}</span>`).join('')}<span class="ns-tl-over-lg"><i></i>просрочено (слева от «сегодня»)</span></div>
+  </div>`;
+}
+// Вид «Нагрузка»: распределение активных критериев по инженерам (проектировщик/АСУ),
+// по всем станциям, с раскладкой по срочности — где пик, кто перегружен в ближайшие 2 недели.
+function vNSLoad(){
+  const ids=new Set(); nsList().forEach(st=>{ if(st.proj) ids.add(st.proj); if(st.asu) ids.add(st.asu); });
+  const loads=[...ids].map(nsEngineerLoad).filter(l=>l.total>0);
+  if(!loads.length) return `<div class="an-panel"><div style="font-size:12.5px;color:var(--muted)">Назначьте инженеров на станции (проектировщик / инженер АСУ ТП) и проставьте статусы — увидите распределение нагрузки по срокам и ближайший пик.</div></div>`;
+  loads.sort((a,b)=>(b.overdue.length+b.soon.length)-(a.overdue.length+a.soon.length) || b.total-a.total);
+  const crunch=Math.max.apply(null, loads.map(l=>l.overdue.length+l.soon.length));
+  const maxTotal=Math.max.apply(null, loads.map(l=>l.total))||1;
+  const seg=(n,cls)=>n?`<span class="ns-ld-seg ${cls}" style="flex:${n}" title="${n}">${n}</span>`:'';
+  const card=l=>{ const near=l.overdue.length+l.soon.length; const peak=near>0 && near===crunch && loads.length>1;
+    const nearest=l.overdue.concat(l.soon,l.next).slice(0,4).map(r=>`<div class="ns-ld-it"><span class="ns-ld-st">${esc(r.st.name)}</span> · ${esc(r.it.title||'')} <b class="${r.d!=null&&r.d<nsDay(todayISO())?'ns-over':''}">${r.d!=null?nsFmtDay(r.d):'без срока'}</b></div>`).join('');
+    return `<div class="ns-ld-card ${peak?'peak':''}">
+      <div class="ns-ld-h"><span class="ns-ld-name">${esc((PEOPLE[l.u]||{}).full||l.u)}</span>
+        <span class="ns-ld-sub">${l.stations.size} ${l.stations.size===1?'станция':'станц.'} · ${l.total} активн.${peak?' · <b class="ns-ld-peak">⚡ пик нагрузки</b>':''}</span></div>
+      <div class="ns-ld-bar" style="width:${Math.max(12,Math.round(l.total*100/maxTotal))}%">
+        ${seg(l.overdue.length,'od')}${seg(l.soon.length,'sn')}${seg(l.next.length,'nx')}${seg(l.later.length,'lt')}</div>
+      <div class="ns-ld-legend">${l.overdue.length?`<span class="od">просроч. ${l.overdue.length}</span>`:''}${l.soon.length?`<span class="sn">≤7 дн ${l.soon.length}</span>`:''}${l.next.length?`<span class="nx">8–14 дн ${l.next.length}</span>`:''}${l.later.length?`<span class="lt">позже ${l.later.length}</span>`:''}</div>
+      ${nearest?`<div class="ns-ld-list">${nearest}</div>`:''}
+    </div>`; };
+  return `<div class="an-panel">
+    <div class="ns-ld-title">Нагрузка инженеров по срокам <span class="mono" style="font-size:10px;color:var(--muted)">активные критерии по всем станциям · пик = просроч.+ближайшие 7 дней</span></div>
+    <div class="ns-ld-grid">${loads.map(card).join('')}</div>
+  </div>`;
+}
+// Вид «Портфель»: все станции одним экраном для рук. ИЦ — тип, готовность, риск,
+// план готовности, критпуть, конфликты. Сортировка: срыв → риск → в графике → готово.
+function vNSPortfolio(){
+  const list=nsList();
+  const rank={risk:0, warn:1, ok:2, done:3};
+  const rows=list.map(st=>({st, r:nsStationRisk(st)}))
+    .sort((a,b)=>(rank[a.r.level]-rank[b.r.level]) || ((b.r.finish||0)-(a.r.finish||0)));
+  const cnt=l=>rows.filter(x=>x.r.level===l).length;
+  const RC={risk:'var(--bad)', warn:'var(--warn)', ok:'var(--good)', done:'var(--muted)'};
+  const cards=rows.map(({st,r})=>{ const crit=nsCriticalPath(st);
+    const critDays=crit.reduce((s,c)=>s+nsDurFor(c),0);
+    const typeLabel=(NS_TYPES[st.type]||NS_TYPES.base).label;
+    const eng=[st.proj?((PEOPLE[st.proj]||{}).full||st.proj):'', st.asu?((PEOPLE[st.asu]||{}).full||st.asu):''].filter(Boolean).join(' · ');
+    return `<button class="ns-pf-card" data-nstab="${st.id}" data-nsview="list">
+      <div class="ns-pf-h"><span class="ns-pf-nm">${esc(st.name)}</span><span class="ns-pf-risk" style="color:${RC[r.level]};border-color:${RC[r.level]}55;background:${RC[r.level]}18">${r.label}</span></div>
+      <div class="ns-pf-type">${esc(typeLabel)}${st.goz?' · <b class="ns-pf-goz">ГОЗ · ВП</b>':''}</div>
+      <div class="ns-pf-bar"><i style="width:${r.pct}%;background:${RC[r.level]}"></i></div>
+      <div class="ns-pf-stat">${r.done}/${r.total} готово · ${r.pct}%${r.finish!=null?` · готовность ${nsFmtDay(r.finish)}`:''}</div>
+      <div class="ns-pf-sig">${r.over?`<span class="ns-pf-b bad">⏰ просроч. ${r.over}</span>`:''}${r.conf?`<span class="ns-pf-b warn">⚠ конфл. ${r.conf}</span>`:''}${crit.length>=2?`<span class="ns-pf-b">★ критпуть ${crit.length} шаг · ${critDays} дн</span>`:''}</div>
+      ${eng?`<div class="ns-pf-eng">${esc(eng)}</div>`:''}
+    </button>`; }).join('');
+  return `<div class="an-panel">
+    <div class="ns-pf-summary"><span class="ns-pf-sc"><b>${list.length}</b> станц.</span><span class="ns-pf-sc ok"><b>${cnt('ok')+cnt('done')}</b> в графике</span><span class="ns-pf-sc warn"><b>${cnt('warn')}</b> риск</span><span class="ns-pf-sc bad"><b>${cnt('risk')}</b> срыв</span></div>
+    <div class="ns-pf-grid">${cards}</div>
+  </div>`;
+}
+function vRoi(){
+  const inp=roiInputs(); const r=S.roi;
+  const fields=ROI_FIELDS.map(([k,label])=>`<label class="roi-f"><span>${label}</span>
+    <input type="number" data-roi="${k}" value="${esc(String(inp[k]))}" min="0"></label>`).join('');
+  const out=r?`<div class="roi-out">
+      <div class="roi-total"><div class="roi-total-v">${rub(r.total_year)}</div><div class="roi-total-l">экономии в год — по вашим числам</div></div>
+      <div class="roi-lines">
+        <div><span>Инженерное время ИЦ</span><b>${rub(r.eng_saved_year)}</b><small>${r.eng_hours_saved_year} н/ч/год × ставка; аналог срезает ${r.hours_saved_per_estimate} ч с каждого из ${r.tz_per_year} просчётов</small></div>
+        <div><span>Избежанные срывы поставки</span><b>${rub(r.delay_saved_year)}</b><small>ранняя видимость комплектации снимает часть сорванных дней (штраф + риск след. заказа)</small></div>
+        <div><span>Избежанная переработка (радар закладок)</span><b>${rub(r.rework_saved_year||0)}</b><small>каталог/радар ловит «молчаливую перезакладку» — часы разбора дублей и переделки КД не тратятся</small></div>
+      </div></div>`:'<div style="font-size:12px;color:var(--muted)">Введите свои числа и нажмите «Посчитать» — калькулятор покажет экономию ₽/год. Это ваша арифметика, а не наша оценка сверху.</div>';
+  return `<div class="an-panel"><div class="an-title">₽ ROI за минуту — по вашим числам <span class="mono" style="font-size:10px;color:var(--muted)">для разговора, не оценка сверху</span></div>
+    <div class="roi-grid">${fields}</div>
+    <div style="margin-top:10px"><button class="btn" data-roicalc="1">Посчитать</button></div>
+    ${out}</div>`;
+}
 function kbSearchProjects(q){
   const tokens = (q||'').toLowerCase().split(/[^a-zа-яё0-9-]+/).filter(t=>t.length>1);
   if(!tokens.length) return [];
@@ -2135,7 +3177,7 @@ function moveTask(t,to,how){
 }
 
 /* ================= views ================= */
-const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Ось заказа',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',plan:'Планирование',kb:'База знаний',supply:'Снабжение',ship:'Отгрузки',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',bench:'Бенчмарки флота',team:'Команда',settings:'Настройки',order:'Заказ'};
+const TITLES = {today:'Сегодня',deals:'Сделки',flow:'Ось заказа',radar:'Радар закладок',estimates:'Просчёт',board:'Доска ИЦ',ns:'Проработка станций',plan:'Планирование',kb:'База знаний',supply:'Снабжение',ship:'Отгрузки',notices:'Извещения',portal:'Портал заказчика',reports:'Отчёты',bench:'Бенчмарки флота',team:'Команда',settings:'Настройки',order:'Заказ'};
 const CRUMBS = {today:'ваш рабочий день', flow:'весь портфель одним взглядом', deals:'воронка проектных продаж', radar:'закладки в проектах судов: П → РКД → тендер',
   estimates:'очередь оценки ТЗ в ИЦ · SLA 4 ч / 3 дн', board:'инженерный центр · спринт 14', plan:'загрузка ИЦ и вехи', kb:'поиск по архиву: шифр + смысл',
   supply:'снабжение и реестровость ПП 719', ship:'комплектация, пропуска, транспорт', notices:'изменения КД по ГОСТ 2.503', portal:'внешний вид заказа для верфи и ВП', reports:'воронка, конверсия, поток',
@@ -2323,6 +3365,43 @@ function estOverdue(e){ return estAckOverdue(e)||estDueOverdue(e); }
 function estAlerts(){ return (S.estimates||[]).filter(estOverdue).length; }
 function fmtDur(m){ m=Math.round(Math.abs(m)); const d=Math.floor(m/1440),h=Math.floor(m%1440/60),mm=m%60; return d?`${d} дн ${h} ч`:h?`${h} ч ${mm} мин`:`${mm} мин`; }
 function estResFill(e){ const h=e.resHours!=null?e.resHours:40; const s=e.resSum!=null?e.resSum:(e.dealId&&dealById(e.dealId)?dealById(e.dealId).sum:5000000); return [h,s]; }
+// Загрузка ИЦ: очередь просчётов (не завершённых) → прогноз сроков (детерм. load.py).
+function icCap(){ S.icCap=S.icCap||{eng:2,hpd:8}; return S.icCap; }
+function icQueue(){
+  return (S.estimates||[]).filter(e=>e.status==='new'||e.status==='wip').map(e=>({
+    id:e.id, name:e.title, hours:e.resHours||0,
+    due_days:Math.max(0, Math.round((estDueLeft(e)||0)/1440))   // мин остатка SLA → дни
+  }));
+}
+async function loadPlan(){
+  const c=icCap(); const queue=icQueue();
+  try{ const r=await fetch('/api/load/plan',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({queue, engineers:c.eng, hours_per_day:c.hpd})});
+    S.icLoad = r.ok ? await r.json() : null;
+  }catch(_){ S.icLoad=null; } render();
+}
+function vLoadPanel(){
+  const c=icCap(); const L=S.icLoad; const byId={}; (S.estimates||[]).forEach(e=>byId[e.id]=e);
+  const cfg=`<div class="bomlink" style="margin:0 0 10px">
+    <label class="roi-f" style="max-width:150px"><span>Инженеров в ИЦ</span><input type="number" data-iccap="eng" value="${c.eng}" min="0"></label>
+    <label class="roi-f" style="max-width:150px"><span>Часов в день на 1</span><input type="number" data-iccap="hpd" value="${c.hpd}" min="0"></label>
+    <button class="btn" data-loadplan="1" style="align-self:flex-end">Рассчитать сроки</button></div>`;
+  let body='<div style="font-size:12px;color:var(--muted)">Нажмите «Рассчитать сроки» — прогноз, когда закроется каждый просчёт при текущей мощности ИЦ, и что не успевает к сроку.</div>';
+  if(L&&L.items){
+    const rows=L.items.map(x=>{
+      const e=byId[x.id]||{}; const col=x.overdue?'var(--risk)':(x.slack>=0&&x.slack<3?'var(--warn)':'var(--good)');
+      return `<div class="anrow" style="grid-template-columns:1fr 70px 90px 90px;cursor:default">
+        <span class="annm">${esc(x.name||x.id)}</span>
+        <span class="anh">${x.hours} н/ч</span>
+        <span class="anh" style="color:${col}">день ${x.done_day}</span>
+        <span class="anh" style="color:${col}">${x.overdue?'СРЫВ '+x.slack:(x.due_days>=0?'запас '+x.slack:'—')}</span></div>`;
+    }).join('');
+    body=`<div class="an-est" style="border:none;padding:0 0 10px">
+        <div class="an-est-v" style="color:${L.overdue?'var(--risk)':'var(--good)'}">${L.overdue} <span>срыв${L.overdue===1?'':'ов'}</span></div>
+        <div class="an-est-l">Мощность ИЦ: <b>${L.daily_capacity} н/ч/день</b> (${L.engineers}×${L.hours_per_day}). Очередь ${L.count} просчётов = ${L.total_hours} н/ч → закрытие за <b>${L.total_days} дн.</b> Порядок очереди решает: срочное за крупным — срывается.</div>
+      </div><div class="anrows">${rows}</div>`;
+  }
+  return `<div class="an-panel" style="margin-bottom:16px"><div class="an-title">⏱ Загрузка ИЦ и прогноз сроков <span class="mono" style="font-size:10px;color:var(--muted)">по оценкам н/ч · детерминированно</span></div>${cfg}${body}</div>`;
+}
 function vEstimates(){
   const all=S.estimates||[]; const f=S.estFilter||'all';
   const shown = f==='queue'?all.filter(e=>e.status==='new')
@@ -2343,6 +3422,7 @@ function vEstimates(){
       <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--good);color:var(--good)">${ndone}</div><div class="l">просчитано</div></div>
     </div>
     <p style="font-size:12.5px;color:var(--muted);margin:0 0 14px">Бутылочное горлышко конверсии — не продавец, а очередь на просчёт в ИЦ: обращения зависают, а молчание дольше 4 часов клиент читает как несерьёзность. Здесь у каждой заявки два SLA-таймера — на первый отклик (4 ч) и на полный просчёт (3 дн). Взятие в работу = отклик состоялся.</p>
+    ${vLoadPanel()}
     ${shown.map(e=>{ const st=EST_ST[e.status];
       const ackL=estAckLeft(e), dueL=estDueLeft(e);
       const ackChip = e.status==='new'
@@ -2670,7 +3750,13 @@ const AGENT_MAP=[
 function resCol(r){ return r==='ok'?'var(--good)':r==='warn'?'var(--warn)':'var(--risk)'; }
 function vAgent(){
   const conns=S.connectors||[];
-  return `<div class="panel" style="margin-bottom:14px"><h3>Эллинг Агент · коннекторы <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· встраивается в ландшафт завода, не заменяет его</span></h3>
+  return `${SRV.on&&canManage()?`<div class="panel" style="margin-bottom:14px"><h3>Импорт заказов из Excel <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· для заводов без 1С</span></h3>
+    <p style="font-size:13px;color:var(--ink2);margin:0 0 10px">Нет 1С? Загрузите список заказов таблицей .xlsx. Обязательна колонка <b>«Номер»</b>; распознаются «Наименование», «Заказчик», «Сумма», «Судно», «Срок», «ГОЗ», «ИГК». Заказы попадут в «Заказы», повторный импорт обновит их.</p>
+    <input type="file" id="xlsxFile" accept=".xlsx" style="display:none">
+    <button class="btn" data-xlsximport="1">Выбрать файл .xlsx…</button>
+    <span id="xlsxResult" style="margin-left:10px;font-size:13px"></span>
+  </div>`:''}
+    <div class="panel" style="margin-bottom:14px"><h3>Эллинг Агент · коннекторы <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· встраивается в ландшафт завода, не заменяет его</span></h3>
     <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Агент подключается к тому, что уже стоит на заводе: 1С (от 7.7 до ERP), КОМПАС/ЛОЦМАН:PLM, любой Outlook, ЕИС, ЭДО. Мы читаем ваши заказы, чертежи и состав изделий — <b>не заставляем переезжать и не заменяем САПР</b>. Нажмите «Синхронизировать» у 1С или ЛОЦМАН — данные появятся в «Заказах» и «Базе знаний».</p>
     ${S.agentMsg?`<div class="ai-box" style="margin:0 0 12px">✓ ${esc(S.agentMsg)}</div>`:''}
     ${SRV.on?`<div id="agSrc" style="margin-bottom:6px"><div class="empty">загружаю источники…</div></div>
@@ -2718,6 +3804,140 @@ function vAgent(){
       <p style="font-size:12px;color:var(--muted);margin-top:8px">Раздельный учёт ГОЗ остаётся в вашей 1С — Эллинг отражает статус, а не дублирует бухгалтерию.</p>
     </div>`;
 }
+// Профиль/аккаунт в шапке. При реальном входе (ME с сервера) — меню с выходом;
+// без сервера (демо) — прежний переключатель ролей.
+function renderUserbox(){
+  const box=$('userbox'); if(!box) return;
+  if(ME){
+    const p=PEOPLE[S.currentUser]||{}; const nm=ME.name||p.full||S.currentUser;
+    const ini=(nm||'?').trim().split(/\s+/).map(w=>w[0]||'').slice(0,2).join('').toUpperCase()||'—';
+    box.innerHTML=`<div class="acct-wrap">
+      <button class="acct-btn" data-acctmenu="1" title="Профиль и выход">
+        <span class="acct-ava">${esc(ini)}</span>
+        <span><span class="acct-nm">${esc(nm)}</span><br><span class="acct-rl">${esc(ME.role||p.role||'')}</span></span>
+        <span style="opacity:.55;font-size:11px">▾</span></button>
+      <div class="acct-drop" id="acctDrop" hidden>
+        <div class="ah"><b>${esc(nm)}</b><br><span style="font-size:11.5px;color:var(--muted)">${esc(ME.role||'')} · ${esc(ME.login||'')}</span></div>
+        <button data-account="password">🔑 Сменить пароль</button>
+        <button data-account="sessions">🛡 Активные сессии и 2FA</button>
+        <button class="danger" data-account="logout">⎋ Выйти</button>
+      </div></div>`;
+  } else {
+    box.innerHTML=`Вы: <select id="userSel">${Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${esc(PEOPLE[p].full)} · ${esc(PEOPLE[p].role)}</option>`).join('')}</select>`;
+  }
+}
+async function doLogout(){
+  try{ await fetch('/api/auth/logout',{method:'POST',headers:AH()}); }catch(_){}
+  location.reload();   // сервер погасил сессию — стартуем начисто, покажется экран входа
+}
+// Сравнение версий документа КД → построчный diff + черновик извещения (ГОСТ 2.503).
+async function loadKbDocs(){
+  const a=$('kbDiffA'), b=$('kbDiffB'); if(!a||!b) return;
+  try{
+    const j=await (await fetch('/api/kb/docs',{cache:'no-store',headers:AH()})).json();
+    const opts=(j.docs||[]).map(d=>`<option value="${d.id}">${esc(d.name)} · ${esc(d.ts||'')}</option>`).join('')||'<option value="">нет документов</option>';
+    a.innerHTML=opts; b.innerHTML=opts; if((j.docs||[]).length>1) b.selectedIndex=0, a.selectedIndex=1;  // разные по умолчанию
+  }catch(_){ a.innerHTML=b.innerHTML='<option>ошибка загрузки</option>'; }
+}
+async function runKbDiff(){
+  const a=$('kbDiffA')?.value, b=$('kbDiffB')?.value, box=$('kbDiffResult');
+  if(!a||!b||!box) return;
+  if(a===b){ box.innerHTML='<span style="color:var(--warn);font-size:13px">Выберите две РАЗНЫЕ редакции.</span>'; return; }
+  box.innerHTML='<span style="font-size:12px;color:var(--muted)">Сравниваю…</span>';
+  try{
+    const d=await (await fetch(`/api/kb/diff?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`,{headers:AH()})).json();
+    if(d.error){ box.innerHTML=`<span style="color:var(--bad)">${esc(d.error)}</span>`; return; }
+    S.kbDiffCodes=d.codes||[];   // затронутые шифры → мост к позициям BOM в карточке заказа
+    const kindColor={'замена':'var(--warn)','добавление':'var(--good)','исключение':'var(--risk)','без изменений':'var(--muted)'}[d.kind]||'var(--ink)';
+    const hunks=(d.hunks||[]).map(h=>{
+      const del=(h.old||[]).map(l=>`<div style="color:var(--risk);font-family:var(--mono);font-size:12px">− ${esc(l)}</div>`).join('');
+      const add=(h.new||[]).map(l=>`<div style="color:var(--good);font-family:var(--mono);font-size:12px">+ ${esc(l)}</div>`).join('');
+      const tagN={replace:'изменено',insert:'добавлено',delete:'удалено'}[h.tag]||h.tag;
+      return `<div style="padding:8px 0;border-top:1px solid var(--line2)"><div style="font-size:11px;color:var(--muted)">${tagN}, строка ${h.at}</div>${del}${add}</div>`;
+    }).join('');
+    box.innerHTML=`<div class="ai-box" style="border-left:3px solid ${kindColor};margin:0 0 10px">
+        <b>Вид изменения: <span style="color:${kindColor}">${esc(d.kind)}</span></b> · ${esc(d.note)}</div>
+      ${hunks||'<span style="font-size:13px;color:var(--muted)">Документы идентичны.</span>'}
+      ${d.hunks&&d.hunks.length&&canManage()?`<button class="btn" style="margin-top:10px" data-kbdiffnotice='${esc(JSON.stringify({code:(d.a_name||'').replace(/\.[^.]+$/,''),kind:d.kind,note:d.note}))}'>Создать черновик извещения</button>`:''}`;
+  }catch(_){ box.innerHTML='<span style="color:var(--bad)">Сервер недоступен</span>'; }
+}
+// Активные сессии (устройства) — список + отзыв. ФСТЭК УПД.5.
+async function loadSessions(){
+  const box=$('sessList'); if(!box) return;
+  box.innerHTML='<span style="font-size:12px;color:var(--muted)">Загружаю…</span>';
+  try{
+    const j=await (await fetch('/api/auth/sessions',{cache:'no-store',headers:AH()})).json();
+    const list=j.sessions||[];
+    if(!list.length){ box.innerHTML='<span style="font-size:12px;color:var(--muted)">Нет активных сессий.</span>'; return; }
+    box.innerHTML=list.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px">${s.current?'<b style="color:var(--good)">● это устройство</b> · ':''}${esc((s.ua||'неизвестное устройство').slice(0,60))}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">IP ${esc(s.ip||'?')} · вход ${esc(s.created||'')} · активность ${esc(s.last_seen||'')}</div>
+      </div>
+      ${s.current?'':`<button class="chip" data-revokesession="${esc(s.handle)}" style="border-color:var(--bad);color:var(--bad)">Завершить</button>`}
+    </div>`).join('');
+  }catch(_){ box.innerHTML='<span style="color:var(--bad);font-size:12px">Не удалось загрузить.</span>'; }
+}
+// QR-энкодер (байт-режим, EC-M, версии 1..10) — ноль зависимостей, для 2FA.
+// Сверен ПОБИТНО с python-qrcode (см. interop/qr.js). Рисуем otpauth-ссылку,
+// чтобы ключ не вводили руками.
+function qrEncode(text,forceMask){
+  const BLOCKS_M={1:[[26,16]],2:[[44,28]],3:[[70,44]],4:[[50,32],[50,32]],5:[[67,43],[67,43]],6:[[43,27],[43,27],[43,27],[43,27]],7:[[49,31],[49,31],[49,31],[49,31]],8:[[60,38],[60,38],[61,39],[61,39]],9:[[58,36],[58,36],[58,36],[59,37],[59,37]],10:[[69,43],[69,43],[69,43],[69,43],[70,44]]};
+  const DATA_CW={1:16,2:28,3:44,4:64,5:86,6:108,7:124,8:154,9:182,10:216};
+  const ALIGN={1:[],2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
+  const EXP=new Array(512),LOG=new Array(256);
+  for(let i=0,x=1;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&0x100)x^=0x11d;}
+  for(let i=255;i<512;i++)EXP[i]=EXP[i-255];
+  const gmul=(a,b)=>(a===0||b===0)?0:EXP[LOG[a]+LOG[b]];
+  function rsGen(n){let g=[1];for(let i=0;i<n;i++){const ng=new Array(g.length+1).fill(0);for(let j=0;j<g.length;j++){ng[j]^=gmul(g[j],1);ng[j+1]^=gmul(g[j],EXP[i]);}g=ng;}return g;}
+  function rsEnc(db,n){const gen=rsGen(n);const res=db.concat(new Array(n).fill(0));for(let i=0;i<db.length;i++){const c=res[i];if(c!==0)for(let j=0;j<gen.length;j++)res[i+j]^=gmul(gen[j],c);}return res.slice(db.length);}
+  const data=Array.from(new TextEncoder().encode(text));
+  let version=0;for(let v=1;v<=10;v++){const cc=v<10?8:16;if(DATA_CW[v]*8>=4+cc+data.length*8){version=v;break;}}
+  if(!version)throw new Error('QR: данные слишком длинные');
+  const bits=[];const put=(val,len)=>{for(let i=len-1;i>=0;i--)bits.push((val>>i)&1);};
+  put(0b0100,4);put(data.length,version<10?8:16);for(const b of data)put(b,8);
+  const tdb=DATA_CW[version]*8;put(0,Math.min(4,tdb-bits.length));while(bits.length%8)bits.push(0);
+  for(let pi=0;bits.length<tdb;pi++)put(pi%2?0x11:0xEC,8);
+  const cws=[];for(let i=0;i<bits.length;i+=8){let v=0;for(let j=0;j<8;j++)v=(v<<1)|bits[i+j];cws.push(v);}
+  const blocks=BLOCKS_M[version];const dB=[],eB=[];let pos=0;
+  for(const [tot,dc] of blocks){const blk=cws.slice(pos,pos+dc);pos+=dc;dB.push(blk);eB.push(rsEnc(blk,tot-dc));}
+  const fin=[];const mD=Math.max(...dB.map(b=>b.length));for(let i=0;i<mD;i++)for(const b of dB)if(i<b.length)fin.push(b[i]);
+  const mE=Math.max(...eB.map(b=>b.length));for(let i=0;i<mE;i++)for(const b of eB)if(i<b.length)fin.push(b[i]);
+  const size=version*4+17;const mod=Array.from({length:size},()=>new Array(size).fill(null));const fn=Array.from({length:size},()=>new Array(size).fill(false));
+  const set=(r,c,v)=>{mod[r][c]=v?1:0;fn[r][c]=true;};
+  function finder(r,c){for(let i=-1;i<=7;i++)for(let j=-1;j<=7;j++){const rr=r+i,cc=c+j;if(rr<0||rr>=size||cc<0||cc>=size)continue;const on=(i>=0&&i<=6&&(j===0||j===6))||(j>=0&&j<=6&&(i===0||i===6))||(i>=2&&i<=4&&j>=2&&j<=4);set(rr,cc,on);}}
+  finder(0,0);finder(0,size-7);finder(size-7,0);
+  for(let i=8;i<size-8;i++){set(6,i,i%2===0);set(i,6,i%2===0);}
+  set(size-8,8,true);
+  const ap=ALIGN[version];const last=ap.length?ap[ap.length-1]:0;
+  for(const r of ap)for(const c of ap){if((r===6&&c===6)||(r===6&&c===last)||(r===last&&c===6))continue;for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++)set(r+i,c+j,Math.max(Math.abs(i),Math.abs(j))!==1);}
+  for(let i=0;i<9;i++){if(!fn[8][i])fn[8][i]=true;if(!fn[i][8])fn[i][8]=true;}
+  for(let i=0;i<8;i++){fn[8][size-1-i]=true;fn[size-1-i][8]=true;}
+  if(version>=7)for(let i=0;i<6;i++)for(let j=0;j<3;j++){fn[i][size-11+j]=true;fn[size-11+j][i]=true;}
+  let bi=0,up=true;
+  for(let col=size-1;col>0;col-=2){if(col===6)col--;for(let t=0;t<size;t++){const row=up?size-1-t:t;for(let k=0;k<2;k++){const c=col-k;if(fn[row][c])continue;let v=0;if(bi<fin.length*8)v=(fin[bi>>3]>>(7-(bi&7)))&1;bi++;mod[row][c]=v;}}up=!up;}
+  const mF=[(i,j)=>(i+j)%2===0,(i,j)=>i%2===0,(i,j)=>j%3===0,(i,j)=>(i+j)%3===0,(i,j)=>(((i>>1)+(Math.floor(j/3)))%2)===0,(i,j)=>((i*j)%2+(i*j)%3)===0,(i,j)=>(((i*j)%2+(i*j)%3)%2)===0,(i,j)=>(((i+j)%2+(i*j)%3)%2)===0];
+  function applyFmt(m,mask){let d=((0b00)<<3)|mask;let v=d<<10;for(let i=4;i>=0;i--)if((v>>(i+10))&1)v^=0x537<<i;const fmt=((d<<10)|v)^0x5412;const bit=k=>(fmt>>k)&1;
+    for(let i=0;i<=5;i++)m[i][8]=bit(i);m[7][8]=bit(6);m[8][8]=bit(7);m[8][7]=bit(8);for(let i=9;i<15;i++)m[8][14-i]=bit(i);
+    for(let i=0;i<8;i++)m[8][size-1-i]=bit(i);for(let i=8;i<15;i++)m[size-15+i][8]=bit(i);m[size-8][8]=1;}
+  function applyVer(m){if(version<7)return;let v=version<<12;for(let i=5;i>=0;i--)if((v>>(i+12))&1)v^=0x1f25<<i;const vi=(version<<12)|v;
+    for(let i=0;i<18;i++){const b=(vi>>i)&1;const r=Math.floor(i/3),c=i%3;m[r][size-11+c]=b;m[size-11+c][r]=b;}}
+  function penalty(m){let p=0;for(let i=0;i<size;i++){let rc=1,cc=1;for(let j=1;j<size;j++){if(m[i][j]===m[i][j-1]){rc++;if(rc===5)p+=3;else if(rc>5)p++;}else rc=1;if(m[j][i]===m[j-1][i]){cc++;if(cc===5)p+=3;else if(cc>5)p++;}else cc=1;}}
+    for(let i=0;i<size-1;i++)for(let j=0;j<size-1;j++){const a=m[i][j];if(a===m[i][j+1]&&a===m[i+1][j]&&a===m[i+1][j+1])p+=3;}
+    const pat=[1,0,1,1,1,0,1];for(let i=0;i<size;i++)for(let j=0;j<size;j++){const ro=j+6<size&&pat.every((v,k)=>m[i][j+k]===v);const co=i+6<size&&pat.every((v,k)=>m[i+k][j]===v);
+      if(ro&&((j+10<size&&[0,0,0,0].every((_,k)=>m[i][j+7+k]===0))||(j-4>=0&&[0,0,0,0].every((_,k)=>m[i][j-1-k]===0))))p+=40;
+      if(co&&((i+10<size&&[0,0,0,0].every((_,k)=>m[i+7+k][j]===0))||(i-4>=0&&[0,0,0,0].every((_,k)=>m[i-1-k][j]===0))))p+=40;}
+    let dark=0;for(let i=0;i<size;i++)for(let j=0;j<size;j++)dark+=m[i][j];p+=Math.floor(Math.abs(dark*100/(size*size)-50)/5)*10;return p;}
+  function render(mask){const m=mod.map(r=>r.slice());for(let i=0;i<size;i++)for(let j=0;j<size;j++)if(!fn[i][j]&&mF[mask](i,j))m[i][j]^=1;applyFmt(m,mask);applyVer(m);return m;}
+  let mask=forceMask;if(mask==null){let best=1e9;for(let mk=0;mk<8;mk++){const pn=penalty(render(mk));if(pn<best){best=pn;mask=mk;}}}
+  return {size,version,modules:render(mask)};
+}
+function qrSvg(text,px){
+  let m;try{m=qrEncode(text).modules;}catch(e){return '';}
+  const n=m.length,q=4,sz=n+q*2;let rects='';
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(m[i][j])rects+=`<rect x="${j+q}" y="${i+q}" width="1" height="1"/>`;
+  return `<svg width="${px||208}" height="${px||208}" viewBox="0 0 ${sz} ${sz}" shape-rendering="crispEdges" style="background:#fff;border-radius:10px;padding:0;display:block"><g fill="#000">${rects}</g></svg>`;
+}
 function vSettings(){
   const cur = localStorage.getItem(THEME_KEY) || 'auto';
   const ROLE_MATRIX = [
@@ -2729,7 +3949,7 @@ function vSettings(){
     ['Логист','отгрузки, комплектация, пропуска','CRM, инженерная БЗ'],
   ];
   const cont = S.orgContour||'cloud';
-  const SET_CATS=[['org','i-portal','Организация','all'],['users','i-deals','Пользователи и роли','all'],['integrations','i-supply','Интеграции','manage'],['migrate','i-supply','Миграция реестра','manage'],['auto','i-today','Автоматизации','manage'],['notify','i-bell','Уведомления','all'],['backup','i-plan','Резервные копии','admin'],['theme','i-settings','Оформление','all'],['api','i-kb','API','manage'],['system','i-plan','Система','all']];
+  const SET_CATS=[['org','i-portal','Организация','all'],['users','i-deals','Пользователи и роли','all'],['security','i-plan','Безопасность','all'],['integrations','i-supply','Интеграции','manage'],['migrate','i-supply','Миграция реестра','manage'],['auto','i-today','Автоматизации','manage'],['notify','i-bell','Уведомления','all'],['backup','i-plan','Резервные копии','admin'],['theme','i-settings','Оформление','all'],['api','i-kb','API','manage'],['system','i-plan','Система','all']];
   const cats = SET_CATS.filter(c=>c[3]==='all'||(c[3]==='manage'&&canManage())||(c[3]==='admin'&&canAdmin()));
   const tab = cats.some(c=>c[0]===(S.setTab||'org'))?(S.setTab||'org'):'org';
   return `<div class="set-wrap"><aside class="set-rail">${cats.map(([id,ic,l])=>`<button class="set-cat ${tab===id?'on':''}" data-settab="${id}"><svg class="ic"><use href="#${ic}"/></svg><span>${l}</span></button>`).join('')}</aside><div class="set-main">
@@ -2765,6 +3985,52 @@ function vSettings(){
         <div class="org-plan"><div><div class="plan-name">Отрасль</div><div class="plan-sub">CRM продаж + ось заказа + инженерная БЗ с ИИ · ГОЗ из коробки</div></div>
           <div class="plan-price">990 ₽<small>/ место · <span style="color:var(--good)">−50% дизайн-партнёр</span></small></div></div>
       </div>
+    </section>
+    <section class="set-sec" data-sec="security" ${tab==='security'?'':'hidden'}>
+      ${SRV.on&&ME?`<div class="panel" style="margin-bottom:14px" id="pwPanel"><h3>Смена пароля</h3>
+        <p style="font-size:13px;color:var(--ink2);margin:0 0 10px">Вы вошли как <b>${esc(ME.name||'')}</b> (${esc(ME.login||'')}). Смена пароля завершит все ваши сессии на других устройствах.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;max-width:520px">
+          <label class="fld"><span>Текущий пароль</span><input id="pwOld" type="password" autocomplete="current-password"></label>
+          <label class="fld"><span>Новый пароль (не короче 8)</span><input id="pwNew" type="password" autocomplete="new-password"></label>
+        </div>
+        <button class="btn" data-changepw="1" style="margin-top:10px">Сменить пароль</button>
+        <span id="pwResult" style="margin-left:10px;font-size:13px"></span>
+      </div>`:''}
+      <div class="panel" style="margin-bottom:14px"><h3>Двухфакторная аутентификация (2FA)</h3>
+      ${!SRV.on?`<p style="font-size:13px;color:var(--muted)">2FA работает только с сервером. В демо без сервера второй фактор недоступен.</p>`
+      : TOTP2FA?`
+        <div class="ai-box" style="margin:0 0 12px;font-size:13px;border-left:3px solid var(--good)">
+          <b style="color:var(--good)">Второй фактор включён.</b> При входе после пароля запрашивается код из приложения-аутентификатора.</div>
+        <label class="fld" style="max-width:280px"><span>Пароль (для отключения)</span>
+          <input id="totpPass" type="password" autocomplete="current-password"></label>
+        <button class="btn" data-2fa-disable="1" style="margin-top:10px;border-color:var(--bad);color:var(--bad)">Выключить 2FA</button>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px">Выключение снижает защиту учётной записи и требует пароля.</p>`
+      : S.totpSetup?`
+        <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Отсканируйте QR-код приложением-аутентификатором (Google Authenticator, Aegis, FreeOTP), затем введите код для подтверждения.</p>
+        <div style="text-align:center;margin:0 0 14px">
+          <div style="display:inline-block;background:#fff;padding:12px;border-radius:12px;border:1px solid var(--line)">${qrSvg(S.totpSetup.uri)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px">Наведите камеру аутентификатора на код</div></div>
+        <details style="margin:0 0 12px"><summary style="cursor:pointer;font-size:13px;color:var(--accent)">Не сканируется? Ввести ключ вручную</summary>
+        <div class="fld" style="max-width:420px;margin-top:8px"><span>Ключ для ручного ввода</span>
+          <div style="font-family:var(--mono);font-size:16px;letter-spacing:.15em;word-break:break-all;background:var(--panel2);padding:10px 12px;border-radius:8px;border:1px solid var(--line)">${esc((S.totpSetup.secret||'').replace(/(.{4})/g,'$1 ').trim())}</div></div>
+        <p style="font-size:12px;color:var(--muted);margin:8px 0 4px">Или ссылка для аутентификатора: <a href="${esc(S.totpSetup.uri)}" style="color:var(--accent);word-break:break-all">${esc(S.totpSetup.uri)}</a></p>
+        </details>
+        <label class="fld" style="max-width:200px;margin-top:6px"><span>Код из приложения</span>
+          <input id="totpCode" inputmode="numeric" maxlength="6" placeholder="6 цифр" style="letter-spacing:.3em;text-align:center;font-size:17px"></label>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn" data-2fa-enable="1">Подтвердить и включить</button>
+          <button class="chip" data-2fa-cancel="1">Отмена</button></div>`
+      :`
+        <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Второй фактор защищает вход, даже если пароль подобрали или украли. Код генерирует приложение-аутентификатор на вашем телефоне, работает офлайн — для завода в закрытом контуре это важно.</p>
+        <button class="btn" data-2fa-setup="1">Включить 2FA</button>`}
+      </div>
+      ${SRV.on?`<div class="panel" style="margin-bottom:14px"><h3>Активные сессии (устройства)</h3>
+        <p style="font-size:13px;color:var(--ink2);margin:0 0 10px">Где открыт ваш вход. Сессия гаснет после 30 мин бездействия или 12 ч, лимит — 8 устройств. Не узнаёте устройство — завершите его.</p>
+        <div id="sessList"><span style="font-size:12px;color:var(--muted)">Нажмите «Показать», чтобы загрузить.</span></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="chip" data-loadsessions="1">Показать</button>
+          <button class="btn" data-revokeothers="1" style="border-color:var(--bad);color:var(--bad)">Завершить на других устройствах</button></div>
+      </div>`:''}
     </section>
     <section class="set-sec" data-sec="theme" ${tab==='theme'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Оформление</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2809,6 +4075,17 @@ function vSettings(){
       </div>`:''}
     </div>`; })()}</section>
     <section class="set-sec" data-sec="users" ${tab==='users'?'':'hidden'}>
+      ${SRV.on&&canAdmin()?`<div class="panel" style="margin-bottom:14px"><h3>Пригласить сотрудника</h3>
+        <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Заведите учётную запись и передайте сотруднику одноразовый код лично. По логину и коду он активирует вход и сам задаст пароль (в закрытом контуре почты нет).</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;max-width:640px">
+          <label class="fld"><span>Логин</span><input id="invLogin" placeholder="petrov"></label>
+          <label class="fld"><span>Имя и фамилия</span><input id="invName" placeholder="Пётр Петров"></label>
+          <label class="fld"><span>Роль</span><input id="invRole" value="инженер"></label>
+          <label class="fld"><span>Уровень (0=дир,1=рук,3=сотр)</span><input id="invLvl" type="number" value="3" min="0" max="9"></label>
+        </div>
+        <button class="btn" data-invite="1" style="margin-top:10px">Создать приглашение</button>
+        <div id="invResult"></div>
+      </div>`:''}
       <div class="panel" style="margin-bottom:14px"><h3>Оргструктура и подчинённость <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· RBAC по иерархии · в проде: SSO/OIDC</span></h3>
         <p style="font-size:13px;color:var(--ink2);margin:0 0 12px">Роль определяет и <b>доступ к данным</b>, и <b>объём функций</b>. Старший по иерархии видит подчинённых и их роли; у него шире и доступ, и набор действий. Уровни: <b>Дирекция → Руководитель отдела → Сотрудник</b>.</p>
         <div class="ai-box" style="margin:0 0 12px;font-size:12.5px">${canAdmin()?'🔓 Вы — директор: можете менять роли и права доступа.':'🔒 Изменение ролей и прав доступа — у директора. Вам доступен просмотр структуры и своей команды.'}</div>
@@ -2940,6 +4217,36 @@ function printDoc(html){
   setTimeout(()=>window.print(), 30);
 }
 
+// Оценочный лист трудоёмкости — печатная форма из результата ИИ-подбора аналогов.
+// Замыкает петлю: ТЗ → аналог → оценка → документ для клиента/внутреннего ТКП.
+function estimateSheetHTML(){
+  const a=S.analog; if(!a) return '<div class="pdoc"><div class="p-title">Нет данных оценки</div></div>';
+  const o=org(); const est=a.estimate||{};
+  const byId={}; (S.kbProjects||[]).forEach(p=>byId[p.id]=p);
+  const basis=byId[est.basis]||{};
+  const rows=(a.analogs||[]).filter(x=>x.score>0).slice(0,5).map((x,i)=>{
+    const p=byId[x.id]||{};
+    return `<tr><td>${i+1}</td><td>${esc(x.name||p.izdelie||x.id)}${p.code?` <span class="p-note">${esc(p.code)}</span>`:''}</td>
+      <td class="p-r">${x.score}%</td><td class="p-r">${x.hours} н/ч</td><td class="p-r">${x.est_hours} н/ч</td></tr>`;
+  }).join('');
+  const cats=Object.values((a.tz&&a.tz.cats)||{}).map(esc).join(', ');
+  const num=`ОЦ-${new Date().toISOString().slice(0,10).replace(/-/g,'')}`;
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name)}</b><br>ИНН ${esc(o.inn)}${o.kpp?' · КПП '+esc(o.kpp):''} · ${esc(o.addr)}<br>${esc(o.phone)} · ${esc(o.email)}</div>
+    <div class="p-title">Оценочный лист трудоёмкости<br><span>№ ${esc(num)} от ${today()}</span></div>
+    <div class="p-to"><b>По техническому заданию:</b> ${esc((S.kbq||'—').slice(0,400))}${cats?`<br><b>Распознанные признаки:</b> ${cats}`:''}</div>
+    ${est.best!=null?`<div style="font-size:22px;font-weight:700;margin:14px 0 3px">Предварительная оценка: ${est.low}–${est.high} н/ч</div>
+      <div class="p-note" style="margin-bottom:12px">Опора — исполненное изделие «${esc(basis.izdelie||est.basis)}»${basis.hours?` (${basis.hours} н/ч, заказ №${esc(basis.order||'—')})`:''}, масштаб по ведущему параметру ТЗ.</div>`
+      :`<div class="p-note" style="margin:14px 0">Близких аналогов для количественной оценки не найдено — требуется просчёт инженерного центра.</div>`}
+    <table class="p-tbl">
+      <tr><th style="width:34px">№</th><th>Изделие-аналог</th><th style="width:66px">Похоже</th><th style="width:88px">Факт, н/ч</th><th style="width:98px">Оценка, н/ч</th></tr>
+      ${rows||'<tr><td colspan="5" class="p-r">аналогов не найдено</td></tr>'}
+    </table>
+    <div class="p-terms">Предварительная оценка на основе исполненных изделий-аналогов (ИИ-подбор: параметры + шифр + вектор-смысл + категории). Итоговая трудоёмкость уточняется инженерным центром после проработки КД. Комплект КД опорного аналога — в базе знаний завода.</div>
+    <div class="p-sign"><div>${esc(o.dirRole||'Руководитель')}<span class="p-line"></span>${esc(o.director||'')}</div><div>Инженерный центр<span class="p-line"></span></div></div>
+    <div class="p-foot">Сформировано ИИ-подбором аналогов в системе «Эллинг» · ${today()} · оценка детерминирована, без облака</div>
+  </div>`;
+}
 function tkpHTML(d){
   const o=org();
   const est=(S.estimates||[]).find(e=>e.dealId===d.id && e.status==='done');
@@ -3173,6 +4480,13 @@ function vToday(){
       ${pa?`<button class="btn big" data-move="${t.key}|${pa[0]}">${pa[1]}</button>`:''}</div>`;
   };
   const isBoss = (p.lvl!=null && p.lvl<=2);   // директор, зам, руководители отделов — управленческий вид
+  const inIC = /инженерн/i.test(p.dept||'');  // сроки проработки НС — только инженерному центру
+  const nsdl = (inIC && !isBoss) ? nsMyDeadlines(me) : {over:[],soon:[]};
+  const nsCard = (inIC && !isBoss) ? `<div class="tsec" style="margin-top:18px"><h3>Проработка станций — сроки ${(nsdl.over.length+nsdl.soon.length)?`<span class="cnt">${nsdl.over.length+nsdl.soon.length}</span>`:''}</h3>
+    ${nsdl.over.concat(nsdl.soon).slice(0,6).map(x=>{ const over=nsIsOverdue(x.it); const sm=NS_STATUS[x.it.status]||NS_STATUS.todo;
+      const cs=nsCriterionState(x.st,x.it);
+      const csx = cs.state==='blocked' ? ` · <span class="ns-dep blocked" style="padding:0 5px">⛓ ждёт: ${esc(cs.waitFor.join(', '))}</span>` : cs.state==='ready' ? ` · <span class="ns-dep ready" style="padding:0 5px">готов к старту</span>` : '';
+      return `<div class="wcard ${over?'urgent':''}" data-nav2="ns" style="cursor:pointer"><div class="body"><span class="k">${esc(x.st.name)}</span><div class="t">${esc(x.it.title||'')}</div><div class="why">${over?'<b>просрочено</b>':'срок'} ${nsFmtDay(x.d)} · ${sm[0]}${csx}</div></div><span class="stchip">открыть →</span></div>`; }).join('')||'<div class="zero">Нет ближайших сроков проработки.</div>'}</div>` : '';
   const pulse = isBoss ? (()=>{
     const ords=S.orders||[];
     const cOk=ords.filter(o=>o.risk==='ok').length, cWarn=ords.filter(o=>o.risk==='warn').length, cRisk=ords.filter(o=>o.risk==='risk').length;
@@ -3180,10 +4494,14 @@ function vToday(){
     const estAll=S.estimates||[]; const ackOver=estAll.filter(e=>e.status==='new'&&estAckLeft(e)<0).length;
     const slaPct=estAll.length?Math.round((estAll.length-ackOver)/estAll.length*100):100;
     const cc=c=>`color:${c};-webkit-text-fill-color:${c}`;
+    const nsOver = inIC ? nsList().reduce((s,st)=>s+(st.items||[]).filter(nsIsOverdue).length,0) : 0;
+    const nsConf = inIC ? nsConflictCount() : 0;
     const attn=[
       ...ords.filter(o=>o.risk==='risk').map(o=>({t:'Срыв срока',n:'№'+o.num+' · '+o.title,c:'var(--risk)',go:'flow'})),
       ...ords.filter(o=>o.risk==='warn').map(o=>({t:'Риск срока',n:'№'+o.num+' · '+o.title,c:'var(--warn)',go:'flow'})),
       ...(ackOver?[{t:'Просрочен отклик ИЦ',n:ackOver+' заявок ждут просчёта дольше 4 ч',c:'var(--risk)',go:'estimates'}]:[]),
+      ...(nsOver?[{t:'Просрочка проработки НС',n:nsOver+' критериев проработки просрочено по станциям',c:'var(--risk)',go:'ns'}]:[]),
+      ...(nsConf?[{t:'Конфликт сроков проработки',n:nsConf+' критериев стоят раньше своих предшественников — план нереалистичен',c:'var(--warn)',go:'ns'}]:[]),
     ];
     return `<div class="stats" style="margin:8px 0 16px">
       <div class="stat"><div class="v">${ords.length}</div><div class="l">заказов в портфеле</div></div>
@@ -3213,6 +4531,7 @@ function vToday(){
           ${wait.map(t=>wcard(t,true)).join('')||'<div class="zero">Ничего не ждёт вашего решения.</div>'}</div>
         <div class="tsec" style="margin-top:18px"><h3>Ваша очередь ${queue.length?`<span class="cnt">${queue.length}</span>`:''}</h3>
           ${queue.map(t=>wcard(t)).join('')||'<div class="zero">✓ Очередь пуста.</div>'}</div>
+        ${nsCard}
       </div>
       <div class="tsec"><h3>Пока вы работали</h3>
         <div class="evfeed">${events.map(({o,f})=>`<div class="ev"><span class="t">${esc(f[0])}</span>
@@ -3371,6 +4690,111 @@ function vOrder(oid){
       ${o.feed.slice().reverse().map(f=>{ const xo=/Мост|синхронизир/i.test(f[1]);
         return `<div class="ev"><span class="t">${esc(f[0])}</span><span>${safe(f[1])}${xo?' <span class="xtag ext">⟷ верфь</span>':''}${f[2]?'<span class="nocall">вместо звонка</span>':''}</span></div>`; }).join('')}
     </div>
+  </div>
+  ${nsOrderPanel(o.num)}
+  ${vBom(o)}`;
+}
+// Интеграция проработки НС с жизненным циклом заказа: станции, привязанные к заказу
+// (st.order === o.num), видны в карточке заказа со статусом; клик → в модуль проработки.
+function nsOrderPanel(num){
+  const sts=(S.ns||[]).filter(s=>String(s.order||'')===String(num||''));
+  if(!sts.length) return '';
+  const RC={risk:'var(--bad)', warn:'var(--warn)', ok:'var(--good)', done:'var(--muted)'};
+  return `<div class="panel" style="margin-top:12px"><h3>Проработка насосных станций (${sts.length})</h3>
+    ${sts.map(s=>{ const p=nsProgress(s); const r=nsStationRisk(s);
+      return `<div class="bl-row" data-nsopen="${s.id}" style="padding:8px 2px;cursor:pointer;align-items:center;gap:10px">
+        <span class="ttl" style="flex:1">${esc(s.name)}${s.goz?' <span style="color:#8a6d1f;font-weight:700;font-size:11px">ГОЗ</span>':''}</span>
+        <span style="width:110px;height:6px;border-radius:4px;background:var(--line);overflow:hidden;flex:none"><i style="display:block;height:100%;width:${p.pct}%;background:${RC[r.level]}"></i></span>
+        <span style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none">${p.done}/${p.total}</span>
+        <span class="stchip" style="color:${RC[r.level]};border:1px solid ${RC[r.level]};flex:none">${r.label}</span></div>`; }).join('')}
+  </div>`;
+}
+
+// Состав изделия (BOM) — доменная сущность L3. Парсинг спецификации и digest —
+// на сервере (bom.py байт-в-байт с Kotlin); здесь дерево + связь с извещением.
+function l3(oid){ S._l3=S._l3||{}; S._l3[oid]=S._l3[oid]||{}; return S._l3[oid]; }
+// Ленивая загрузка L3-сущностей из нормализованных таблиц (не из блоба состояния).
+// Инвалидация по digest: кэш валиден, только если L.loadedDigest == текущему bomRef.digest.
+async function ensureL3(oid){
+  const o=S.orders.find(x=>x.id===oid); if(!o||!o.bomRef) return;
+  const L=l3(oid);
+  if(L.bom && L.loadedDigest===o.bomRef.digest) return;   // кэш совпадает со снимком — ок
+  if(L.loading) return;                                    // уже грузится — не дёргаем дважды
+  L.loading=true;
+  try{
+    const bm=await (await fetch('/api/bom/load?order='+encodeURIComponent(o.num),{cache:'no-store',headers:AH()})).json();
+    const cd=await (await fetch('/api/cddoc/load?order='+encodeURIComponent(o.num),{cache:'no-store',headers:AH()})).json();
+    const nt=await (await fetch('/api/notice/load?order='+encodeURIComponent(o.num),{cache:'no-store',headers:AH()})).json();
+    L.bom=bm.nodes||[]; L.cddocs=cd.docs||[]; L.notices=nt.notices||[];
+    if(L.cddocs.length){ const lk=await fetch('/api/cddoc/link-bom',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({docs:L.cddocs,nodes:L.bom})}); L.cddocLink=await lk.json().catch(()=>null); }
+    else L.cddocLink=null;
+    L.loadedDigest=o.bomRef.digest; L.loading=false; render();
+  }catch(_){ L.loading=false; }   // при ошибке кэш НЕ залипает пустым — повторим при следующем открытии
+}
+function vBom(o){
+  const L=l3(o.id);
+  // источник данных — кэш L3 (из таблиц); о.bom оставлен для совместимости со старым блобом
+  const bom = L.bom||o.bom||[];
+  const alert = new Set(L.bomAlert||o.bomAlert||[]);
+  const cddocLink = L.cddocLink||o.cddocLink;
+  const cddocs = L.cddocs||o.cddocs;
+  const plmDigest = o.bomRef&&o.bomRef.plm || o.plmDigest;
+  const changeNotices = L.notices||o.changeNotices||[];
+  const linkByKey = {}; ((cddocLink&&cddocLink.links)||[]).forEach(l=>{ linkByKey[l.node_key]=l; });
+  const hasKd = !!cddocLink;
+  const tree = bom.length ? `<div class="bomtree">${bom.map(n=>{
+      const hit = alert.has(n.key);
+      const cd = linkByKey[n.key];
+      const rev = cd ? `<span class="bomrev" title="актуальная ревизия чертежа">ред. ${esc(cd.latest_rev||'—')}</span>`
+                     : (hasKd ? '<span class="bomrev nodoc" title="в реестре КД нет чертежа на эту позицию">нет чертежа</span>' : '');
+      return `<div class="bomrow${hit?' hit':''}" style="padding-left:${(n.depth||0)*18+4}px">
+        <span class="bomcode">${esc(n.code)}</span>
+        <span class="bomname">${esc(n.name||'')}</span>
+        ${rev}
+        <span class="bomqty">${esc(n.qty||'')}${esc(n.unit||'')}</span>
+        ${hit?'<span class="chip warn" style="padding:1px 7px">извещение</span>':''}</div>`;
+    }).join('')}</div>` :
+    '<div class="empty">Спецификация не загружена. Загрузите .xlsx — состав узла разложится деревом (устойчивый шифр+ревизия) и свяжется с извещениями об изменении.</div>';
+  const bomDigest = (o.bomRef&&o.bomRef.digest)||o.bomDigest;
+  const digest = bomDigest ? `<span class="mono" style="font-size:10px;color:var(--muted)">${bom.length} позиций · digest ${esc(bomDigest.slice(0,10))} · <span style="color:var(--good)">в таблицах</span></span>` : '';
+  const kdInfo = hasKd ? `<span class="mono" style="font-size:10px;color:var(--muted)">· КД: ${(cddocs||[]).length} докум.${(cddocLink.nodes_without_doc||[]).length?', без чертежа: '+cddocLink.nodes_without_doc.length:''}</span>` : '';
+  const ncList = changeNotices;
+  const ncDocDefault = (cddocs&&cddocs[0]&&cddocs[0].designation)||'';
+  const link = bom.length ? `<div class="bomlink">
+      <input id="bomCodes" placeholder="шифры извещения через запятую — напр. ЦВС.400.01.00" value="${esc(L.bomCodesRaw||'')}">
+      <button class="btn ghost" data-bomlink="${o.id}">Отметить затронутые позиции</button>
+      <button class="btn ghost" data-bomdiff="${o.id}" title="взять изменённые шифры из сравнения версий КД">← из diff КД</button>
+      ${L.bomAlertNote?`<span style="font-size:12px;color:var(--warn)">${esc(L.bomAlertNote)}</span>`:''}
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:12px">Извещение <b>по составу</b> — связывает переход ревизии КД с позициями комплектации и уходит верфи через Мост. Это отдельный контур от реестра-модуля «Извещения» (документооборот черновик→внедрено).</div>
+    <div class="bomlink" style="margin-top:6px">
+      <input id="ncDoc" placeholder="обозначение КД" value="${esc(ncDocDefault)}" style="max-width:170px">
+      <input id="ncFrom" placeholder="ревизия из" style="max-width:88px">
+      <input id="ncTo" placeholder="в" style="max-width:70px">
+      <input id="ncNo" placeholder="№ извещения" style="max-width:120px">
+      <button class="btn ghost" data-noticebuild="${o.id}" title="собрать извещение по составу из перехода ревизии и шифров (поле «шифры» выше) и связать с позициями">Собрать по составу</button>
+    </div>
+    ${ncList.length?`<div class="ncgrid">${ncList.map(nc=>`<div class="ncrow">
+        <span class="mono" style="font-size:10px;color:var(--muted)">id ${esc((nc.id||'').slice(0,8))}</span>
+        <span class="ncbody">${esc(nc.bridge||'')}</span>
+        ${o.goz?`<button class="btn ghost" data-noticefed="${o.id}|${esc(nc.id||'')}" title="отправить верфи через Мост (поле change_notice, владелец — поставщик)">→ верфи (Мост)</button>`:''}
+      </div>`).join('')}</div>`:''}` : '';
+  return `<div class="panel" style="margin-top:12px">
+    <h3 style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">Состав изделия (BOM) ${digest} ${kdInfo}
+      <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn" data-plmingest="${o.id}" style="font-size:12px" title="ночная выгрузка спецификации из PLM (ЛОЦМАН/T-FLEX): состав и КД одним файлом по ГОСТ 2.106">Принять из PLM (.xlsx)</button>
+        <button class="btn ghost" data-bomimport="${o.id}" style="font-size:12px">Спецификация (.xlsx)</button>
+        ${bom.length?`<button class="btn ghost" data-cddocimport="${o.id}" style="font-size:12px" title="реестр конструкторской документации с ревизиями">КД (.xlsx)</button>`:''}
+        ${bom.length&&o.goz?`<button class="btn ghost" data-bomshare="${o.id}" style="font-size:12px" title="отправить верфи проекцию состава/КД через Мост — только белый список полей, без себестоимости">Поделиться с верфью (Мост)</button>`:''}
+        ${(o.bomRef)?`<button class="btn ghost" data-snapshot="${o.id}" style="font-size:12px" title="выгрузить подписанный снимок проекта (состав+КД+извещения) для архива/передачи">Экспорт снимка (подпись)</button>`:''}
+      </span>
+    </h3>
+    ${plmDigest?`<div class="mono" style="font-size:10px;color:var(--muted);margin:-4px 0 8px">снимок PLM · ${esc(plmDigest.slice(0,10))} · раскладка по ГОСТ 2.106 · хранится в таблицах L3</div>`:''}
+    ${tree}
+    ${link}
+    <input type="file" id="bomFile" accept=".xlsx" style="display:none">
+    <input type="file" id="cddocFile" accept=".xlsx" style="display:none">
+    <input type="file" id="plmFile" accept=".xlsx" style="display:none">
   </div>`;
 }
 
@@ -3418,8 +4842,8 @@ function vKB(){
       <textarea class="kb-input" id="kbq" rows="2" placeholder="Например: центробежный насос охлаждения, подача 400 м³/ч, 40 бар, бронзовый корпус, РМРС">${esc(S.kbq||'')}</textarea>
       <div class="kb-hero-act">
         <button class="btn" id="aiBtn">Найти аналоги</button>
-        <button class="btn ghost" id="upBtn" title="ТЗ в DOCX/PDF — распознаем и найдём по содержимому">Загрузить файл ТЗ</button>
-        <input type="file" id="upFile" accept=".pdf,.docx,.txt,.md,.csv" style="display:none">
+        <button class="btn ghost" id="tzBtn" title="ТЗ в DOCX/PDF/TXT — извлечём текст и найдём аналоги с оценкой">Загрузить файл ТЗ</button>
+        <input type="file" id="tzFile" accept=".pdf,.docx,.txt,.md,.csv" style="display:none">
         <span style="font-size:12px;color:var(--muted)">или попробуйте:</span>
         ${['насос охлаждения 40 бар','теплообменник титан','арматура ДУ-50 запорная'].map(ex=>`<button class="chip" data-kbex="${esc(ex)}">${esc(ex)}</button>`).join('')}
       </div>
@@ -3429,6 +4853,8 @@ function vKB(){
     ${S.kbThinking ? kbSkeleton()
       : res===null ? `<div class="empty" style="padding:26px 4px">Введите параметры нового ТЗ и нажмите «Найти аналоги» — здесь появятся похожие исполненные проекты с их документами и трудоёмкостью.</div>`
       : res.length ? `${extractTZParams(S.kbq).length?`<div class="tz-extract"><span class="tz-lbl">Извлечено из ТЗ</span>${extractTZParams(S.kbq).map(v=>`<span class="tz-chip">${esc(v)}</span>`).join('')}</div>`:''}
+        ${S.analog?analogPanel():''}
+        ${vRoi()}
         <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Найдено аналогов: <b style="color:var(--ink)">${res.length}</b> · ранжировано гибридно: точное обозначение + параметры + смысл. Клик — открыть.</div>
         ${res.map(analogCard).join('')}
         ${S.kbFiles&&S.kbFiles.length?`<h3 style="font-size:14px;margin:22px 0 10px">Совпадения в загруженных файлах</h3>
@@ -3460,6 +4886,15 @@ function vKB(){
           <input class="search" id="kbq" placeholder="фильтр по названию…" value="${esc(S.kbq||'')}" style="flex:1;min-width:180px"></div>
       </div>
       ${S.kbMsg?`<div class="ai-box">${esc(S.kbMsg)}</div>`:''}
+      ${SRV.on?`<div class="panel" style="margin-bottom:14px"><h3>Сравнить версии документа <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· извещение об изменении из diff (ГОСТ 2.503)</span></h3>
+        <p style="font-size:13px;color:var(--ink2);margin:0 0 10px">Выберите две редакции одного документа КД — система покажет, что изменилось построчно, и предложит черновик извещения.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+          <label class="fld" style="flex:1;min-width:180px"><span>Старая редакция</span><select id="kbDiffA"><option>загружаю…</option></select></label>
+          <label class="fld" style="flex:1;min-width:180px"><span>Новая редакция</span><select id="kbDiffB"><option>загружаю…</option></select></label>
+          <button class="btn" data-kbdiff="1">Сравнить</button>
+        </div>
+        <div id="kbDiffResult" style="margin-top:12px"></div>
+      </div>`:''}
       ${docs.length?docs.map(d=>`<div class="doc"><span class="tp">${esc(d.tp)}</span><span class="nm">${esc(d.nm)}</span><span class="vv">${esc(d.vv)}</span></div>`).join('')
         :emptyBox('i-kb','База знаний пока пуста','Загрузите ТЗ, чертежи и спецификации — или импортируйте их из КОМПАС/ЛОЦМАН в «Настройках → Эллинг Агент». Дальше ИИ найдёт аналоги по любому новому ТЗ.','Импортировать из ЛОЦМАН','data-nav2="settings"')}`;
   }
@@ -3714,6 +5149,7 @@ const NAVGROUPS = [
   ]},
   {id:'ic', icon:'i-board', label:'Инженерный центр', items:[
     {view:'board', icon:'i-board', label:'Доска ИЦ'},
+    {view:'ns', icon:'i-plan', label:'Проработка станций', badge:'nsN'},
     {view:'kb', icon:'i-kb', label:'База знаний'},
     {view:'notices', icon:'i-notices', label:'Извещения', badge:'noticesN'},
     {view:'plan', icon:'i-plan', label:'Планирование'},
@@ -3757,8 +5193,8 @@ function syncNavOpen(){
 }
 /* ролевой хаб быстрых действий на «Сегодня» */
 const ROLE_TILES = {
-  'инженер':[['kb','i-kb','Найти в базе знаний'],['board','i-board','Доска ИЦ'],['notices','i-notices','Извещения'],['estimates','i-est','Просчёт']],
-  'рук. ИЦ':[['board','i-board','Доска ИЦ'],['estimates','i-est','Очередь просчёта'],['team','i-deals','Моя команда'],['plan','i-plan','Планирование']],
+  'инженер':[['kb','i-kb','Найти в базе знаний'],['ns','i-plan','Проработка станций'],['board','i-board','Доска ИЦ'],['notices','i-notices','Извещения'],['estimates','i-est','Просчёт']],
+  'рук. ИЦ':[['board','i-board','Доска ИЦ'],['ns','i-plan','Проработка станций'],['estimates','i-est','Очередь просчёта'],['team','i-deals','Моя команда'],['plan','i-plan','Планирование']],
   'продажи':[['deals','i-deals','Сделки'],['radar','i-radar','Радар закладок'],['estimates','i-est','Просчёт ТКП'],['portal','i-portal','Портал заказчика']],
   'закупки':[['supply','i-supply','Снабжение'],['flow','i-flow','Ось заказа'],['portal','i-portal','Портал заказчика']],
   'логист':[['ship','i-ship','Отгрузки'],['flow','i-flow','Ось заказа'],['supply','i-supply','Снабжение'],['portal','i-portal','Портал заказчика']],
@@ -3775,6 +5211,7 @@ function navCount(v){ try{
   if(v==='portal') return portalPending();
   if(v==='radar') return (S.projects||[]).flatMap(p=>p.positions).filter(x=>x.st!=='ok').length;
   if(v==='board') return S.tasks.filter(t=>t.who===S.currentUser&&t.col!=='done').length;
+  if(v==='ns') return nsOverdueCount();
   if(v==='ship') return shipAlerts();
   if(v==='team') return directReports(S.currentUser).length;
 }catch(e){} return 0; }
@@ -4008,15 +5445,17 @@ function render(){
   const ea=estAlerts(); const en=$('estN'); if(en){ en.textContent=ea||''; en.style.display=ea?'':'none'; }
   const sh=shipAlerts(); const shn=$('shipN'); if(shn){ shn.textContent=sh||''; shn.style.display=sh?'':'none'; }
   const pq=portalPending(); const pn=$('portalN'); if(pn){ pn.textContent=pq||''; pn.style.display=pq?'':'none'; }
-  $('content').innerHTML = S.view==='today'?vToday(): S.view==='deals'?vDeals(): S.view==='supply'?vSupply(): S.view==='ship'?vShip(): S.view==='flow'?vFlow(): S.view==='radar'?vRadar(): S.view==='board'?vBoard():
+  const nso=nsOverdueCount(); const nsn=$('nsN'); if(nsn){ nsn.textContent=nso||''; nsn.style.display=nso?'':'none'; }
+  $('content').innerHTML = S.view==='today'?vToday(): S.view==='deals'?vDeals(): S.view==='supply'?vSupply(): S.view==='ship'?vShip(): S.view==='flow'?vFlow(): S.view==='radar'?vRadar(): S.view==='board'?vBoard(): S.view==='ns'?vNS():
     S.view==='plan'?vPlan(): S.view==='order'?vOrder(S.orderId): S.view==='kb'?vKB(): S.view==='estimates'?vEstimates(): S.view==='notices'?vNotices(): S.view==='portal'?vPortal(): S.view==='bench'?vBench(): S.view==='team'?vTeam(): S.view==='settings'?vSettings(): vReports();
   if(S.view!==S._prevView){ const c=$('content'); c.classList.remove('view-in'); void c.offsetWidth; c.classList.add('view-in'); S._prevView=S.view; animateCounters(); }
   if(S._scrollMig){ S._scrollMig=0; try{ setTimeout(()=>{ const w=document.getElementById('migWiz'); if(w&&w.scrollIntoView) w.scrollIntoView({behavior:'smooth',block:'start'}); },70); }catch(e){} }
   if(S.tour&&S.tour.on){ try{ setTimeout(paintTour,60); }catch(e){} }
-  $('userSel').innerHTML = Object.keys(PEOPLE).map(p=>`<option value="${p}" ${S.currentUser===p?'selected':''}>${PEOPLE[p].full} · ${PEOPLE[p].role}</option>`).join('');
+  renderUserbox();
   renderBell();
   if(S.view==='reports' && canAudit()) loadAudit();   // журнал аудита не грузим тем, кому он закрыт
   if(S.view==='settings' && S.setTab==='integrations' && SRV.on){ loadFedPeers(); loadAgentSources(); }
+  if(S.view==='kb' && (S.kbTab||'search')==='files' && SRV.on){ try{ loadKbDocs(); }catch(_){} }
   save();
 }
 /* фоновый рендер (SSE/поллинг/таймер автоматизаций): не рвём фокус и текст,
@@ -4222,10 +5661,237 @@ document.addEventListener('click', e=>{
   if(e.target.closest('[data-chipwho]')){ S.chips.who=null; render(); return; }
   const stab = e.target.closest('[data-settab]');
   if(stab){ S.setTab=stab.dataset.settab; render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
+  // ---- 2FA (второй фактор) ----
+  if(e.target.closest('[data-2fa-setup]')){
+    (async()=>{ try{
+      const j = await (await fetch('/api/auth/2fa/setup',{method:'POST',headers:AH()})).json();
+      if(j.secret){ S.totpSetup={secret:j.secret,uri:j.uri}; render(); }
+      else toast(j.error||'Не удалось начать настройку','bad');
+    }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
+  if(e.target.closest('[data-2fa-cancel]')){ S.totpSetup=null; render(); return; }
+  if(e.target.closest('[data-acctmenu]')){ const d=$('acctDrop'); if(d) d.hidden=!d.hidden; return; }
+  const acct=e.target.closest('[data-account]');
+  if(acct){ const a=acct.dataset.account; const d=$('acctDrop'); if(d) d.hidden=true;
+    if(a==='logout'){ doLogout(); return; }
+    if(a==='sessions'||a==='password'){ S.view='settings'; S.setTab='security'; render();
+      try{ setTimeout(loadSessions,60); }catch(_){} }
+    return; }
+  // клик вне аккаунт-меню — закрыть выпадашку
+  if(!e.target.closest('.acct-wrap')){ const d=$('acctDrop'); if(d&&!d.hidden) d.hidden=true; }
+  if(e.target.closest('[data-changepw]')){
+    const oldv=($('pwOld')?.value||''), nw=($('pwNew')?.value||''), box=$('pwResult');
+    if(box) box.textContent='Меняю…';
+    (async()=>{ try{
+      const r=await fetch('/api/auth/password',{method:'POST',headers:AH({'Content-Type':'application/json'}),
+        body:JSON.stringify({old:oldv,new:nw})});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok){ if(box) box.innerHTML='<span style="color:var(--good)">Пароль изменён. Войдите заново.</span>';
+        toast('Пароль изменён','ok'); setTimeout(()=>location.reload(),1200); }
+      else { if(box) box.innerHTML=`<span style="color:var(--bad)">${esc(j.error||'Не удалось')}</span>`; }
+    }catch(_){ if(box) box.textContent='Сервер недоступен'; } })();
+    return; }
+  if(e.target.closest('[data-kbdiff]')){ runKbDiff(); return; }
+  const kdn=e.target.closest('[data-kbdiffnotice]');
+  if(kdn){ let p={}; try{ p=JSON.parse(kdn.dataset.kbdiffnotice); }catch(_){}
+    S.view='notices'; S.entForm='not'; render();
+    setTimeout(()=>{ try{ if($('nfCode'))$('nfCode').value=p.code||''; if($('nfNote'))$('nfNote').value=p.note||'';
+      const k=$('nfKind'); if(k){ const map={'замена':'replace','добавление':'add','исключение':'cancel'};
+        const want=map[p.kind]; if(want) for(const o of k.options) if(o.value===want){ k.value=want; break; } }
+      if($('nfCode'))$('nfCode').focus(); }catch(_){}; }, 80);
+    toast('Черновик извещения — заполните документ и заказы','ok'); return; }
+  if(e.target.closest('[data-loadsessions]')){ loadSessions(); return; }
+  if(e.target.closest('[data-xlsximport]')){
+    const inp=$('xlsxFile'); if(!inp) return;
+    inp.onchange=async()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
+      const box=$('xlsxResult'); if(box) box.textContent='Импортирую…';
+      try{ const buf=await f.arrayBuffer();
+        const r=await fetch('/api/import/xlsx',{method:'POST',headers:AH(),body:buf});
+        const j=await r.json().catch(()=>({}));
+        if(r.ok){ if(box) box.innerHTML=`<span style="color:var(--good)">Импортировано заказов: <b>${j.imported}</b> (строк в файле: ${j.rows})</span>`;
+          toast('Импортировано заказов: '+j.imported,'ok'); if(typeof pullState==='function') pullState(); }
+        else { if(box) box.innerHTML=`<span style="color:var(--bad)">${esc(j.error||'Не удалось')}</span>`; }
+      }catch(_){ if(box) box.textContent='Сервер недоступен'; }
+      inp.value='';
+    };
+    inp.click(); return; }
+  const bomImp=e.target.closest('[data-bomimport]');
+  if(bomImp){ const oid=bomImp.dataset.bomimport; const inp=$('bomFile'); if(!inp) return;
+    inp.onchange=async()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
+      const o=S.orders.find(x=>x.id===oid); if(!o){ inp.value=''; return; }
+      try{ const buf=await f.arrayBuffer();
+        const r=await fetch('/api/bom/parse?order='+encodeURIComponent(o.num),{method:'POST',headers:AH(),body:buf});
+        const j=await r.json().catch(()=>({}));
+        if(r.ok){ const L=l3(oid);
+          const sb=await fetch('/api/bom/save?order='+encodeURIComponent(o.num),{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({nodes:j.nodes||[]})});
+          if(!sb.ok){ toast('Не удалось сохранить состав в хранилище','bad'); inp.value=''; return; }
+          L.bom=j.nodes||[]; L.bomAlert=[]; L.bomAlertNote='';
+          o.bomRef={digest:j.digest||'',count:j.count||0}; L.loadedDigest=o.bomRef.digest; delete o.bom; delete o.bomDigest;
+          o.feed.push(['сейчас',`<b>Загружен состав изделия</b> — ${j.count} позиций (digest ${(j.digest||'').slice(0,8)}); в таблицах L3`,0]);
+          save(); render(); toast('Состав загружен: '+j.count+' позиций','ok'); }
+        else toast(j.error||'Не удалось разобрать спецификацию','bad');
+      }catch(_){ toast('Сервер недоступен','bad'); }
+      inp.value='';
+    };
+    inp.click(); return; }
+  const bomLink=e.target.closest('[data-bomlink]');
+  if(bomLink){ const oid=bomLink.dataset.bomlink; const o=S.orders.find(x=>x.id===oid); const L=l3(oid); if(!o||!(L.bom||[]).length) return;
+    const raw=(($('bomCodes')&&$('bomCodes').value)||'').trim(); L.bomCodesRaw=raw;
+    const codes=raw.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean);
+    if(!codes.length){ L.bomAlert=[]; L.bomAlertNote=''; render(); return; }
+    (async()=>{ try{
+      const r=await fetch('/api/bom/link-notice',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({nodes:L.bom,codes})});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok){ L.bomAlert=j.affected_keys||[];
+        L.bomAlertNote=`затронуто позиций: ${L.bomAlert.length}`+((j.missing&&j.missing.length)?`; не в составе: ${j.missing.join(', ')}`:'');
+        render(); toast('Отмечено позиций: '+L.bomAlert.length,'ok'); }
+      else toast(j.error||'Не удалось связать','bad');
+    }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
+  const bomDiff=e.target.closest('[data-bomdiff]');
+  if(bomDiff){ const codes=(S.kbDiffCodes||[]); const inp=$('bomCodes');
+    if(inp) inp.value=codes.join(', ');
+    toast(codes.length?('Шифры из diff КД: '+codes.length):'Сначала сравните версии КД в БЗ→Файлы', codes.length?'ok':'bad');
+    return; }
+  const plmIng=e.target.closest('[data-plmingest]');
+  if(plmIng){ const oid=plmIng.dataset.plmingest; const inp=$('plmFile'); if(!inp) return;
+    inp.onchange=async()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
+      const o=S.orders.find(x=>x.id===oid); if(!o){ inp.value=''; return; }
+      try{ const buf=await f.arrayBuffer();
+        const r=await fetch('/api/plm/ingest?order='+encodeURIComponent(o.num),{method:'POST',headers:AH(),body:buf});
+        const j=await r.json().catch(()=>({}));
+        if(r.ok){ const L=l3(oid);
+          const c=j.counts||{};
+          // СНАЧАЛА персист в таблицы; bomRef/удаление из блоба — ТОЛЬКО если записи прошли,
+          // иначе bomRef заявит новый снимок, а таблица останется старой → потеря данных.
+          const sb=await fetch('/api/bom/save?order='+encodeURIComponent(o.num),{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({nodes:j.nodes||[]})});
+          const sc=await fetch('/api/cddoc/save?order='+encodeURIComponent(o.num),{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({docs:j.docs||[]})});
+          if(!sb.ok||!sc.ok){ toast('Не удалось сохранить состав в хранилище — снимок не применён','bad'); inp.value=''; return; }
+          L.bom=j.nodes||[]; L.bomAlert=[]; L.bomAlertNote=''; L.cddocs=j.docs||[]; L.cddocLink=j.link||{links:[],nodes_without_doc:[]};
+          o.bomRef={digest:j.bom_digest||'',count:c.positions||0,docs:c.documents||0,plm:j.digest||''};
+          L.loadedDigest=o.bomRef.digest;   // кэш согласован со снимком — ensureL3 не перегружает зря
+          delete o.bom; delete o.cddocs; delete o.cddocLink; delete o.plmDigest; delete o.bomDigest;
+          o.feed.push(['сейчас',`<b>Принята выгрузка PLM</b> — ${c.positions||0} позиций, ${c.documents||0} документов КД (снимок ${(j.digest||'').slice(0,8)}); хранится в таблицах L3`,0]);
+          save(); render(); toast(`PLM: ${c.positions||0} позиций, ${c.documents||0} докум. КД → таблицы`,'ok'); }
+        else toast(j.error||'Не удалось принять выгрузку PLM','bad');
+      }catch(_){ toast('Сервер недоступен','bad'); }
+      inp.value='';
+    };
+    inp.click(); return; }
+  const snap=e.target.closest('[data-snapshot]');
+  if(snap){ const o=S.orders.find(x=>x.id===snap.dataset.snapshot); if(!o) return;
+    (async()=>{ try{
+      const r=await fetch('/api/order/snapshot?order='+encodeURIComponent(o.num)+'&title='+encodeURIComponent(o.title||''),{cache:'no-store',headers:AH()});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok&&j.body){
+        const blob=new Blob([JSON.stringify(j,null,2)],{type:'application/json'});
+        const url=URL.createObjectURL(blob); const a=document.createElement('a');
+        a.href=url; a.download='elling-snimok-'+(o.num||'проект')+'.json'; document.body.appendChild(a); a.click();
+        setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },100);
+        o.feed.push(['сейчас',`<b>Экспортирован подписанный снимок</b> — ${(j.body.counts||{}).positions||0} позиций, ${(j.body.counts||{}).documents||0} докум. КД (digest ${(j.digest||'').slice(0,8)}, Ed25519)`,0]);
+        save(); render(); toast('Снимок выгружен (подписан Ed25519)','ok');
+      } else toast(j.error||'Не удалось сформировать снимок','bad');
+    }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
+  const bomShare=e.target.closest('[data-bomshare]');
+  if(bomShare){ const o=S.orders.find(x=>x.id===bomShare.dataset.bomshare); if(!o) return;
+    (async()=>{ try{
+      const r=await fetch('/api/fed/share-bom',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({order:o.num, actor:PEOPLE[S.currentUser].full})});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok){ const c=(j.share&&j.share.counts)||{};
+        o.feed.push(['сейчас',`Поделился составом с верфью через Мост — ${c.positions||0} позиций, ${c.documents||0} докум. КД (только белый список, без себестоимости)`,1]);
+        save(); render(); toast('Отправлено верфи: '+(c.positions||0)+' позиций','ok'); }
+      else toast(j.error||'Мост недоступен','bad');
+    }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
+  const ncBuild=e.target.closest('[data-noticebuild]');
+  if(ncBuild){ const oid=ncBuild.dataset.noticebuild; const o=S.orders.find(x=>x.id===oid); const L=l3(oid); if(!o||!(L.bom||[]).length) return;
+    const cd=(($('ncDoc')&&$('ncDoc').value)||'').trim();
+    if(!cd){ toast('Укажите обозначение КД','bad'); return; }
+    const raw=(($('bomCodes')&&$('bomCodes').value)||'').trim();
+    const codes=raw.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean);
+    const body={cd_doc:cd, rev_from:(($('ncFrom')&&$('ncFrom').value)||'').trim(), rev_to:(($('ncTo')&&$('ncTo').value)||'').trim(),
+      notice_no:(($('ncNo')&&$('ncNo').value)||'').trim(), codes, nodes:L.bom, kind:'замена'};
+    (async()=>{ try{
+      const r=await fetch('/api/notice/build',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify(body)});
+      const nc=await r.json().catch(()=>({}));
+      if(r.ok&&nc.id){ L.notices=L.notices||[];
+        if(!L.notices.some(x=>x.id===nc.id)) L.notices.unshift(nc);
+        await fetch('/api/notice/save?order='+encodeURIComponent(o.num),{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({notice:nc})});
+        L.bomAlert=nc.affected_positions||[];   // подсветить задетые позиции
+        o.feed.push(['сейчас',`<b>Извещение об изменении</b> ${esc(nc.notice_no||nc.id.slice(0,8))} — ${esc(nc.cd_doc)} рев.${esc(nc.rev_from)}→${esc(nc.rev_to)}, позиций: ${nc.affected_count}`,1]);
+        save(); render(); toast('Извещение собрано, позиций: '+nc.affected_count,'ok'); }
+      else toast(nc.error||'Не удалось собрать извещение','bad');
+    }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
+  const ncFed=e.target.closest('[data-noticefed]');
+  if(ncFed){ const [oid,nid]=ncFed.dataset.noticefed.split('|'); const o=S.orders.find(x=>x.id===oid); if(!o) return;
+    const nc=(l3(oid).notices||[]).find(x=>x.id===nid); if(!nc) return;
+    fedEmit('change_notice', nc.bridge||('Извещение '+nc.id), PEOPLE[S.currentUser].full, o.num).then(j=>{
+      if(j){ o.feed.push(['сейчас',`Извещение ${esc(nc.notice_no||nc.id.slice(0,8))} отправлено верфи через Мост`,1]); render(); toast('Отправлено верфи через Мост','ok'); }
+      else toast('Мост недоступен','bad');
+    }); return; }
+  const cddocImp=e.target.closest('[data-cddocimport]');
+  if(cddocImp){ const oid=cddocImp.dataset.cddocimport; const inp=$('cddocFile'); if(!inp) return;
+    inp.onchange=async()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
+      const o=S.orders.find(x=>x.id===oid); if(!o){ inp.value=''; return; }
+      try{ const buf=await f.arrayBuffer();
+        const r=await fetch('/api/cddoc/parse',{method:'POST',headers:AH(),body:buf});
+        const j=await r.json().catch(()=>({}));
+        if(r.ok){ const L=l3(oid); L.cddocs=j.docs||[];
+          await fetch('/api/cddoc/save?order='+encodeURIComponent(o.num),{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({docs:L.cddocs})});
+          const lr=await fetch('/api/cddoc/link-bom',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({docs:L.cddocs,nodes:L.bom||[]})});
+          L.cddocLink=await lr.json().catch(()=>({links:[],nodes_without_doc:[]}));
+          if(o.bomRef) o.bomRef.docs=j.count||0;
+          o.feed.push(['сейчас',`<b>Загружен реестр КД</b> — ${j.count} документов, привязано к составу; в таблицах L3`,0]);
+          save(); render(); toast('Реестр КД: '+j.count+' документов','ok'); }
+        else toast(j.error||'Не удалось разобрать реестр КД','bad');
+      }catch(_){ toast('Сервер недоступен','bad'); }
+      inp.value='';
+    };
+    inp.click(); return; }
+  if(e.target.closest('[data-revokeothers]')){
+    (async()=>{ try{ const r=await fetch('/api/auth/sessions/revoke-others',{method:'POST',headers:AH()});
+      const j=await r.json().catch(()=>({})); toast(r.ok?`Завершено сессий: ${j.revoked||0}`:'Не удалось', r.ok?'ok':'bad'); loadSessions();
+    }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
+  const rvs=e.target.closest('[data-revokesession]');
+  if(rvs){ const h=rvs.dataset.revokesession;
+    (async()=>{ try{ const r=await fetch('/api/auth/sessions/revoke',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({handle:h})});
+      toast(r.ok?'Сессия завершена':'Не удалось', r.ok?'ok':'bad'); loadSessions();
+    }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
+  if(e.target.closest('[data-invite]')){
+    const login=($('invLogin')?.value||'').trim(), name=($('invName')?.value||'').trim();
+    const role=($('invRole')?.value||'инженер').trim(), lvl=parseInt($('invLvl')?.value||'3',10)||3;
+    const box=$('invResult'); if(box) box.innerHTML='<span style="font-size:12px;color:var(--muted)">Создаю…</span>';
+    (async()=>{ try{
+      const r=await fetch('/api/auth/invite',{method:'POST',headers:AH({'Content-Type':'application/json'}),
+        body:JSON.stringify({login,name,role,lvl})});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok&&j.code){ box.innerHTML=`<div class="ai-box" style="margin-top:12px;border-left:3px solid var(--good)">
+        <b style="color:var(--good)">Приглашение создано.</b> Логин: <b>${esc(j.login)}</b><br>
+        Одноразовый код активации: <span style="font-family:var(--mono);font-size:18px;letter-spacing:.15em;background:var(--panel2);padding:3px 10px;border-radius:6px">${esc(j.code)}</span><br>
+        <span style="font-size:12px;color:var(--muted)">Передайте код сотруднику лично. Показывается один раз.</span></div>`;
+        toast('Приглашение создано','ok'); if($('invLogin'))$('invLogin').value='';
+      } else { box.innerHTML=`<div style="color:var(--bad);font-size:13px;margin-top:10px">${esc(j.error||'Не удалось')}</div>`; }
+    }catch(_){ box.innerHTML='<div style="color:var(--bad);font-size:13px;margin-top:10px">Сервер недоступен</div>'; } })();
+    return; }
+  if(e.target.closest('[data-2fa-enable]')){
+    const code=($('totpCode')?.value||'').trim(); const setup=S.totpSetup||{};
+    (async()=>{ try{
+      const r = await fetch('/api/auth/2fa/enable',{method:'POST',headers:AH({'Content-Type':'application/json'}),
+        body:JSON.stringify({secret:setup.secret,code})});
+      const j = await r.json().catch(()=>({}));
+      if(r.ok&&j.enabled){ TOTP2FA=true; S.totpSetup=null; render(); toast('Двухфакторная защита включена','ok'); }
+      else toast(j.error||'Код не сошёлся','bad');
+    }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
+  if(e.target.closest('[data-2fa-disable]')){
+    const pass=($('totpPass')?.value||'');
+    (async()=>{ try{
+      const r = await fetch('/api/auth/2fa/disable',{method:'POST',headers:AH({'Content-Type':'application/json'}),
+        body:JSON.stringify({password:pass})});
+      const j = await r.json().catch(()=>({}));
+      if(r.ok&&j.enabled===false){ TOTP2FA=false; render(); toast('Второй фактор выключен','ok'); }
+      else toast(j.error||'Пароль неверен','bad');
+    }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
   const cont = e.target.closest('[data-contour]');
   if(cont){ S.orgContour=cont.dataset.contour; save(); render(); toast(S.orgContour==='box'?'Контур: закрытый (коробка on-prem)':'Контур: облако','ok'); return; }
   const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
-  const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); return; }
+  const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); ensureL3(ord.dataset.order); return; }
   const adv = e.target.closest('[data-advance]');
   if(adv){ const o=S.orders.find(x=>x.id===adv.dataset.advance);
     if(o.stage<STAGE_NAMES.length-1){ o.stage++; if(o.stage>=8&&o.risk!=='done') o.risk='ok';
@@ -4704,9 +6370,36 @@ document.addEventListener('click', e=>{
   }
   const kbp = e.target.closest('[data-kbproj]');
   if(kbp){ vKbProject(kbp.dataset.kbproj); return; }
+  if(e.target.closest('[data-roicalc]')){ roiCalc(); return; }
+  if(e.target.closest('[data-loadplan]')){ loadPlan(); return; }
+  if(e.target.closest('[data-estsheet]')){ if(S.analog) printDoc(estimateSheetHTML()); return; }
+  const fromAn=e.target.closest('[data-fromanalog]'); if(fromAn){ orderFromAnalog(fromAn.dataset.fromanalog); return; }
+  // ── Проработка НС ──
+  if(e.target.closest('[data-nsgoztoggle]')){ S._nsAddGoz=!S._nsAddGoz; render(); return; }
+  if(e.target.closest('[data-nsadd]')){ S._nsAddOpen=!S._nsAddOpen; render(); return; }
+  { const el=e.target.closest('[data-nsaddtype]'); if(el){ nsAddStation(el.dataset.nsaddtype, S._nsAddGoz); return; } }
+  { const el=e.target.closest('[data-nsview]'); if(el){ S.nsView=el.dataset.nsview; if(el.dataset.nstab) S.nsActive=el.dataset.nstab; render(); return; } }
+  { const el=e.target.closest('[data-nstab]'); if(el){ S.nsActive=el.dataset.nstab; render(); return; } }
+  { const el=e.target.closest('[data-nsstatus]'); if(el){ const a=el.dataset.nsstatus.split(':'); nsCycleStatus(a[0],a[1]); return; } }
+  { const el=e.target.closest('[data-nsadditem]'); if(el){ nsAddItem(el.dataset.nsadditem); return; } }
+  { const el=e.target.closest('[data-nsdelitem]'); if(el){ const a=el.dataset.nsdelitem.split(':'); nsDelItem(a[0],a[1]); return; } }
+  { const el=e.target.closest('[data-nsdelst]'); if(el){ nsDelStation(el.dataset.nsdelst); return; } }
+  { const el=e.target.closest('[data-nssnap]'); if(el){ nsSnapshot(el.dataset.nssnap); return; } }
+  { const el=e.target.closest('[data-nsartadd]'); if(el){ const a=el.dataset.nsartadd.split(':'); nsAddArtifact(a[0],a[1]); return; } }
+  { const el=e.target.closest('[data-nsartbump]'); if(el){ const a=el.dataset.nsartbump.split(':'); nsBumpRev(a[0],a[1],a[2]); return; } }
+  { const el=e.target.closest('[data-nsartdel]'); if(el){ const a=el.dataset.nsartdel.split(':'); nsDelArtifact(a[0],a[1],a[2]); return; } }
+  { const el=e.target.closest('[data-nssched]'); if(el){ nsPromptSchedule(el.dataset.nssched); return; } }
+  { const el=e.target.closest('[data-nsreport]'); if(el){ const st=nsById(el.dataset.nsreport); if(st) printDoc(nsReportHTML(st)); return; } }
+  { const el=e.target.closest('[data-nstask]'); if(el){ nsStationToTask(el.dataset.nstask); return; } }
+  if(e.target.closest('[data-nsverify]')){ nsVerifyPrompt(); return; }
+  if(e.target.closest('[data-nsvfreport]')){ const v=S._nsVerify; if(v&&v.body) printDoc(nsReportFromSnapshot(v.body, v.digest, v.valid)); return; }
+  if(e.target.closest('[data-nsvfclose]')){ S._nsVerify=null; render(); return; }
+  { const el=e.target.closest('[data-nsopen]'); if(el){ S.view='ns'; S.nsView='list'; S.nsActive=el.dataset.nsopen; render(); return; } }
+  { const el=e.target.closest('[data-nsgoorder]'); if(el){ S.view='order'; S.orderId=el.dataset.nsgoorder; render(); return; } }
+  { const el=e.target.closest('[data-nslog]'); if(el){ const k=el.dataset.nslog; S._nsLog = S._nsLog===k?null:k; render(); return; } }
   if(e.target.id==='aiBtn'){
     if(!(S.kbq||'').trim()){ S.kbMsg='Введите параметры ТЗ или ключевые слова.'; render(); return; }
-    S.kbMsg=''; searchFiles();
+    S.kbMsg=''; searchFiles(); analogRank();   // серверная ИИ-оценка трудоёмкости
     let reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(x){}
     if(reduce){ S.kbAI=true; S.kbThinking=false; render(); return; }
     S.kbThinking=true; S.kbAI=false; render();
@@ -4717,12 +6410,28 @@ document.addEventListener('click', e=>{
     if(!SRV.on){ S.kbMsg='Загрузка файлов работает при подключённом сервере (запустите Запустить_сервер.bat). Поиск по каталогу проектов работает и без сервера.'; render(); return; }
     $('upFile').click(); return;
   }
+  if(e.target.id==='tzBtn'){
+    if(!SRV.on){ S.kbMsg='Извлечение ТЗ из файла работает при подключённом сервере.'; render(); return; }
+    $('tzFile').click(); return;
+  }
   if(e.target.id==='subAdd'){ const t=task($('drawer').dataset.task); const v=$('subNew').value.trim();
     if(t&&v){ t.subs.push({t:v,done:false}); t.log.push('подзадача добавлена'); save(); openTask(t.key); } return; }
   if(e.target.id==='cmtAdd'){ const t=task($('drawer').dataset.task); const v=$('cmtNew').value.trim();
     if(t&&v){ t.comments.push({a:PEOPLE[S.currentUser].full,m:v}); t.log.push(`комментарий от ${PEOPLE[S.currentUser].full}`); save(); openTask(t.key); } return; }
 });
 
+// Загрузка файла ТЗ (DOCX/PDF/TXT) → извлечение текста на сервере → в поиск аналогов.
+async function tzExtract(f){
+  S.kbMsg='Извлекаю текст ТЗ из «'+f.name+'»…'; render();
+  try{ const buf=await f.arrayBuffer();
+    const r=await fetch('/api/tz/extract',{method:'POST',headers:AH({'X-Filename':encodeURIComponent(f.name)}),body:buf});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok && (j.text||'').trim()){
+      S.kbq=j.text.slice(0,4000); S.kbMsg=''; S.kbAI=true; S.kbThinking=false;
+      searchFiles(); analogRank(); render();
+    } else { S.kbMsg=j.error||('Из файла «'+f.name+'» не извлёкся текст (для PDF-сканов нужен OCR).'); render(); }
+  }catch(_){ S.kbMsg='Сервер недоступен — не удалось извлечь ТЗ.'; render(); }
+}
 async function uploadDoc(f){
   try{
     S.kbMsg = `Загружаю «${f.name}»…`; render();
@@ -4741,6 +6450,7 @@ async function uploadDoc(f){
 
 document.addEventListener('change', e=>{
   if(e.target.id==='upFile'){ const f=e.target.files[0]; e.target.value=''; if(f) uploadDoc(f); return; }
+  if(e.target.id==='tzFile'){ const f=e.target.files[0]; e.target.value=''; if(f) tzExtract(f); return; }
   if(e.target.id==='bkRestore'){ const f=e.target.files[0]; e.target.value=''; if(f){
     if(!confirm('Восстановить базу из файла «'+f.name+'»?\n\nТекущее состояние заменится. Перед этим будет сделан страховочный снимок.')) return;
     S.bkMsg='Проверяю файл и восстанавливаю…'; render();
@@ -4797,6 +6507,15 @@ document.addEventListener('change', e=>{
 
 document.addEventListener('input', e=>{
   if(e.target.id==='q'){ S.q=e.target.value; if(S.view==='board'||S.view==='plan') render(); }
+  if(e.target.dataset&&e.target.dataset.roi){ S.roiIn=S.roiIn||{}; S.roiIn[e.target.dataset.roi]=Math.max(0,parseInt(e.target.value||'0',10)||0); return; }
+  if(e.target.dataset&&e.target.dataset.nsrole){ const a=e.target.dataset.nsrole.split(':'); const st=nsById(a[0]); const it=st&&(st.items||[]).find(x=>x.id===a[1]); if(it){ it.role=e.target.value; nsLog(it,'исполнитель → '+(NS_ROLE[it.role]||it.role)); nsTouch(it); save(); } return; }
+  if(e.target.dataset&&e.target.dataset.nsdue){ const a=e.target.dataset.nsdue.split(':'); const st=nsById(a[0]); const it=st&&(st.items||[]).find(x=>x.id===a[1]); if(it){ it.due=e.target.value||''; nsLog(it,'срок → '+(it.due||'снят')); nsTouch(it); save(); render(); } return; }
+  if(e.target.dataset&&e.target.dataset.nsdec){ const a=e.target.dataset.nsdec.split(':'); const st=nsById(a[0]); const it=st&&(st.items||[]).find(x=>x.id===a[1]); if(it){ it.dec=e.target.value; nsTouch(it); save(); } return; }
+  if(e.target.dataset&&e.target.dataset.nsname){ const st=nsById(e.target.dataset.nsname); if(st){ st.name=e.target.value; save(); } return; }
+  if(e.target.dataset&&e.target.dataset.nsproj){ const st=nsById(e.target.dataset.nsproj); if(st){ st.proj=e.target.value; save(); } return; }
+  if(e.target.dataset&&e.target.dataset.nsasu){ const st=nsById(e.target.dataset.nsasu); if(st){ st.asu=e.target.value; save(); } return; }
+  if(e.target.dataset&&e.target.dataset.nsorder){ const st=nsById(e.target.dataset.nsorder); if(st){ st.order=e.target.value; save(); } return; }
+  if(e.target.dataset&&e.target.dataset.iccap){ icCap()[e.target.dataset.iccap]=Math.max(0,parseInt(e.target.value||'0',10)||0); return; }
   if(e.target.id==='kbq'){ S.kbq=e.target.value;
     // на вкладке «Поиск» текст ТЗ печатается/вставляется без ре-рендера (сохраняем фокус),
     // результаты — по кнопке; в каталоге/файлах — живой фильтр
@@ -4891,5 +6610,5 @@ buildNav();
 render();
 bootstrapSrv();
 try{ if(!localStorage.getItem(WELCOME_KEY)) openWelcome(); }catch(e){}  // приветствие при первом входе
-setInterval(()=>{ if(runAutomations('timer')) renderBg(); }, 60000);  // v0.9: авто-проверка просрочек (renderBg — не рвём ввод, ревью v1.0)
+setInterval(()=>{ let ch=runAutomations('timer'); if(nsScanOverdue()) ch=true; if(ch) renderBg(); }, 60000);  // v0.9: авто-проверка просрочек задач + проработки НС (renderBg — не рвём ввод, ревью v1.0)
 </script>
