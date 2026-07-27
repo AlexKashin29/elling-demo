@@ -1262,6 +1262,45 @@ const COLS = [ {id:'open',name:'Очередь'},{id:'wip',name:'В работе
 const STNAME = {open:'Очередь',wip:'В работе',rev:'Согласование',done:'Готово'};
 const RISK = {ok:['var(--good)','в графике'],warn:['var(--warn)','риск срока'],risk:['var(--risk)','срыв срока'],done:['var(--muted)','закрыт']};
 
+// Сид станций проработки с ОТНОСИТЕЛЬНЫМИ к сегодня датами (иначе демо зависит от часов
+// посетителя: всё «в будущем» или всё «просрочено»). Даёт живой спектр: НС-1 «в графике»,
+// НС-2 «срыв» (просроченный критерий), НС-3 ГОЗ-пожарная «риск». nsDay/nsISO/todayISO —
+// function-declarations (хойстятся), вызываемы на момент загрузки. NS_TYPES тут НЕ юзать (TDZ).
+function nsSeedStations(){
+  var T=nsDay(todayISO()); var D=function(n){ return nsISO(T+n); };
+  return [
+    {id:'NS1', name:'НС-1 Канализационная (КНС-1200)', type:'kns', order:'2417', proj:'petrov', asu:'ivanov', note:'Заглубление 6 м, две рабочие + резерв. Сети — самотёк.', items:[
+      {id:'d1', title:'ТЗ на подбор оборудования', role:'proj', status:'done', due:D(-16), dec:'Подача 1200 м³/ч, напор 32 м — 3×насос Grundfos S2, 1 резерв.', artifact:'ТЗ-2071-НС1'},
+      {id:'d2', title:'Гидравлическая схема', role:'proj', status:'done', due:D(-11), dec:'Напорный коллектор Ду400, обратные клапаны на каждом насосе.', artifact:'ГС-2071-01'},
+      {id:'d3', title:'Компоновка насосной', role:'proj', status:'check', due:D(1), dec:'Мокрая камера + сухой машзал. Кран-балка 2 т.', artifacts:[{code:'СБ-2071-03',rev:'Б'},{code:'ГЧ-2071-01',rev:'А'},{code:'Спецификация 2071-НС1',rev:''}]},
+      {id:'d4', title:'Резервуары', role:'proj', status:'wip', due:D(4), dec:'Приёмный резервуар V=180 м³, монолит.'},
+      {id:'d5', title:'Расположение на плане', role:'proj', status:'wip', due:D(6), dec:''},
+      {id:'d6', title:'Компоновка трубопроводов', role:'proj', status:'todo', due:D(11), dec:''},
+      {id:'d7', title:'3D-модель', role:'proj', status:'todo', due:D(17), dec:''},
+      {id:'d8', title:'Схемы автоматизации (АСУ ТП)', role:'asu', status:'todo', due:D(22), dec:'Ждёт компоновку и гидросхему — датчики уровня, ЧРП на 3 насоса.'},
+    ]},
+    {id:'NS2', name:'НС-2 Хозпитьевая (ВНС объект 22350)', type:'vns', order:'', proj:'petrov', asu:'ivanov', note:'Повысительная, 2 насоса + мембранный бак.', items:[
+      {id:'d1', title:'ТЗ на подбор оборудования', role:'proj', status:'done', due:D(-18), dec:'Подача 80 м³/ч, напор 50 м, второй насос — АВР.'},
+      {id:'d2', title:'Гидравлическая схема', role:'proj', status:'wip', due:D(-3), dec:'Мембранный бак 500 л, поддержание давления.'},
+      {id:'d3', title:'Компоновка насосной', role:'proj', status:'todo', due:D(2), dec:''},
+      {id:'d4', title:'Резервуары', role:'proj', status:'todo', due:D(5), dec:''},
+      {id:'d5', title:'Расположение на плане', role:'proj', status:'todo', due:D(8), dec:''},
+      {id:'d6', title:'Компоновка трубопроводов', role:'proj', status:'todo', due:D(12), dec:''},
+      {id:'d7', title:'3D-модель', role:'proj', status:'todo', due:D(16), dec:''},
+      {id:'d8', title:'Схемы автоматизации (АСУ ТП)', role:'asu', status:'todo', due:D(20), dec:''},
+    ]},
+    {id:'NS3', name:'ПНС-4 Пожарная (склад №4)', type:'fire', goz:1, order:'2431', proj:'petrov', asu:'ivanov', note:'Гособоронзаказ. АУП, дизельный резерв, жокей-насос. Приёмка ВП.', items:[
+      {id:'d1', title:'ТЗ на подбор оборудования', role:'proj', status:'done', due:D(-6), dec:'НПВ 60 л/с, автоматический пуск по падению давления.', deps:[]},
+      {id:'d2', title:'Расчёт НПВ (нормативный пожарный расход)', role:'proj', status:'wip', due:D(1), dec:'', deps:['d1']},
+      {id:'d3', title:'Гидравлическая схема', role:'proj', status:'todo', due:D(2), dec:'', deps:['d1','d2']},
+      {id:'d4', title:'Пожарные резервуары', role:'proj', status:'todo', due:D(3), dec:'', deps:['d2','d3']},
+      {id:'d5', title:'Жокей-насос поддержания давления', role:'proj', status:'todo', due:D(4), dec:'', deps:['d3']},
+      {id:'d6', title:'Компоновка насосной', role:'proj', status:'todo', due:D(5), dec:'', deps:['d3','d4','d5']},
+      {id:'d7', title:'Автоматика пуска АУП (по давлению)', role:'asu', status:'todo', due:D(6), dec:'', deps:['d3','d5']},
+      {id:'d8', title:'Согласование КД с военпредом (ВП)', role:'proj', status:'todo', due:D(6), dec:'ВП проверяет готовый комплект КД.', deps:['d6','d7']},
+    ]},
+  ];
+}
 function seed(){
   function t(key,ttl,epic,who,col,prio,est,sla,desc,subs,comments){
     return {key,ttl,epic,who,col,prio,est,sla,desc,
@@ -1596,28 +1635,7 @@ function seed(){
           {type:'Сертификат', name:'СТО №22.00779.120', ver:'до 2027', where:'реестр сертификатов'},
         ]},
     ],
-    ns:[
-      {id:'NS1', name:'НС-1 Канализационная (КНС-1200)', order:'2417', proj:'petrov', asu:'ivanov', note:'Заглубление 6 м, две рабочие + резерв. Сети — самотёк.', items:[
-        {id:'d1', title:'ТЗ на подбор оборудования', role:'proj', status:'done', due:'2026-07-10', dec:'Подача 1200 м³/ч, напор 32 м — 3×насос Grundfos S2, 1 резерв.', artifact:'ТЗ-2071-НС1'},
-        {id:'d2', title:'Гидравлическая схема', role:'proj', status:'done', due:'2026-07-14', dec:'Напорный коллектор Ду400, обратные клапаны на каждом насосе.', artifact:'ГС-2071-01'},
-        {id:'d3', title:'Компоновка насосной', role:'proj', status:'check', due:'2026-07-18', dec:'Мокрая камера + сухой машзал. Кран-балка 2 т.', artifacts:[{code:'СБ-2071-03',rev:'Б'},{code:'ГЧ-2071-01',rev:'А'},{code:'Спецификация 2071-НС1',rev:''}]},
-        {id:'d4', title:'Резервуары', role:'proj', status:'wip', due:'2026-07-24', dec:'Приёмный резервуар V=180 м³, монолит.'},
-        {id:'d5', title:'Расположение на плане', role:'proj', status:'wip', due:'2026-07-25', dec:''},
-        {id:'d6', title:'Компоновка трубопроводов', role:'proj', status:'todo', due:'2026-07-30', dec:''},
-        {id:'d7', title:'3D-модель', role:'proj', status:'todo', due:'2026-08-05', dec:''},
-        {id:'d8', title:'Схемы автоматизации (АСУ ТП)', role:'asu', status:'todo', due:'2026-08-08', dec:'Ждёт компоновку и гидросхему — датчики уровня, ЧРП на 3 насоса.'},
-      ]},
-      {id:'NS2', name:'НС-2 Хозпитьевая (ВНС объект 22350)', order:'', proj:'petrov', asu:'ivanov', note:'Повысительная, 2 насоса + мембранный бак.', items:[
-        {id:'d1', title:'ТЗ на подбор оборудования', role:'proj', status:'done', due:'2026-07-12', dec:'Подача 80 м³/ч, напор 50 м, второй насос — АВР.'},
-        {id:'d2', title:'Гидравлическая схема', role:'proj', status:'wip', due:'2026-07-22', dec:'Мембранный бак 500 л, поддержание давления.'},
-        {id:'d3', title:'Компоновка насосной', role:'proj', status:'todo', due:'2026-07-28', dec:''},
-        {id:'d4', title:'Резервуары', role:'proj', status:'todo', due:'2026-07-30', dec:''},
-        {id:'d5', title:'Расположение на плане', role:'proj', status:'todo', due:'2026-08-01', dec:''},
-        {id:'d6', title:'Компоновка трубопроводов', role:'proj', status:'todo', due:'2026-08-04', dec:''},
-        {id:'d7', title:'3D-модель', role:'proj', status:'todo', due:'2026-08-08', dec:''},
-        {id:'d8', title:'Схемы автоматизации (АСУ ТП)', role:'asu', status:'todo', due:'2026-08-10', dec:''},
-      ]},
-    ],
+    ns: nsSeedStations(),
     rules:[
       {id:'R1',name:'Просрочка → комментарий + уведомить наблюдателей и исполнителя',trigger:'overdue',act:{comment:1,notify:1,prio:0},enabled:1},
       {id:'R2',name:'Задача «на согласовании» → уведомить руководителя ИЦ',trigger:'to_rev',act:{comment:0,notify:1,prio:0},enabled:1},
