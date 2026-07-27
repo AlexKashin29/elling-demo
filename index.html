@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.77 «Отгрузки» — рабочий MVP</title>
+﻿<title>Эллинг v1.78 «Проработка НС» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1702,6 +1702,10 @@ function seed(){
 }
 let S;
 try{ S = JSON.parse(localStorage.getItem(LSKEY)) || seed(); }catch(e){ S = seed(); }
+// Бэкфилл новых сид-ключей для вернувшихся с кэшем старой версии (напр. модуль
+// проработки НС появился позже): подмешиваем только ОТСУТСТВУЮЩИЕ ключи, не трогая
+// уже сохранённые правки пользователя. Иначе у старого кэша S.ns=undefined → пустой модуль.
+(function(){ try{ const _sd=seed(); for(const k in _sd){ if(S[k]===undefined) S[k]=_sd[k]; } }catch(_){} })();
 function save(){ try{ const {_l3, ...rest}=S; localStorage.setItem(LSKEY, JSON.stringify(rest)); }catch(e){} queuePush(); }
 // _l3 (кэш узлов состава, десятки тысяч) НЕ персистится: (1) не переполняет лимит
 // localStorage, (2) после перезагрузки кэш перечитывается из таблиц через ensureL3
