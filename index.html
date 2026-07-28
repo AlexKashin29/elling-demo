@@ -4785,7 +4785,10 @@ function vToday(){
     ${nsdl.over.concat(nsdl.soon).slice(0,6).map(x=>{ const over=nsIsOverdue(x.it); const sm=NS_STATUS[x.it.status]||NS_STATUS.todo;
       const cs=nsCriterionState(x.st,x.it);
       const csx = cs.state==='blocked' ? ` · <span class="ns-dep blocked" style="padding:0 5px">⛓ ждёт: ${esc(cs.waitFor.join(', '))}</span>` : cs.state==='ready' ? ` · <span class="ns-dep ready" style="padding:0 5px">готов к старту</span>` : '';
-      return `<div class="wcard ${over?'urgent':''}" data-nav2="ns" style="cursor:pointer"><div class="body"><span class="k">${esc(x.st.name)}</span><div class="t">${esc(x.it.title||'')}</div><div class="why">${over?'<b>просрочено</b>':'срок'} ${nsFmtDay(x.d)} · ${sm[0]}${csx}</div></div><span class="stchip">открыть →</span></div>`; }).join('')||'<div class="zero">Нет ближайших сроков проработки.</div>'}</div>` : '';
+      // «одна большая кнопка»: двигаем критерий прямо из «Сегодня». Заблокированный зависимостями — только открыть.
+      const adv={todo:['Взять в работу','wip'],wip:['На проверку','check'],check:['Готово ✓','done']}[x.it.status];
+      const advBtn = (cs.state!=='blocked' && adv) ? `<button class="btn big" data-nsadvance="${x.st.id}:${x.it.id}">${adv[0]}</button>` : `<span class="stchip">открыть →</span>`;
+      return `<div class="wcard ${over?'urgent':''}" data-nav2="ns" style="cursor:pointer"><div class="body"><span class="k">${esc(x.st.name)}</span><div class="t">${esc(x.it.title||'')}</div><div class="why">${over?'<b>просрочено</b>':'срок'} ${nsFmtDay(x.d)} · ${sm[0]}${csx}</div></div>${advBtn}</div>`; }).join('')||'<div class="zero">Нет ближайших сроков проработки.</div>'}</div>` : '';
   const pulse = isBoss ? (()=>{
     const ords=S.orders||[];
     const cOk=ords.filter(o=>o.risk==='ok').length, cWarn=ords.filter(o=>o.risk==='warn').length, cRisk=ords.filter(o=>o.risk==='risk').length;
@@ -6211,6 +6214,8 @@ document.addEventListener('click', e=>{
     }catch(_){ toast('Сервер недоступен','bad'); } })(); return; }
   const cont = e.target.closest('[data-contour]');
   if(cont){ S.orgContour=cont.dataset.contour; save(); render(); toast(S.orgContour==='box'?'Контур: закрытый (коробка on-prem)':'Контур: облако','ok'); return; }
+  // «одна большая кнопка» на карточке НС в «Сегодня»: двигаем критерий, не открывая модуль (раньше data-nav2)
+  { const el=e.target.closest('[data-nsadvance]'); if(el){ const a=el.dataset.nsadvance.split(':'); nsCycleStatus(a[0],a[1]); return; } }
   const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
   { const nm=e.target.closest('[data-nsgoto]'); if(nm){ S.view='ns'; S.nsView='list'; S.nsActive=nm.dataset.nsgoto; render(); return; } }
   const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); ensureL3(ord.dataset.order); return; }
