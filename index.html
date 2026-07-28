@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.80 «Проработка НС + аудит-трейл + ПСИ» — рабочий MVP</title>
+﻿<title>Эллинг v1.81 «Проработка НС · аудит-трейл · ПСИ · отчёты» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -5402,11 +5402,44 @@ function vReports(){
         <span class="bar"><i style="width:${Math.round(n/maxL*100)}%"></i></span><span class="n">${n}</span></div>`).join('')}
       <p style="font-size:12px;color:var(--muted);margin-top:10px">Метрики потока видит рук. ИЦ и директор. Первые 3 месяца после внедрения не публикуются наружу — принцип адопшена.</p>
     </div>
+    <div class="panel" style="margin-top:14px">${chartNSHealth()}</div>
     ${canAudit()?`<div class="panel" style="margin-top:14px"><h3>Журнал аудита <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· сервер · кто, когда, что</span></h3>
       <div id="auditBox"><div class="empty">доступен при подключённом сервере</div></div>
     </div>`:`<div class="panel" style="margin-top:14px"><h3>Журнал аудита</h3>
       <div class="empty">🔒 Журнал действий доступен дирекции. Ваша роль — ${esc((PEOPLE[S.currentUser]||{}).role||'')}: аудит скрыт по матрице доступа.</div>
     </div>`}`;
+}
+// Здоровье проработки НС в отчётах директора: риск-разбивка станций + просрочки/конфликты + прогноз ИЦ.
+// Связывает работу руководителя ИЦ (проработка) с аналитикой дирекции в одном месте.
+function chartNSHealth(){
+  const list=nsList();
+  if(!list.length) return `<h3>Проработка станций (НС)</h3><div class="empty">Станции ещё не заведены. Модуль «Проработка НС» — на вкладке «Проработка».</div>`;
+  const RC={risk:'var(--risk)', warn:'var(--warn)', ok:'var(--good)', done:'var(--muted)'};
+  const rk=list.map(st=>({st, r:nsStationRisk(st)}));
+  const cnt=l=>rk.filter(x=>x.r.level===l).length;
+  const over=list.reduce((s,st)=>s+(st.items||[]).filter(nsIsOverdue).length,0);
+  const conf=(typeof nsConflictCount==='function')?nsConflictCount():0;
+  const icf=(typeof nsICForecast==='function')?nsICForecast():null;
+  const doneC=list.reduce((s,st)=>s+(st.items||[]).filter(x=>x.status==='done').length,0);
+  const totC=list.reduce((s,st)=>s+(st.items||[]).length,0);
+  const pct=totC?Math.round(doneC*100/totC):0;
+  const cc=c=>`color:${c};-webkit-text-fill-color:${c}`;
+  const rows=rk.sort((a,b)=>({risk:0,warn:1,ok:2,done:3}[a.r.level]-{risk:0,warn:1,ok:2,done:3}[b.r.level])).map(({st,r})=>
+    `<div class="loadrow" style="align-items:center;gap:10px"><span class="nm" style="flex:0 0 210px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(st.name)}${st.goz?' <span style="color:#8a6d1f;font-size:10px;font-weight:700">ГОЗ</span>':''}</span>
+      <span class="tm-bar" style="flex:1;margin:0"><i style="width:${r.pct}%;background:${RC[r.level]}"></i></span>
+      <span style="flex:none;width:64px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">${r.done}/${r.total}</span>
+      <span class="stchip" style="flex:none;color:${RC[r.level]};border:1px solid ${RC[r.level]}">${r.label}</span></div>`).join('');
+  return `<h3>Проработка станций (НС) <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· готовность критериев ${doneC}/${totC} (${pct}%)</span></h3>
+    <div class="stats" style="margin:6px 0 12px">
+      <div class="stat"><div class="v">${list.length}</div><div class="l">станций в проработке</div></div>
+      <div class="stat"><div class="v" style="${cc('var(--good)')}">${cnt('ok')+cnt('done')}</div><div class="l">в графике</div></div>
+      <div class="stat"><div class="v" style="${cc(cnt('warn')?'var(--warn)':'var(--good)')}">${cnt('warn')}</div><div class="l">риск срока</div></div>
+      <div class="stat"><div class="v" style="${cc(cnt('risk')?'var(--risk)':'var(--good)')}">${cnt('risk')}</div><div class="l">срыв</div></div>
+      <div class="stat"><div class="v" style="${cc(over?'var(--risk)':'var(--good)')}">${over}</div><div class="l">просроч. критериев</div></div>
+      <div class="stat"><div class="v" style="${cc(conf?'var(--warn)':'var(--good)')}">${conf}</div><div class="l">конфликтов сроков</div></div>
+    </div>
+    ${rows}
+    ${icf?`<p style="font-size:12px;color:var(--muted);margin-top:10px">Единая очередь ИЦ (проработка + просчёты): <b style="${cc(icf.level==='over'?'var(--risk)':icf.level==='high'?'var(--warn)':'var(--good)')}">${icf.level==='over'?'перегружен':icf.level==='high'?'высокая нагрузка':'в норме'}</b> — ${icf.totalDays} инженеро-дней на ${icf.engineers} инж. (~${icf.perEng} раб. дн/инж).</p>`:''}`;
 }
 
 /* ================= drawer ================= */
