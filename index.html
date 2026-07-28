@@ -4846,6 +4846,17 @@ function vToday(){
     .sort((a,b)=>(({lost:0,warn:1}[a.x.st])-({lost:0,warn:1}[b.x.st])) || ((b.pr.stage||0)-(a.pr.stage||0))) : [];
   const radarCard = (inSales && !isBoss) ? `<div class="tsec" style="margin-top:18px"><h3>Радар закладок — требуют действий ${rHot.length?`<span class="cnt">${rHot.length}</span>`:''}</h3>
     ${rHot.slice(0,6).map(({pr,x})=>`<div class="wcard ${x.st==='lost'?'urgent':''}" data-nav2="radar" style="cursor:pointer"><div class="body"><span class="k">${esc(x.nm)}</span><div class="t">${esc(pr.name)} · ${esc(RSTAGES[pr.stage]||'—')}</div><div class="why"><b style="color:${PST[x.st][0]}">${PST[x.st][1]}</b>${x.note?' · '+esc(x.note):''}</div></div><button class="btn big" data-mktask="${esc(pr.name)}|${esc(x.nm)}">→ Задача</button></div>`).join('')||'<div class="zero">Все позиции держатся — перезаложенных нет.</div>'}</div>` : '';
+  // снабжение для закупщика: истекающие/просроченные сертификаты РМРС + проблемы реестровости ПП 719
+  const inSupply = /закуп|снабж/i.test(p.dept||'');
+  const supHot = (inSupply && !isBoss) ? (function(){
+    const cs=(S.certs||[]).filter(c=>certDays(c)<180).map(c=>({kind:'cert', c, d:certDays(c)})).sort((a,b)=>a.d-b.d);
+    const sp=(S.suppliers||[]).filter(s=>s.reg!=='ok').map(s=>({kind:'sup', s}));
+    return {cs, sp, n:cs.length+sp.length};
+  })() : {cs:[],sp:[],n:0};
+  const supplyCard = (inSupply && !isBoss) ? `<div class="tsec" style="margin-top:18px"><h3>Снабжение — под контролем ${supHot.n?`<span class="cnt">${supHot.n}</span>`:''}</h3>
+    ${supHot.cs.slice(0,4).map(({c,d})=>`<div class="wcard ${d<0?'urgent':''}" data-nav2="supply" style="cursor:pointer"><div class="body"><span class="k">Сертификат РМРС</span><div class="t">${esc(c.name)}</div><div class="why"><b style="color:${d<0?'var(--risk)':'var(--warn)'}">${d<0?'просрочен '+(-d)+' дн — продукцию не примут':'истекает через '+d+' дн'}</b> · повторная сертификация ~400 тыс ₽</div></div><span class="stchip">открыть →</span></div>`).join('')}
+    ${supHot.sp.slice(0,3).map(({s})=>`<div class="wcard urgent" style="cursor:default"><div class="body"><span class="k">ПП 719 · реестровость</span><div class="t">${esc(s.position)} · заказ №${esc(s.order)}</div><div class="why"><b style="color:${REG_ST[s.reg][0]}">${REG_ST[s.reg][1]}</b>${s.repl&&s.repl!=='—'?' · есть согласованная замена: '+esc(s.repl):''}</div></div><button class="btn big" data-supalert="${esc(s.id)}">→ Задача</button></div>`).join('')}
+    ${supHot.n?'':'<div class="zero">Сертификаты в силе, реестровость в порядке.</div>'}</div>` : '';
   const pulse = isBoss ? (()=>{
     const ords=S.orders||[];
     const cOk=ords.filter(o=>o.risk==='ok').length, cWarn=ords.filter(o=>o.risk==='warn').length, cRisk=ords.filter(o=>o.risk==='risk').length;
@@ -4865,6 +4876,8 @@ function vToday(){
       ...(icf&&icf.level==='over'?[{t:'ИЦ перегружен',n:'единая очередь '+icf.totalDays+' инженеро-дней (~'+icf.perEng+' раб.дн на инженера) — новые сделки под риском срыва: двигать сроки / усилить ИЦ',c:'var(--risk)',go:'ns'}]:[]),
       ...(()=>{ const lost=(S.projects||[]).flatMap(pr=>pr.positions||[]).filter(x=>x.st==='lost').length;
         return lost?[{t:'Перезакладка в радаре',n:lost+' наших позиций перезаложены на конкурента — судьба сделок решается до тендера, нужен ход продаж',c:'var(--risk)',go:'radar'}]:[]; })(),
+      ...(()=>{ const exp=(S.certs||[]).filter(c=>certDays(c)<0).length;
+        return exp?[{t:'Сертификат РМРС просрочен',n:exp+' сертификат(ов) аннулированы — продукцию не примут при освидетельствовании судна',c:'var(--risk)',go:'supply'}]:[]; })(),
     ];
     return `<div class="stats" style="margin:8px 0 16px">
       <div class="stat"><div class="v">${ords.length}</div><div class="l">заказов в портфеле</div></div>
@@ -4896,6 +4909,7 @@ function vToday(){
           ${queue.map(t=>wcard(t)).join('')||'<div class="zero">✓ Очередь пуста.</div>'}</div>
         ${nsCard}
         ${radarCard}
+        ${supplyCard}
       </div>
       <div class="tsec"><h3>Пока вы работали</h3>
         <div class="evfeed">${events.map(({o,f})=>`<div class="ev"><span class="t">${esc(f[0])}</span>
