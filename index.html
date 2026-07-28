@@ -4739,12 +4739,26 @@ function radarForm(){
 function vRadar(){
   const all = S.projects.flatMap(p=>p.positions);
   const alerts = all.filter(x=>x.st!=='ok').length;
+  // дайджест «требуют действий»: все позиции под угрозой по всем проектам, перезаложено → под угрозой,
+  // те, что ближе к тендеру (стадия правее) — выше. Продажнику видно, куда звонить сегодня.
+  const rank={lost:0, warn:1};
+  const hot=S.projects.flatMap(p=>p.positions.filter(x=>x.st!=='ok').map(x=>({p,x})))
+    .sort((a,b)=>(rank[a.x.st]-rank[b.x.st]) || ((b.p.stage||0)-(a.p.stage||0)));
+  const digest = hot.length ? `<div class="panel" style="margin-bottom:16px;border-color:color-mix(in srgb,var(--risk) 30%,transparent)">
+      <h3>Требуют действий сейчас <span class="cnt">${hot.length}</span> <span style="font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:400">· перезаложенные и ближе к тендеру — выше</span></h3>
+      ${hot.map(({p,x})=>`<div class="bl-row" style="padding:9px 2px;gap:10px;align-items:baseline;flex-wrap:wrap">
+        <span class="stchip" style="flex:none;color:${PST[x.st][0]};border:1px solid ${PST[x.st][0]}">${PST[x.st][1]}</span>
+        <span style="flex:none;font-weight:640;color:var(--ink);font-size:13px">${esc(x.nm)}</span>
+        <span style="flex:1;min-width:0;font-size:12px;color:var(--muted)">${esc(p.name)} · ${esc(RSTAGES[p.stage]||'—')}${x.note?` · ${esc(x.note)}`:''}</span>
+        <button class="btn" style="flex:none;padding:5px 12px;font-size:12px" data-mktask="${esc(p.name)}|${esc(x.nm)}">→ Задача продажам</button></div>`).join('')}
+    </div>` : `<div class="panel" style="margin-bottom:16px"><div class="zero" style="padding:6px 2px">Все позиции держатся — перезаложенных нет. Радар следит дальше.</div></div>`;
   return `${radarForm()}
     <div class="stats" style="margin-bottom:16px">
       <div class="stat"><div class="v">${S.projects.length}</div><div class="l">проектов судов под наблюдением</div></div>
       <div class="stat"><div class="v">${all.length}</div><div class="l">наших позиций в закладках</div></div>
       <div class="stat"><div class="v" style="color:${alerts?'var(--risk)':'var(--good)'}">${alerts}</div><div class="l">требуют действий продаж</div></div>
     </div>
+    ${digest}
     ${S.projects.map(p=>`<div class="panel" style="margin-bottom:12px">
       <h3 style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline">${esc(p.name)}
         <span style="font-size:12px;color:var(--muted);font-weight:400">${esc(p.bureau)} · ${esc(p.vessels)}</span></h3>
