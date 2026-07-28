@@ -11,6 +11,7 @@
     --accent:#0C6B8F; --accent-soft:#DCEBF1; --steel:#0E7C93;
     --navy:#1F3A50; --navy-soft:#E4EBF3;
     --good:#1E7D46; --good-soft:#E1F1E7; --warn:#A9660A; --warn-soft:#F8EEDA; --risk:#C0362E; --risk-soft:#F9E4E1;
+    --goz:#8a6d1f; --goz-base:#c8a63e;   /* ГОЗ-золото (военпред) — токенизировано, тёмная тема осветляет */
     
     --glow:0 0 0 1px rgba(12,107,143,.18), 0 8px 30px -8px rgba(30,50,70,.18);
     --shadow:0 10px 34px -14px rgba(20,35,55,.28);
@@ -23,6 +24,7 @@
       --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#26343F;--line2:#1E2A36;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px -4px rgba(0,0,0,.55);--sh-lg:0 18px 42px -10px rgba(0,0,0,.75),0 6px 14px -6px rgba(0,0,0,.5);
       --accent:#37AECF;--accent-soft:#0D2A36;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;
       --good:#5FD08B;--good-soft:#122A1B;--warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
+      --goz:#E3BE55;--goz-base:#E3BE55;
       
       --glow:0 0 0 1px rgba(55,174,207,.20), 0 10px 40px -10px rgba(0,0,0,.6);
       --shadow:0 16px 50px -18px rgba(0,0,0,.7);
@@ -38,7 +40,7 @@
   :root[data-theme="dark"]{--bg:#080C12;--panel:#111A24;--panel2:#17222F;--side:#060A0F;--side-ink:#8195A9;
     --ink:#EAF1F8;--ink2:#A7B7C7;--muted:#6E8091;--line:#26343F;--line2:#1E2A36;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px -4px rgba(0,0,0,.55);--sh-lg:0 18px 42px -10px rgba(0,0,0,.75),0 6px 14px -6px rgba(0,0,0,.5);--accent:#37AECF;
     --accent-soft:#0D2A36;--steel:#3AAFC9;--navy:#8FB4D1;--navy-soft:#16283A;--good:#5FD08B;--good-soft:#122A1B;
-    --warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;
+    --warn:#E0A03C;--warn-soft:#2E2410;--risk:#F0736A;--risk-soft:#331714;--goz:#E3BE55;--goz-base:#E3BE55;
     
     --glow:0 0 0 1px rgba(55,174,207,.20), 0 10px 40px -10px rgba(0,0,0,.6);
     --shadow:0 16px 50px -18px rgba(0,0,0,.7);
@@ -919,7 +921,7 @@
   .ns-art-ed:hover,.ns-art-add:hover{color:var(--accent,#2E6E8E)}
   .ns-art-item{display:inline-flex;align-items:center;gap:1px}
   .ns-art-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 3px;line-height:1}.ns-art-x:hover{color:var(--bad)}
-  .ns-rev{font-size:9.5px;font-weight:700;color:#8a6d1f;background:color-mix(in srgb,#c8a63e 15%,transparent);border-radius:4px;padding:0 4px;margin-left:1px}
+  .ns-rev{font-size:9.5px;font-weight:700;color:var(--goz);background:color-mix(in srgb,var(--goz-base) 15%,transparent);border-radius:4px;padding:0 4px;margin-left:1px}
   .ns-mini{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:10.5px;font-family:var(--mono);color:var(--muted);cursor:pointer;border:1px solid var(--line);border-radius:20px;padding:2px 8px 2px 6px;transition:border-color .12s,color .12s}
   .ns-mini:hover{border-color:var(--accent,#2E6E8E);color:var(--ink2)}
   .ns-mini-dot{width:7px;height:7px;border-radius:50%;flex:none}
@@ -967,8 +969,8 @@
   .ns-pf-tchip{font-size:11.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:3px 10px;cursor:pointer;transition:border-color .12s,color .12s}
   .ns-pf-tchip:hover{border-color:var(--accent,#2E6E8E)}
   .ns-pf-tchip.on{border-color:var(--accent,#2E6E8E);color:var(--ink2);background:color-mix(in srgb,var(--accent,#2E6E8E) 9%,transparent)}
-  .ns-pf-tchip.goz{color:#8a6d1f;border-color:color-mix(in srgb,#c8a63e 40%,transparent)}
-  .ns-pf-tchip.goz.on{background:color-mix(in srgb,#c8a63e 16%,transparent)}
+  .ns-pf-tchip.goz{color:var(--goz);border-color:color-mix(in srgb,var(--goz-base) 40%,transparent)}
+  .ns-pf-tchip.goz.on{background:color-mix(in srgb,var(--goz-base) 16%,transparent)}
   .ns-pf-clear{font-size:11.5px;color:var(--bad);background:transparent;border:none;cursor:pointer;padding:3px 6px}
   .ns-pf-clear:hover{text-decoration:underline}
   .ns-pf-fnote{font-size:11.5px;color:var(--muted);margin-bottom:8px}
@@ -1003,10 +1005,10 @@
   .ns-add-t{text-align:left;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--ink);font-size:12.5px;padding:8px 11px;cursor:pointer}
   .ns-add-t:hover{background:color-mix(in srgb,var(--accent,#2E6E8E) 12%,transparent);border-color:color-mix(in srgb,var(--accent,#2E6E8E) 30%,transparent)}
   .ns-goz-tog{text-align:left;background:transparent;border:1px dashed var(--line2);border-radius:8px;color:var(--muted);font-size:11.5px;padding:6px 10px;cursor:pointer;margin-bottom:4px}
-  .ns-goz-tog.on{color:#8a6d1f;border-color:#c8a63e;border-style:solid;background:color-mix(in srgb,#c8a63e 12%,transparent)}
+  .ns-goz-tog.on{color:var(--goz);border-color:var(--goz-base);border-style:solid;background:color-mix(in srgb,var(--goz-base) 12%,transparent)}
   .ns-add-menu.center .ns-goz-tog{flex-basis:100%;text-align:center}
-  .ns-goz-badge{font-size:10px;font-weight:700;letter-spacing:.03em;color:#8a6d1f;background:color-mix(in srgb,#c8a63e 15%,transparent);border:1px solid color-mix(in srgb,#c8a63e 45%,transparent);border-radius:6px;padding:2px 7px;white-space:nowrap}
-  .ns-pf-goz{color:#8a6d1f;font-weight:700}
+  .ns-goz-badge{font-size:10px;font-weight:700;letter-spacing:.03em;color:var(--goz);background:color-mix(in srgb,var(--goz-base) 15%,transparent);border:1px solid color-mix(in srgb,var(--goz-base) 45%,transparent);border-radius:6px;padding:2px 7px;white-space:nowrap}
+  .ns-pf-goz{color:var(--goz);font-weight:700}
   .ns-add-menu.center .ns-add-t{border:1px solid var(--line);border-radius:20px;text-align:center}
   .ns-intro{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;padding:10px 13px;border-radius:11px;font-size:12px;line-height:1.5;color:var(--ink2);background:color-mix(in srgb,var(--accent,#2E6E8E) 7%,transparent);border:1px solid color-mix(in srgb,var(--accent,#2E6E8E) 22%,transparent)}
   .ns-intro-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;flex:none}.ns-intro-x:hover{color:var(--ink)}
@@ -5109,7 +5111,7 @@ function nsPortalReadiness(num){
   const SL={risk:'в работе', warn:'в работе', ok:'по графику', done:'готово'};
   return `<h4 class="psec">Готовность проработки КД</h4>
     ${sts.map(s=>{ const p=nsProgress(s); const r=nsStationRisk(s);
-      return `<div class="kbdoc-row"><div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--ink);font-size:13px">${esc(s.name)}${s.goz?' · <span style="color:#8a6d1f;font-size:10px;font-weight:700">ГОЗ · ВП</span>':''}</div>
+      return `<div class="kbdoc-row"><div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--ink);font-size:13px">${esc(s.name)}${s.goz?' · <span style="color:var(--goz);font-size:10px;font-weight:700">ГОЗ · ВП</span>':''}</div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:5px"><span style="flex:1;max-width:220px;height:6px;border-radius:4px;background:var(--line);overflow:hidden"><i style="display:block;height:100%;width:${p.pct}%;background:${RC[r.level]}"></i></span>
           <span style="font-size:11.5px;color:var(--muted);font-family:var(--mono)">${p.pct}%</span></div></div>
         <span class="stchip" style="color:${RC[r.level]};border:1px solid ${RC[r.level]}">${SL[r.level]||'—'}</span></div>`; }).join('')}
@@ -5122,7 +5124,7 @@ function nsOrderPanel(num){
   return `<div class="panel" style="margin-top:12px"><h3>Проработка насосных станций (${sts.length})</h3>
     ${sts.map(s=>{ const p=nsProgress(s); const r=nsStationRisk(s);
       return `<div class="bl-row" data-nsopen="${s.id}" style="padding:8px 2px;cursor:pointer;align-items:center;gap:10px">
-        <span class="ttl" style="flex:1">${esc(s.name)}${s.goz?' <span style="color:#8a6d1f;font-weight:700;font-size:11px">ГОЗ</span>':''}</span>
+        <span class="ttl" style="flex:1">${esc(s.name)}${s.goz?' <span style="color:var(--goz);font-weight:700;font-size:11px">ГОЗ</span>':''}</span>
         <span style="width:110px;height:6px;border-radius:4px;background:var(--line);overflow:hidden;flex:none"><i style="display:block;height:100%;width:${p.pct}%;background:${RC[r.level]}"></i></span>
         <span style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none">${p.done}/${p.total}</span>
         <span class="stchip" style="color:${RC[r.level]};border:1px solid ${RC[r.level]};flex:none">${r.label}</span></div>`; }).join('')}
@@ -5579,7 +5581,7 @@ function chartNSHealth(){
   const pct=totC?Math.round(doneC*100/totC):0;
   const cc=c=>`color:${c};-webkit-text-fill-color:${c}`;
   const rows=rk.sort((a,b)=>({risk:0,warn:1,ok:2,done:3}[a.r.level]-{risk:0,warn:1,ok:2,done:3}[b.r.level])).map(({st,r})=>
-    `<div class="loadrow" style="align-items:center;gap:10px"><span class="nm" style="flex:0 0 210px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(st.name)}${st.goz?' <span style="color:#8a6d1f;font-size:10px;font-weight:700">ГОЗ</span>':''}</span>
+    `<div class="loadrow" style="align-items:center;gap:10px"><span class="nm" style="flex:0 0 210px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(st.name)}${st.goz?' <span style="color:var(--goz);font-size:10px;font-weight:700">ГОЗ</span>':''}</span>
       <span class="tm-bar" style="flex:1;margin:0"><i style="width:${r.pct}%;background:${RC[r.level]}"></i></span>
       <span style="flex:none;width:64px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">${r.done}/${r.total}</span>
       <span class="stchip" style="flex:none;color:${RC[r.level]};border:1px solid ${RC[r.level]}">${r.label}</span></div>`).join('');
