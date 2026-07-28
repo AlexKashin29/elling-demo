@@ -4975,17 +4975,18 @@ function vOrder(oid){
   const eps = S.epics.filter(e=>e.orderId===oid).map(e=>e.id);
   const ts = S.tasks.filter(t=>eps.includes(t.epic));
   const saved = (o.feed||[]).filter(f=>f[2]).length;
-  const rk = RISK[o.risk] ? o.risk : 'ok';   // импортированный заказ может не иметь risk
+  const rk = RISK[o.risk] ? o.risk : 'ok';   // импортированный/внешний заказ может не иметь risk
   const rc = RISK[rk][0];
+  const stg = Number.isFinite(o.stage) ? o.stage : 0;   // и не иметь stage — не ломаем степпер
   return `<div style="margin-bottom:10px"><button class="chip" data-nav2="flow">← все заказы</button></div>
   <div class="panel" style="margin-bottom:12px"><h3 style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline">
-    Заказ №${esc(o.num)} — ${esc(o.title)} ${o.goz?'<span class="gozpill">ГОЗ · 275-ФЗ</span>':''}
+    Заказ №${esc(o.num||o.id||'—')} — ${esc(o.title||'без названия')} ${o.goz?'<span class="gozpill">ГОЗ · 275-ФЗ</span>':''}
     <span style="font-size:12.5px;color:${rc};font-weight:600">● ${RISK[rk][1]}</span>
-    <span style="font-size:12px;color:var(--muted);font-weight:400">${esc(o.customer)} · ${esc(o.vessel)} · срок ${esc(o.due)} · ${money(o.sum)}</span></h3>
+    <span style="font-size:12px;color:var(--muted);font-weight:400">${esc(o.customer||'—')} · ${esc(o.vessel||'—')} · срок ${esc(o.due||'—')} · ${o.sum!=null?money(o.sum):'—'}</span></h3>
   <div class="stepper-wrap"><div class="stepper">${STAGE_NAMES.map((s,i)=>
-    `<span class="step ${s[1]?'goz':''} ${i<o.stage?'done':''} ${i===o.stage?'current':''}"><span class="node"></span><span class="nm">${s[0]}</span></span>`).join('')}
+    `<span class="step ${s[1]?'goz':''} ${i<stg?'done':''} ${i===stg?'current':''}"><span class="node"></span><span class="nm">${s[0]}</span></span>`).join('')}
   </div></div>
-  ${o.stage<STAGE_NAMES.length-1?`<button class="btn" data-advance="${o.id}">Этап выполнен → ${STAGE_NAMES[o.stage+1][0]}</button>`:'<span class="stchip st-done">заказ закрыт</span>'}
+  ${stg<STAGE_NAMES.length-1?`<button class="btn" data-advance="${o.id}">Этап выполнен → ${STAGE_NAMES[stg+1][0]}</button>`:'<span class="stchip st-done">заказ закрыт</span>'}
   </div>
   <div class="ordgrid">
     <div class="panel"><h3>Задачи заказа (${ts.length})</h3>
@@ -4995,7 +4996,7 @@ function vOrder(oid){
     </div>
     <div class="panel evfeed"><h3>Лента заказа <span style="font-family:var(--mono);font-size:10px;color:var(--good)">· ${saved} событий вместо звонков</span></h3>
       ${o.goz?'<div class="xfeed-note">события с меткой <span class="xtag ext">⟷ верфь</span> синхронизированы с контуром верфи через Мост — остальное видно только вашей команде</div>':''}
-      ${o.feed.slice().reverse().map(f=>{ const xo=/Мост|синхронизир/i.test(f[1]);
+      ${(o.feed||[]).slice().reverse().map(f=>{ const xo=/Мост|синхронизир/i.test(f[1]);
         return `<div class="ev"><span class="t">${esc(f[0])}</span><span>${safe(f[1])}${xo?' <span class="xtag ext">⟷ верфь</span>':''}${f[2]?'<span class="nocall">вместо звонка</span>':''}</span></div>`; }).join('')}
     </div>
   </div>
@@ -6502,7 +6503,8 @@ document.addEventListener('click', e=>{
       ACTS.push('накладная по отгрузке заказа '+sh.order); save(); }
     return; }
   const psi = e.target.closest('[data-psi]');
-  if(psi){ const [oid,actName]=String(psi.dataset.psi).split('|');
+  if(psi){ const raw=String(psi.dataset.psi); const bar=raw.indexOf('|');   // split по первому '|' — имя акта может содержать '|'
+    const oid=bar<0?raw:raw.slice(0,bar); const actName=bar<0?'':raw.slice(bar+1);
     const act=(S.portalAccept||[]).find(a=>a.orderId===oid && a.act===actName) || {orderId:oid, act:actName};
     printDoc(psiProtocolHTML(act)); ACTS.push('проект протокола ПСИ по заказу '+oid); save(); return; }
   /* Резервные копии — только директор (роут это тоже проверяет на сервере) */
