@@ -2986,19 +2986,45 @@ function vNS(){
     </div>
   </div>`;
 }
+// Канонический JSON как на бэкенде (sort_keys по code-points, без пробелов, ensure_ascii=false).
+function nsCanon(o){
+  if(o===null) return 'null';
+  if(typeof o==='number') return String(o);
+  if(typeof o==='boolean') return o?'true':'false';
+  if(typeof o==='string') return JSON.stringify(o);
+  if(Array.isArray(o)) return '['+o.map(nsCanon).join(',')+']';
+  return '{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+nsCanon(o[k])).join(',')+'}';
+}
+async function nsSha256Hex(str){ const b=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function nsSnapKd(it){ const a=nsArtifacts(it); return a.map(x=>({code:String(x.code||''), rev:String(x.rev||'')})); }
+// Тело снимка проработки — та же структура, что build_ns на сервере (для офлайн-демо).
+function nsSnapBody(st){
+  const items=(st.items||[]).map(it=>({title:String(it.title||''),role:String(it.role||''),status:String(it.status||''),due:String(it.due||''),dec:String(it.dec||''),kd:nsSnapKd(it)}));
+  const total=items.length, done=items.filter(it=>it.status==='done').length;
+  return {kind:'elling-ns-snapshot',proto:1,station:{id:String(st.id||''),name:String(st.name||''),order:String(st.order||''),proj:String(st.proj||''),asu:String(st.asu||''),goz:st.goz?1:0},items,counts:{total,done},progress_pct:total?Math.floor(done*100/total):0,meta:{title:String(st.name||''),ts:new Date().toISOString()}};
+}
+function nsSnapDownload(pkg, st){
+  const blob=new Blob([JSON.stringify(pkg,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='elling-проработка-'+(st.name||'НС').replace(/[^\wа-яёА-ЯЁ-]+/g,'_').slice(0,40)+'.json'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },100);
+}
 function nsSnapshot(stId){ const st=nsById(stId); if(!st) return;
-  (async()=>{ try{
-    const r=await fetch('/api/ns/snapshot',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({station:st, title:st.name||''})});
-    const j=await r.json().catch(()=>({}));
-    if(r.ok&&j.body){
-      const blob=new Blob([JSON.stringify(j,null,2)],{type:'application/json'});
-      const url=URL.createObjectURL(blob); const a=document.createElement('a');
-      a.href=url; a.download='elling-проработка-'+(st.name||'НС').replace(/[^\wа-яёА-ЯЁ-]+/g,'_').slice(0,40)+'.json'; document.body.appendChild(a); a.click();
-      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },100);
-      const c=j.body.counts||{}; ACTS.push('снимок проработки НС «'+(st.name||'')+'» подписан');
-      toast('Снимок проработки выгружен ('+(c.done||0)+'/'+(c.total||0)+', подпись Ed25519)','ok');
-    } else toast(j.error||'Не удалось сформировать снимок','bad');
-  }catch(_){ toast('Сервер недоступен — снимок формируется на бэкенде','bad'); } })();
+  (async()=>{
+    if(!SRV.on){   // офлайн-демо: канонический body + реальный SHA-256, БЕЗ подписи (честно)
+      const body=nsSnapBody(st); const digest=await nsSha256Hex(nsCanon(body)); const c=body.counts;
+      nsSnapDownload({body, sig:'', pub:'', digest, note:'ДЕМО-ПАКЕТ: цифровая подпись Ed25519 формируется на сервере (Запустить_сервер.bat). SHA-256 канона тела ниже — целостность проверяема, но подписи в этом пакете нет.'}, st);
+      toast('Демо-пакет проработки выгружен ('+(c.done||0)+'/'+(c.total||0)+', digest '+digest.slice(0,8)+' · подпись — на сервере)','ok');
+      return;
+    }
+    try{
+      const r=await fetch('/api/ns/snapshot',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({station:st, title:st.name||''})});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok&&j.body){ nsSnapDownload(j, st); const c=j.body.counts||{}; ACTS.push('снимок проработки НС «'+(st.name||'')+'» подписан');
+        toast('Снимок проработки выгружен ('+(c.done||0)+'/'+(c.total||0)+', подпись Ed25519)','ok');
+      } else toast(j.error||'Не удалось сформировать снимок','bad');
+    }catch(_){ toast('Сервер недоступен — снимок формируется на бэкенде','bad'); }
+  })();
 }
 // UTC-парс (не локальный): согласован с nsFmtDay (форматирует через getUTC*) — иначе
 // в поясе UTC+N срок показывался на день раньше (2026-07-18 → «17.07»). nsISO — обратная.
