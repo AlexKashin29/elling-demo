@@ -3486,8 +3486,22 @@ function icQueue(){
     due_days:Math.max(0, Math.round((estDueLeft(e)||0)/1440))   // мин остатка SLA → дни
   }));
 }
+// Клиентский двойник load.py.plan (офлайн-демо): та же арифметика — очередь в порядке,
+// накопление н/ч, день готовности = ceil(накоплено/мощность), срыв = позже due_days.
+function loadPlanClient(queue, eng, hpd){
+  eng=Math.max(0,eng|0); hpd=Math.max(0,hpd|0); const cap=eng*hpd;
+  const cd=(a,b)=> b>0 ? Math.floor((a+b-1)/b) : 0;
+  let cum=0; const items=[];
+  (queue||[]).forEach(q=>{ if(!q||typeof q!=='object') return;
+    const h=Math.max(0,q.hours|0); const start=cd(cum,cap); cum+=h; const done=cd(cum,cap);
+    const du=q.due_days; const due=(du!==null&&du!=='')?(du|0):-1;
+    items.push({id:String(q.id||''),name:String(q.name||''),hours:h,start_day:start,done_day:done,due_days:due,overdue:due>=0&&done>due,slack:due>=0?(due-done):-999});
+  });
+  return {daily_capacity:cap,engineers:eng,hours_per_day:hpd,total_hours:cum,total_days:items.length?items[items.length-1].done_day:0,items,overdue:items.filter(x=>x.overdue).length,count:items.length};
+}
 async function loadPlan(){
   const c=icCap(); const queue=icQueue();
+  if(!SRV.on){ S.icLoad=loadPlanClient(queue, c.eng, c.hpd); render(); return; }   // офлайн — считаем клиентски
   try{ const r=await fetch('/api/load/plan',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({queue, engineers:c.eng, hours_per_day:c.hpd})});
     S.icLoad = r.ok ? await r.json() : null;
   }catch(_){ S.icLoad=null; } render();
