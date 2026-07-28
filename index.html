@@ -4976,7 +4976,7 @@ function nsOrderMini(num){
     const l=nsStationRisk(s).level; if((NS_RANK[l]||0)>(NS_RANK[worst]||0)) worst=l; });
   const pct=total?Math.round(done*100/total):0;
   const lbl={risk:'срыв',warn:'риск',ok:'в графике',done:'готово'}[worst]||'';
-  return `<span class="ns-mini" data-nsorder="${esc(sts[0].id)}" title="Проработка НС: ${done}/${total} критериев · ${lbl}. Открыть модуль проработки">
+  return `<span class="ns-mini" data-nsgoto="${esc(sts[0].id)}" title="Проработка НС: ${done}/${total} критериев · ${lbl}. Открыть модуль проработки">
     <span class="ns-mini-dot" style="background:${NS_RC[worst]}"></span>НС ${done}/${total}
     <span class="ns-mini-bar"><i style="width:${pct}%;background:${NS_RC[worst]}"></i></span></span>`;
 }
@@ -6175,7 +6175,7 @@ document.addEventListener('click', e=>{
   const cont = e.target.closest('[data-contour]');
   if(cont){ S.orgContour=cont.dataset.contour; save(); render(); toast(S.orgContour==='box'?'Контур: закрытый (коробка on-prem)':'Контур: облако','ok'); return; }
   const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
-  { const nm=e.target.closest('[data-nsorder]'); if(nm){ S.view='ns'; S.nsView='list'; S.nsActive=nm.dataset.nsorder; render(); return; } }
+  { const nm=e.target.closest('[data-nsgoto]'); if(nm){ S.view='ns'; S.nsView='list'; S.nsActive=nm.dataset.nsgoto; render(); return; } }
   const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); ensureL3(ord.dataset.order); return; }
   const adv = e.target.closest('[data-advance]');
   if(adv){ const o=S.orders.find(x=>x.id===adv.dataset.advance);
