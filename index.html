@@ -839,6 +839,8 @@
   .an-est-v{font-size:30px;font-weight:780;letter-spacing:-.02em;color:var(--accent,#C24309);font-variant-numeric:tabular-nums;white-space:nowrap}
   .an-est-v span{font-size:14px;font-weight:600;color:var(--muted)}
   .an-est-l{font-size:12.5px;color:var(--ink2);flex:1;min-width:220px;line-height:1.4}
+  .an-ic{font-size:12px;color:var(--ink2);margin:8px 0 4px;padding:8px 11px;border-radius:9px;background:color-mix(in srgb,var(--warn) 9%,transparent);border:1px solid color-mix(in srgb,var(--warn) 26%,transparent)}
+  .an-ic b{color:var(--ink);font-variant-numeric:tabular-nums}
   .anrows{display:flex;flex-direction:column;gap:7px}
   .anrow{display:grid;grid-template-columns:44px 90px 1fr auto;gap:10px;align-items:center;cursor:pointer;padding:3px 0}
   .anrow:hover .annm{color:var(--accent,#C24309)}
@@ -2426,13 +2428,15 @@ function analogPanel(){
   const head = (est.best!=null)
     ? `<div class="an-est"><div class="an-est-v">${est.low}–${est.high}<span> н/ч</span></div><div class="an-est-l">ИИ-оценка трудоёмкости по ${est.relevant} аналог${est.relevant==1?'у':'ам'}. Опора — «${esc((byId[est.basis]||{}).izdelie||est.basis)}», масштаб по ведущему параметру. Готовая цифра для ТКП за секунды вместо дней просчёта.</div></div>`
     : `<div class="an-est"><div class="an-est-l">Близких аналогов для оценки не нашлось — уточните параметры ТЗ (подача, давление, мощность, материал, шифр).</div></div>`;
+  const icf=(est.best!=null)?nsICForecast():null;
+  const icLine=icf?`<div class="an-ic">Инженерный центр: <b>${icf.totalDays}</b> инженеро-дней проработки в очереди · ближайшее окно инженера <b>~${nsFmtDay(icf.startDay)}</b> — реальный старт работы над заказом (сделка не «зависает на просчёте»)</div>`:'';
   const cats=(a.tz&&a.tz.cats)||{}; const ptype=(a.tz&&a.tz.ptype)||'';
   const typeChip=ptype?`<span class="tz-chip" style="border-color:var(--good);color:var(--good)">${esc(ptype)}</span>`:'';
   const catChips=typeChip+Object.keys(cats).map(k=>`<span class="tz-chip">${esc(cats[k])}</span>`).join('');
   const catLine=catChips?`<div class="tz-extract" style="margin:0 0 10px"><span class="tz-lbl">Распознано (тип/среда/исполнение)</span>${catChips}</div>`:'';
   const mkOrder=(est.best!=null&&byId[est.basis])?`<div style="margin:2px 0 12px"><button class="btn" data-fromanalog="${esc(est.basis)}" style="font-size:12px">Создать заказ по аналогу «${esc((byId[est.basis]||{}).izdelie||est.basis)}»</button> <span style="font-size:11px;color:var(--muted)">— перенесёт состав аналога в новый заказ как основу</span></div>`:'';
   return `<div class="an-panel"><div class="an-title">⚙ Оценка по аналогам <span class="mono" style="font-size:10px;color:var(--muted)">гибрид: тип + параметры + шифр + вектор-смысл + категории, БЕЗ облака</span>
-    ${est.best!=null?`<button class="btn ghost" data-estsheet="1" style="font-size:11px;margin-left:auto">🖨 Оценочный лист</button>`:''}</div>${head}${mkOrder}${catLine}<div class="anrows">${rows}</div></div>`;
+    ${est.best!=null?`<button class="btn ghost" data-estsheet="1" style="font-size:11px;margin-left:auto">🖨 Оценочный лист</button>`:''}</div>${head}${icLine}${mkOrder}${catLine}<div class="anrows">${rows}</div></div>`;
 }
 // ROI-калькулятор для discovery-звонка: числа поставщика → ₽/год (детерм. roi.py).
 const ROI_FIELDS=[
@@ -2702,6 +2706,16 @@ function nsMyDeadlines(me){ const over=[],soon=[]; const t=nsDay(todayISO());
     if(d<t) over.push({st,it,d}); else if(d-t<=7) soon.push({st,it,d}); }));
   over.sort((a,b)=>a.d-b.d); soon.sort((a,b)=>a.d-b.d); return {over,soon}; }
 function nsList(){ return S.ns=S.ns||[]; }
+// Прогноз доступности ИЦ для НОВОЙ работы (связка «продажи → ИЦ»): суммарная очередь
+// проработки в инженеро-днях + ближайшее окно (самый рано освобождающийся инженер берёт
+// новое). Делает ИЦ прозрачным для продаж: не «чёрный ящик», а реальный старт по загрузке.
+function nsICForecast(){
+  const ids=new Set(); nsList().forEach(st=>{ if(st.proj) ids.add(st.proj); if(st.asu) ids.add(st.asu); });
+  const loads=[...ids].map(nsEngineerLoad); const t=nsDay(todayISO());
+  const totalDays=loads.reduce((s,l)=>s+l.days,0);
+  const frees=loads.map(l=>l.freeDay!=null?l.freeDay:t);
+  return {totalDays, startDay: frees.length?Math.min.apply(null,frees):t, engineers:loads.length};
+}
 function nsById(id){ return nsList().find(x=>x.id===id); }
 function nsActive(){ const l=nsList(); if(!l.length) return null; const a=nsById(S.nsActive); return a||l[0]; }
 function nsIsOverdue(it){ return it.status!=='done' && it.due && it.due < todayISO(); }
