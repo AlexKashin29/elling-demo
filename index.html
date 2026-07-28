@@ -5200,7 +5200,22 @@ function vKB(){
   }
   if(tab==='checklists'){
     const cls = S.checklists||[];
-    return head + `<p style="font-size:13px;color:var(--ink2);margin:0 0 14px;max-width:60em">Типовые операции по НТД: стандартные шаги и частые ошибки от опытных мастеров. Это конвейер онбординга и <b>захват уходящей экспертизы</b> — знание остаётся на заводе, а не уходит с человеком. Применить чек-лист к задаче — пункты станут подзадачами.</p>
+    const addForm = S._clAdd ? `<div class="anacard" style="cursor:default;border-color:var(--accent,#2E6E8E)">
+      <div style="font-weight:640;font-size:14px;margin-bottom:4px">Записать операцию мастера</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Пока эксперт на заводе — зафиксируйте порядок и частые ошибки. Junior потом работает по проверенному чек-листу, знание остаётся.</div>
+      <div style="display:grid;gap:8px">
+        <input id="cl_title" placeholder="Операция (напр. «Приёмка сварного шва секции»)" value="${esc(S._clDraft&&S._clDraft.title||'')}">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="cl_ntd" placeholder="НТД (ГОСТ/ОСТ/РД)" style="flex:1;min-width:150px" value="${esc(S._clDraft&&S._clDraft.ntd||'')}">
+          <input id="cl_role" placeholder="Участок / роль" style="flex:1;min-width:150px" value="${esc(S._clDraft&&S._clDraft.role||'')}">
+        </div>
+        <input id="cl_author" placeholder="Кто передал экспертизу (напр. «бригадир участка №4»)" value="${esc(S._clDraft&&S._clDraft.author||'')}">
+        <textarea id="cl_steps" rows="6" placeholder="Шаги — по одному на строку. Частую ошибку добавьте через | : &#10;Проверить катет по шаблону | недостаточный катет — до 30% замечаний приёмки&#10;Зачистить кромки перед сваркой">${esc(S._clDraft&&S._clDraft.steps||'')}</textarea>
+        <div style="display:flex;gap:8px"><button class="btn" data-clsave="1">Сохранить в базу знаний</button><button class="btn ghost" data-cladd="0">Отмена</button></div>
+      </div></div>` : '';
+    return head + `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:0 0 14px"><p style="font-size:13px;color:var(--ink2);margin:0;max-width:52em">Типовые операции по НТД: стандартные шаги и частые ошибки от опытных мастеров. Это конвейер онбординга и <b>захват уходящей экспертизы</b> — знание остаётся на заводе, а не уходит с человеком. Применить чек-лист к задаче — пункты станут подзадачами.</p>
+      ${S._clAdd?'':`<button class="btn" data-cladd="1" style="flex:none">＋ Записать операцию</button>`}</div>
+      ${addForm}
       ${cls.length?cls.map(c=>`<div class="anacard" style="cursor:default">
         <div class="ana-top">
           <div><div class="ana-name">${esc(c.title)}</div>
@@ -6742,6 +6757,26 @@ document.addEventListener('click', e=>{
       S.view='board'; save(); render(); toast('Чек-лист применён — задача создана','ok');
     } return;
   }
+  // захват экспертизы: открыть/закрыть форму записи операции (черновик сохраняем на время сессии)
+  { const el=e.target.closest('[data-cladd]'); if(el){
+      if(el.dataset.cladd==='1'){ S._clAdd=true; }
+      else { S._clAdd=false; S._clDraft=null; }
+      render(); return; } }
+  // сохранить новый чек-лист в БЗ: парсим шаги («шаг | частая ошибка» построчно)
+  { const el=e.target.closest('[data-clsave]'); if(el){
+      const g=id=>{ const n=document.getElementById(id); return n?n.value.trim():''; };
+      const title=g('cl_title'), ntd=g('cl_ntd'), role=g('cl_role'), author=g('cl_author'), stepsRaw=g('cl_steps');
+      const items=stepsRaw.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{ const i=l.indexOf('|'); return i<0?{t:l}:{t:l.slice(0,i).trim(), tip:l.slice(i+1).trim()}; });
+      if(!title || !items.length){
+        // не теряем введённое: сохраняем черновик и подсказываем
+        S._clDraft={title,ntd,role,author,steps:stepsRaw};
+        toast('Нужны хотя бы название и один шаг','bad'); render(); return; }
+      S.checklists=S.checklists||[];
+      const id='CL'+(S.checklists.length+1)+'-'+((S.seq||0)+1);
+      S.checklists.unshift({id, title, ntd:ntd||'—', role:role||'—', author:author||((PEOPLE[S.currentUser]||{}).full||''), items});
+      S._clAdd=false; S._clDraft=null;
+      ACTS.push('чек-лист записан в БЗ: '+title.slice(0,40)); save(); render();
+      toast('Операция записана в базу знаний — знание осталось на заводе','ok'); return; } }
   const kbex = e.target.closest('[data-kbex]');
   if(kbex){ S.kbq = kbex.dataset.kbex; S.kbMsg=''; searchFiles();
     let reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(x){}
