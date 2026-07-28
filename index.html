@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.79 «Проработка НС + аудит-трейл» — рабочий MVP</title>
+﻿<title>Эллинг v1.80 «Проработка НС + аудит-трейл + ПСИ» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -3568,7 +3568,8 @@ function vPortal(){
       <span class="stchip" style="font-size:9px">↓ доступен</span></div>`).join(''):'<div class="empty">пока нет опубликованных документов</div>'}
     ${o.goz?`<h4 class="psec">Приёмка и замечания ВП</h4>
     ${(S.portalAccept||[]).filter(a=>a.orderId===oid).map(a=>{ const m={ok:['принято ВП','var(--good)'],note:['замечание ВП','var(--warn)'],wait:['ожидает','var(--muted)']}[a.status]||['—','var(--muted)'];
-      return `<div class="kbdoc-row"><div><div style="font-weight:600;color:var(--ink);font-size:13px">${esc(a.act)}</div><div style="font-size:11.5px;color:var(--muted)">${esc(a.date)} · ${esc(a.note)}</div></div><span class="stchip" style="color:${m[1]};border:1px solid ${m[1]}">${m[0]}</span></div>`;
+      const isTest=/испытан|псИ|обкат|швартов|давлен/i.test(a.act||'');
+      return `<div class="kbdoc-row"><div><div style="font-weight:600;color:var(--ink);font-size:13px">${esc(a.act)}</div><div style="font-size:11.5px;color:var(--muted)">${esc(a.date)} · ${esc(a.note)}</div></div><div style="display:flex;gap:8px;align-items:center">${isTest?`<button class="btn ghost" data-psi="${esc(a.orderId)}|${esc(a.act)}" style="font-size:11px" title="сформировать проект протокола приёмо-сдаточных испытаний (типовая программа-методика для судового насоса)">🖨 Протокол ПСИ</button>`:''}<span class="stchip" style="color:${m[1]};border:1px solid ${m[1]}">${m[0]}</span></div></div>`;
     }).join('')||'<div class="empty">актов приёмки пока нет</div>'}`:''}
 
     <h4 class="psec">Вопросы и ответы — вместо звонков</h4>
@@ -4540,6 +4541,42 @@ function tkpHTML(d){
   </div>`;
 }
 
+// Протокол приёмо-сдаточных испытаний (ПСИ) — печатный проект по акту приёмки.
+// Программа-методика: типовые параметры судового насоса (ГОСТ/ПМ), результат заполняется на стенде.
+// Замыкает инженерный цикл: КД → изготовление → ПСИ → приёмка ВП (для ГОЗ).
+const PSI_ROWS=[
+  ['Внешний осмотр, комплектность, маркировка','соответствие КД','визуальный контроль'],
+  ['Гидравлическое (прочность), пробное давление','1,5× рабочего, без течей и потений','опрессовка, выдержка 10 мин'],
+  ['Подача на номинальном режиме','по ТЗ, отклонение ≤ 5 %','расходомер на стенде'],
+  ['Напор на номинальном режиме','по ТЗ, отклонение ≤ 5 %','манометрия вход/выход'],
+  ['Потребляемая мощность','≤ паспортной','измерение на приводе'],
+  ['Виброскорость СКЗ подшипниковых опор','≤ 4,5 мм/с (ГОСТ ИСО 10816)','виброанализатор'],
+  ['Уровень шума','≤ норм по ТЗ','шумомер, 1 м'],
+  ['Наработка на стенде (обкатка)','без замечаний','непрерывный прогон'],
+];
+function psiProtocolHTML(act){
+  const o=org();
+  const ord=(S.orders||[]).find(x=>x.id===(act&&act.orderId))||{};
+  const num=`ПСИ-${esc(String(ord.num||act&&act.orderId||''))}-${new Date().toISOString().slice(0,10).replace(/-/g,'')}`;
+  const goz=!!ord.goz;
+  const rows=PSI_ROWS.map((r,i)=>`<tr><td>${i+1}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="p-r"></td><td class="p-r"></td></tr>`).join('');
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name)}</b><br>ИНН ${esc(o.inn)}${o.ogrn?' · ОГРН '+esc(o.ogrn):''} · ${esc(o.addr)}</div>
+    <div class="p-title">Протокол приёмо-сдаточных испытаний<br><span>№ ${num} от ${today()}</span></div>
+    <div class="p-to"><b>Изделие:</b> ${esc(ord.title||'—')}${ord.num?` · заказ №${esc(ord.num)}`:''}${goz?' · <b>ГОЗ · 275-ФЗ</b>'+(ord.igk?` · ИГК ${esc(ord.igk)}`:''):''}<br>
+      <b>Заказчик:</b> ${esc(ord.customer||'—')}${ord.vessel&&ord.vessel!=='—'?` · ${esc(ord.vessel)}`:''}<br>
+      <b>Испытание:</b> ${esc((act&&act.act)||'Приёмо-сдаточные испытания')}</div>
+    <div class="p-note" style="margin:8px 0 4px"><b>Основание:</b> ТЗ на изделие, программа и методика испытаний (ПМ), ГОСТ 24634 / ГОСТ ИСО 10816. Испытания проведены на аттестованном стенде предприятия.</div>
+    <table class="p-tbl">
+      <tr><th style="width:28px">№</th><th>Проверяемый параметр</th><th style="width:150px">Норма по ТЗ / ПМ</th><th style="width:130px">Метод</th><th style="width:80px">Факт</th><th style="width:88px">Заключение</th></tr>
+      ${rows}
+    </table>
+    <div class="p-terms">Заключение: изделие <b>соответствует / не соответствует</b> требованиям ТЗ и ПМ (нужное подчеркнуть после заполнения фактических значений на стенде). Настоящий протокол — проект; фактические значения и итоговое заключение вносятся комиссией по результатам испытаний.${goz?' Для ГОЗ: протокол предъявляется представителю заказчика — военному представительству (ВП).':''}</div>
+    <div class="p-sign"><div>Председатель комиссии${' '}(ОТК)<span class="p-line"></span></div><div>Член комиссии${' '}(ИЦ)<span class="p-line"></span>${esc((PEOPLE[ord.proj]||{}).full||'')}</div></div>
+    <div class="p-sign" style="margin-top:8px">${goz?`<div>Представитель заказчика — ВП<span class="p-line"></span></div>`:`<div>Представитель заказчика<span class="p-line"></span></div>`}<div>Дата испытаний<span class="p-line"></span></div></div>
+    <div class="p-foot">Сформировано в системе «Эллинг» · ${today()} · проект протокола ПСИ (программа-методика — типовая для судовых насосов)</div>
+  </div>`;
+}
 function waybillHTML(sh){
   const o=org();
   const ord=(S.orders||[]).find(x=>x.num===sh.order)||{};
@@ -6459,6 +6496,10 @@ document.addEventListener('click', e=>{
     if(sh){ printDoc(waybillHTML(sh));
       ACTS.push('накладная по отгрузке заказа '+sh.order); save(); }
     return; }
+  const psi = e.target.closest('[data-psi]');
+  if(psi){ const [oid,actName]=String(psi.dataset.psi).split('|');
+    const act=(S.portalAccept||[]).find(a=>a.orderId===oid && a.act===actName) || {orderId:oid, act:actName};
+    printDoc(psiProtocolHTML(act)); ACTS.push('проект протокола ПСИ по заказу '+oid); save(); return; }
   /* Резервные копии — только директор (роут это тоже проверяет на сервере) */
   if(e.target.id==='bkFull' || e.target.id==='bkPortable'){
     const portable = e.target.id==='bkPortable';
