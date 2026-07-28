@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.84 «Извещения ГОСТ 2.503 · все роли · НС · CRM» — рабочий MVP</title>
+﻿<title>Эллинг v1.85 «152-ФЗ согласие · Извещения ГОСТ 2.503 · НС» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -381,6 +381,22 @@
   .lg-err{background:var(--risk-soft,#FBE9E7);color:var(--risk);border:1px solid var(--risk);
     border-radius:8px;padding:9px 11px;font-size:12.5px;margin-bottom:4px}
   .lg-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:18px}
+  .lg-consent{margin-top:18px;display:flex;flex-direction:column;gap:9px}
+  .lg-cs{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--ink2);line-height:1.45;cursor:pointer}
+  .lg-cs input{margin:1px 0 0;flex:none;width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+  .lg-cs a{color:var(--accent);text-decoration:underline}
+  .legal-ov{position:fixed;inset:0;z-index:60;background:rgba(8,12,18,.6);backdrop-filter:blur(2px);display:grid;place-items:center;padding:20px}
+  .legal-card{width:min(94vw,640px);max-height:88vh;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px -20px rgba(0,0,0,.5)}
+  .legal-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:20px 22px 14px;border-bottom:1px solid var(--line)}
+  .legal-t{font-size:16px;font-weight:700;color:var(--ink)}
+  .legal-s{font-size:12px;color:var(--muted);margin-top:3px}
+  .legal-x{border:none;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px}
+  .legal-x:hover{background:var(--panel2);color:var(--ink)}
+  .legal-body{padding:16px 22px;overflow-y:auto;font-size:13px;color:var(--ink2);line-height:1.6}
+  .legal-body p{margin:0 0 11px}
+  .legal-body b{color:var(--ink);font-weight:600}
+  .legal-ver{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:8px}
+  .legal-foot{padding:14px 22px;border-top:1px solid var(--line);text-align:right}
   .appship{position:fixed;right:-26px;bottom:-14px;width:min(44vw,540px);height:auto;z-index:0;pointer-events:none;
     stroke:var(--ink);fill:none;stroke-width:1.3;opacity:.05;stroke-linecap:round;stroke-linejoin:round}
   :root[data-theme="dark"] .appship{opacity:.07}
@@ -1944,20 +1960,60 @@ function paintLogin(err, opts){
   if(!$('lgWrap')) document.body.insertAdjacentHTML('beforeend', '<div class="lg-wrap" id="lgWrap"></div>');
   renderLoginMode(opts._mode || 'login', err, opts);
 }
+// Версия согласий: при изменении текста документов инкремент требует нового согласия.
+const CONSENT_VER = '1.0-2026';
+// Правовые документы параметризованы организацией-оператором. Ключевая тонкость закрытого
+// контура: оператор ПДн — предприятие-работодатель, а не «Эллинг» (данные не покидают периметр).
+function legalDocText(kind){
+  const o=(typeof org==='function')?org():{};
+  const op=esc(o.full||o.name||'Предприятие-оператор'); const inn=esc(o.inn||'—'); const addr=esc(o.addr||'—');
+  if(kind==='pdn'){
+    return {title:'Политика обработки персональных данных', sub:'в соответствии с Федеральным законом № 152-ФЗ «О персональных данных»',
+      html:`<p><b>Оператор персональных данных:</b> ${op}${inn!=='—'?', ИНН '+inn:''}${addr!=='—'?', '+addr:''}. Обработка ведётся в информационной системе «Эллинг», развёрнутой в закрытом контуре предприятия (on-premise). Разработчик ПО «Эллинг» не является оператором и доступа к персональным данным не имеет.</p>
+      <p><b>1. Правовое основание.</b> Ст. 6 ч. 1 п. 2, 5 Федерального закона № 152-ФЗ (обработка необходима для исполнения трудового договора и осуществления функций, возложенных законодательством), Трудовой кодекс РФ (гл. 14).</p>
+      <p><b>2. Цели обработки.</b> Ведение именных учётных записей сотрудников; разграничение прав доступа по ролям; журналирование действий в системе управления производственным заказом; обеспечение прослеживаемости и информационной безопасности.</p>
+      <p><b>3. Перечень персональных данных.</b> Фамилия, имя, отчество; служебный логин; должность и роль; сведения о действиях пользователя в системе (журнал аудита). Специальные категории ПДн не обрабатываются.</p>
+      <p><b>4. Порядок и условия обработки.</b> Обработка (сбор, запись, хранение, использование, уточнение, удаление) осуществляется исключительно на технических средствах в закрытом контуре предприятия. <b>Передача третьим лицам, трансграничная передача и использование облачных сервисов не производятся</b> — данные не покидают периметр организации.</p>
+      <p><b>5. Срок обработки.</b> На период трудовых отношений и срок хранения, установленный нормативными актами; по истечении — обезличивание либо удаление.</p>
+      <p><b>6. Права субъекта.</b> Право на доступ, уточнение, блокирование, удаление персональных данных и <b>отзыв согласия</b> (ст. 9, 14 № 152-ФЗ) путём обращения к оператору. Отзыв согласия влечёт прекращение доступа к системе.</p>`};
+  }
+  return {title:'Пользовательское соглашение', sub:'условия использования информационной системы «Эллинг»',
+    html:`<p><b>1. Предмет.</b> Соглашение регулирует использование сотрудником информационной системы «Эллинг», эксплуатируемой ${op}, в рамках служебных обязанностей.</p>
+    <p><b>2. Учётная запись.</b> Учётная запись <b>именная</b>. Передача логина, пароля и доступа иным лицам запрещена. Пользователь несёт ответственность за действия, совершённые под его учётной записью.</p>
+    <p><b>3. Журналирование.</b> Действия пользователя фиксируются в неизменяемом журнале аудита под его именем в целях безопасности и прослеживаемости. Пользователь уведомлён и согласен с журналированием.</p>
+    <p><b>4. Конфиденциальность.</b> Сведения, ставшие известными в системе (в т. ч. составляющие коммерческую тайну и сведения по гособоронзаказу — 275-ФЗ), не подлежат разглашению. Обработка сведений ГОЗ ведётся с учётом требований о защите государственной тайны и раздельного учёта.</p>
+    <p><b>5. Прекращение доступа.</b> Оператор вправе прекратить доступ при увольнении, нарушении настоящего Соглашения либо отзыве согласия на обработку персональных данных.</p>`};
+}
+function legalOverlayHTML(kind){
+  const d=legalDocText(kind);
+  return `<div class="legal-ov" id="legalOv"><div class="legal-card">
+    <div class="legal-h"><div><div class="legal-t">${esc(d.title)}</div><div class="legal-s">${esc(d.sub)}</div></div>
+      <button type="button" class="legal-x" data-legalclose="1" aria-label="Закрыть">✕</button></div>
+    <div class="legal-body">${d.html}<div class="legal-ver">Редакция ${esc(CONSENT_VER)}</div></div>
+    <div class="legal-foot"><button type="button" class="lg-btn" data-legalclose="1" style="width:auto;padding:10px 22px">Понятно</button></div>
+  </div></div>`;
+}
 function renderLoginMode(mode, err, opts){
   const errBox = err?`<div class="lg-err" id="lgErr">${esc(err)}</div>`:'<div class="lg-err" id="lgErr" hidden></div>';
   const sub = mode==='register'?'Регистрация администратора':(mode==='claim'?'Активация приглашения':'Вход в систему');
+  // блок согласий 152-ФЗ (обязателен при создании учётной записи с персональными данными)
+  const consentBlock = `<div class="lg-consent">
+      <label class="lg-cs"><input type="checkbox" id="csPdn"><span>Даю согласие на обработку моих персональных данных в соответствии с <a href="#" data-legal="pdn">Политикой обработки ПДн (152-ФЗ)</a></span></label>
+      <label class="lg-cs"><input type="checkbox" id="csTerms"><span>Принимаю условия <a href="#" data-legal="terms">Пользовательского соглашения</a></span></label>
+    </div>`;
   let inner;
   if(mode==='register'){
     inner = `<label class="lg-lab">Логин</label><input class="lg-inp" id="rgUser" autocomplete="username" autofocus>
       <label class="lg-lab">Имя и фамилия</label><input class="lg-inp" id="rgName" autocomplete="name">
       <label class="lg-lab">Пароль (не короче 8)</label><input class="lg-inp" id="rgPass" type="password" autocomplete="new-password">
+      ${consentBlock}
       <button class="lg-btn" type="submit" id="lgGo">Создать администратора</button>
       <div class="lg-note">Это первая учётная запись — она станет директором. Дальше сотрудников заводит директор приглашением.</div>`;
   } else if(mode==='claim'){
     inner = `<label class="lg-lab">Логин</label><input class="lg-inp" id="clUser" autocomplete="username" autofocus>
       <label class="lg-lab">Код активации (от администратора)</label><input class="lg-inp" id="clCode" maxlength="8" style="letter-spacing:.25em;text-transform:uppercase" placeholder="8 символов">
       <label class="lg-lab">Придумайте пароль (не короче 8)</label><input class="lg-inp" id="clPass" type="password" autocomplete="new-password">
+      ${consentBlock}
       <button class="lg-btn" type="submit" id="lgGo">Активировать и войти</button>
       <div class="lg-note">Код выдаёт администратор лично. После активации входите по логину и своему паролю.</div>`;
   } else {
@@ -1979,6 +2035,15 @@ function renderLoginMode(mode, err, opts){
   $('lgWrap').innerHTML = `<form class="lg-card" id="lgForm"><div class="lg-brand">Эллинг</div><div class="lg-sub">${sub}</div>${errBox}${inner}${footer}</form>`;
 
   $('lgWrap').querySelectorAll('[data-lgmode]').forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); renderLoginMode(a.dataset.lgmode, '', opts); }));
+  // правовые документы: открыть оверлей поверх формы, закрыть по кнопке/фону
+  $('lgWrap').querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', e=>{
+    e.preventDefault();
+    const old=$('legalOv'); if(old) old.remove();
+    $('lgWrap').insertAdjacentHTML('beforeend', legalOverlayHTML(a.dataset.legal));
+    const ov=$('legalOv');
+    ov.querySelectorAll('[data-legalclose]').forEach(b=>b.addEventListener('click', ()=>ov.remove()));
+    ov.addEventListener('click', ev=>{ if(ev.target===ov) ov.remove(); });
+  }));
   const sso = $('lgSso'); if(sso) sso.addEventListener('click', ()=>{ location.href='/api/auth/oidc/start'; });
   if(mode==='login'){ try{ const se=new URLSearchParams(location.search).get('sso_error'); if(se){ const b=$('lgErr'); b.hidden=false; b.textContent='SSO: '+se; } }catch(_){} }
 
@@ -1989,8 +2054,15 @@ function renderLoginMode(mode, err, opts){
     const fail = m => { box.hidden=false; box.textContent=m; btn.disabled=false; btn.textContent=label; };
     try{
       let url, payload;
-      if(mode==='register'){ url='/api/auth/register'; payload={login:$('rgUser').value, name:$('rgName').value, password:$('rgPass').value}; }
-      else if(mode==='claim'){ url='/api/auth/claim'; payload={login:$('clUser').value, code:($('clCode').value||'').trim(), password:$('clPass').value}; }
+      // 152-ФЗ: без согласия учётную запись с персональными данными не создаём
+      if(mode==='register' || mode==='claim'){
+        const pdn=$('csPdn'), terms=$('csTerms');
+        if(!pdn||!pdn.checked||!terms||!terms.checked){
+          fail('Для создания учётной записи необходимо согласие на обработку персональных данных (152-ФЗ) и принятие Пользовательского соглашения'); return; }
+      }
+      const consent={pdn:true, terms:true, v:CONSENT_VER, ts:new Date().toISOString()};
+      if(mode==='register'){ url='/api/auth/register'; payload={login:$('rgUser').value, name:$('rgName').value, password:$('rgPass').value, consent}; }
+      else if(mode==='claim'){ url='/api/auth/claim'; payload={login:$('clUser').value, code:($('clCode').value||'').trim(), password:$('clPass').value, consent}; }
       else { url='/api/auth/login'; payload={login:$('lgUser').value, password:$('lgPass').value};
         if(!$('lgTotpWrap').hidden) payload.code=($('lgCode').value||'').trim(); }
       const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
