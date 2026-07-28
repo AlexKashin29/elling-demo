@@ -2878,9 +2878,9 @@ function vNS(){
   const vf=S._nsVerify;
   const verifyBanner = vf ? `<div class="ns-vf ${vf.valid?'ok':'bad'}"><div>${vf.valid?'✔ Снимок подлинный':'✖ Подпись не прошла — пакет изменён'} · станция «${esc((vf.body.station||{}).name||'')}» · ${(vf.body.counts||{}).done||0}/${(vf.body.counts||{}).total||0} готово${(vf.body.station||{}).goz?' · ГОЗ':''} · digest ${esc((vf.digest||'').slice(0,12))}</div><div style="display:flex;gap:6px">${vf.valid?`<button class="btn ghost" data-nsvfreport="1" style="font-size:11px">🖨 Справка из снимка</button>`:''}<button class="btn ghost" data-nsvfclose="1" style="font-size:11px">закрыть</button></div></div>` : '';
   const intro = S._nsIntroHid ? '' : `<div class="ns-intro"><div><b>Проработка насосных станций</b> — инженерная проработка изделия: статусы критериев, зависимости (кто на кого ждёт), сроки и комплект КД. Виды: <b>Список</b> — детально по станции · <b>График</b> — сроки на оси · <b>Нагрузка</b> — по инженерам · <b>Портфель</b> — все станции с риском.</div><button class="ns-intro-x" data-nsintroclose="1" title="скрыть">×</button></div>`;
-  if(view==='timeline') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${vNSTimeline()}</div>`;
-  if(view==='load') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${vNSLoad()}</div>`;
-  if(view==='portfolio') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${vNSPortfolio()}</div>`;
+  if(view==='timeline') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${intro}${verifyBanner}${vNSTimeline()}</div>`;
+  if(view==='load') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${intro}${verifyBanner}${vNSLoad()}</div>`;
+  if(view==='portfolio') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${intro}${verifyBanner}${vNSPortfolio()}</div>`;
   const st=nsActive();
   // верхняя лента: все НС как мини-карточки (смотреть «что где в работе, на каком этапе»)
   const strip=list.map(s=>{ const p=nsProgress(s); const on=s.id===st.id;
