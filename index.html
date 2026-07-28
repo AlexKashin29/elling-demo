@@ -4329,7 +4329,7 @@ function vSettings(){
     ['Логист','отгрузки, комплектация, пропуска','CRM, инженерная БЗ'],
   ];
   const cont = S.orgContour||'cloud';
-  const SET_CATS=[['org','i-portal','Организация','all'],['users','i-deals','Пользователи и роли','all'],['security','i-plan','Безопасность','all'],['integrations','i-supply','Интеграции','manage'],['migrate','i-supply','Миграция реестра','manage'],['auto','i-today','Автоматизации','manage'],['notify','i-bell','Уведомления','all'],['backup','i-plan','Резервные копии','admin'],['theme','i-settings','Оформление','all'],['api','i-kb','API','manage'],['system','i-plan','Система','all']];
+  const SET_CATS=[['org','i-portal','Организация','all'],['users','i-deals','Пользователи и роли','all'],['security','i-plan','Безопасность','all'],['integrations','i-supply','Интеграции','manage'],['migrate','i-supply','Миграция реестра','manage'],['auto','i-today','Автоматизации','manage'],['notify','i-bell','Уведомления','all'],['backup','i-plan','Резервные копии','admin'],['theme','i-settings','Оформление','all'],['api','i-kb','API','manage'],['legal','i-notices','Правовые документы','all'],['system','i-plan','Система','all']];
   const cats = SET_CATS.filter(c=>c[3]==='all'||(c[3]==='manage'&&canManage())||(c[3]==='admin'&&canAdmin()));
   const tab = cats.some(c=>c[0]===(S.setTab||'org'))?(S.setTab||'org'):'org';
   return `<div class="set-wrap"><aside class="set-rail">${cats.map(([id,ic,l])=>`<button class="set-cat ${tab===id?'on':''}" data-settab="${id}"><svg class="ic"><use href="#${ic}"/></svg><span>${l}</span></button>`).join('')}</aside><div class="set-main">
@@ -4517,6 +4517,15 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
   -d '{"title":"Оценка ТЗ","assignee":"petrov"}' ${location.origin}/api/v1/tasks</div>
       <p style="font-size:12px;color:var(--muted);margin-top:10px">${SRV.on?'Сервер запущен — API активен.':'API работает при запущенном сервере (Запустить_сервер.bat).'} Соответствует джентльменскому минимуму трекера из паритет-чека с Jira/Я.Трекером.</p>
     </div></section>
+    <section class="set-sec" data-sec="legal" ${tab==='legal'?'':'hidden'}>
+      <div class="panel" style="margin-bottom:14px"><h3>Правовые документы <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· 152-ФЗ · доступны в любой момент</span></h3>
+        <p style="font-size:12.5px;color:var(--ink2);margin:0 0 6px">Документы, с которыми вы согласились при активации учётной записи. Субъект персональных данных вправе знакомиться с ними в любое время (ст. 14 № 152-ФЗ). Оператор — ${esc(org().full||org().name)}. Действующая редакция: <span class="mono">${esc(CONSENT_VER)}</span>.</p>
+      </div>
+      ${['pdn','terms'].map(k=>{ const dc=legalDocText(k); return `<div class="panel" style="margin-bottom:14px">
+        <h3 style="margin-bottom:2px">${esc(dc.title)}</h3>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">${esc(dc.sub)}</div>
+        <div style="font-size:13px;color:var(--ink2);line-height:1.6">${dc.html}</div></div>`; }).join('')}
+    </section>
     <section class="set-sec" data-sec="system" ${tab==='system'?'':'hidden'}><div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
