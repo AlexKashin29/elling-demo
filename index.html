@@ -867,6 +867,7 @@
   .roi-lines span{font-size:12px;color:var(--muted)}
   .roi-lines b{font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
   .roi-lines small{font-size:10.5px;color:var(--muted);line-height:1.35}
+  .roi-ops{margin-top:12px;font-size:11.5px;color:var(--ink2);line-height:1.5;padding:9px 12px;border-radius:9px;background:color-mix(in srgb,var(--accent,#2E6E8E) 7%,transparent);border:1px solid color-mix(in srgb,var(--accent,#2E6E8E) 20%,transparent)}
   @media(max-width:640px){.roi-lines{grid-template-columns:1fr}}
   /* Проработка НС */
   .ns-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
@@ -3167,10 +3168,13 @@ function vRoi(){
         <div><span>Избежанные срывы поставки</span><b>${rub(r.delay_saved_year)}</b><small>ранняя видимость комплектации снимает часть сорванных дней (штраф + риск след. заказа)</small></div>
         <div><span>Избежанная переработка (радар закладок)</span><b>${rub(r.rework_saved_year||0)}</b><small>каталог/радар ловит «молчаливую перезакладку» — часы разбора дублей и переделки КД не тратятся</small></div>
       </div></div>`:'<div style="font-size:12px;color:var(--muted)">Введите свои числа и нажмите «Посчитать» — калькулятор покажет экономию ₽/год. Это ваша арифметика, а не наша оценка сверху.</div>';
+  const icf=nsICForecast();
+  const govN=(S.orders||[]).filter(o=>(o.feed||[]).some(f=>/Принят при перегрузке ИЦ/.test((f&&f[1])||''))).length;
+  const opsNote=`<div class="roi-ops"><b>Операционная реальность</b> (не входит в расчёт выше, чтобы не задваивать): ИЦ ${icf.level==='over'?'<b style="color:var(--bad)">перегружен</b> — очередь '+icf.totalDays+' инженеро-дней на '+icf.engineers+' инж.':(icf.level==='high'?'<b style="color:var(--warn)">под высокой нагрузкой</b>':'в норме')}${govN?', <b>'+govN+'</b> заказ(ов) приняты при перегрузке (под риском срока)':''}. Прозрачная очередь ИЦ + governance — механизм, за счёт которого статья «избежанные срывы» из модели становится реальной, а не декларацией.</div>`;
   return `<div class="an-panel"><div class="an-title">₽ ROI за минуту — по вашим числам <span class="mono" style="font-size:10px;color:var(--muted)">для разговора, не оценка сверху</span></div>
     <div class="roi-grid">${fields}</div>
     <div style="margin-top:10px"><button class="btn" data-roicalc="1">Посчитать</button></div>
-    ${out}</div>`;
+    ${out}${opsNote}</div>`;
 }
 function kbSearchProjects(q){
   const tokens = (q||'').toLowerCase().split(/[^a-zа-яё0-9-]+/).filter(t=>t.length>1);
