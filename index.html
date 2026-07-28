@@ -2837,6 +2837,19 @@ function nsBumpRev(stId,itId,idx){ const st=nsById(stId); if(!st) return;
 }
 // Печатная справка о проработке станции — выносной документ для отчёта наверх/заказчику.
 // Собирает всё, что знает модуль: статус, критпуть, сроки, комплект КД с ревизиями, ГОЗ.
+// Печатный блок «что изменилось с последнего снимка» — уходит в выносную справку для ВП/директора.
+function nsReportDiffBlock(st){
+  const d=nsDiffSince(st); if(!d) return '';
+  if(!d.changes.length) return `<div class="p-note" style="margin:6px 0 12px">С последнего снимка (${nsLogFmt(d.ts)}) проработка не менялась — состояние совпадает с подписанным пакетом.</div>`;
+  const dd=d.doneNow-d.donePrev;
+  const items=d.changes.map(c=>{
+    const b = c.t==='status' ? `${esc(c.from)} → ${esc(c.to)}`
+      : c.t==='due' ? `срок ${esc(c.from)} → ${esc(c.to)}` : esc(c.note||'');
+    return `<li><b>${esc(c.title)}</b> — ${b}</li>`;
+  }).join('');
+  return `<div style="margin:6px 0 12px"><b>Изменения с последнего снимка</b> (${nsLogFmt(d.ts)}): готовность ${d.donePrev}/${d.total} → ${d.doneNow}/${d.total}${dd?` (${dd>0?'+':''}${dd} критериев)`:''}, всего изменений ${d.changes.length}.
+    <ul style="margin:4px 0 0;padding-left:18px;font-size:12px;line-height:1.5">${items}</ul></div>`;
+}
 function nsReportHTML(st){
   const o=org(); const p=nsProgress(st); const r=nsStationRisk(st);
   const typeLabel=(NS_TYPES[st.type]||NS_TYPES.base).label;
@@ -2858,6 +2871,7 @@ function nsReportHTML(st){
     <div style="font-size:15px;font-weight:700;margin:12px 0 4px">Готовность: ${p.done}/${p.total} критериев (${p.pct}%) · Состояние: ${RL[r.level]||'—'}${r.finish!=null?` · План готовности: ${nsFmtDay(r.finish)}`:''}</div>
     ${conf?`<div class="p-note" style="color:#b00;margin-bottom:4px">⚠ Конфликтов сроков: ${conf} (критерий раньше предшественника — план требует пересмотра)</div>`:''}
     ${crit.length>=2?`<div class="p-note" style="margin-bottom:10px"><b>★ Критический путь</b> (определяет срок готовности): ${crit.map(c=>esc(c.title||'')).join(' → ')}</div>`:''}
+    ${nsReportDiffBlock(st)}
     <table class="p-tbl">
       <tr><th style="width:28px">№</th><th>Критерий проработки</th><th style="width:120px">Исполнитель</th><th style="width:78px">Статус</th><th style="width:84px">Срок</th><th style="width:130px">Комплект КД</th><th>Принятое решение</th></tr>
       ${rows||'<tr><td colspan="7" class="p-r">критериев нет</td></tr>'}
