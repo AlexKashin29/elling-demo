@@ -923,6 +923,18 @@
   .ns-mini-dot{width:7px;height:7px;border-radius:50%;flex:none}
   .ns-mini-bar{width:44px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
   .ns-mini-bar>i{display:block;height:100%}
+  .ns-diff{margin-top:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:11px 13px}
+  .ns-diff-head{font-size:12.5px;color:var(--ink2);margin-bottom:8px}
+  .ns-diff-delta{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:20px;margin-left:4px}
+  .ns-diff-delta.up{color:var(--good);background:var(--good-soft)}
+  .ns-diff-delta.dn{color:var(--warn);background:var(--warn-soft)}
+  .ns-diff-empty{font-size:12px;color:var(--muted)}
+  .ns-diff-list{display:flex;flex-direction:column;gap:5px}
+  .ns-diff-row{display:grid;grid-template-columns:20px minmax(0,1.1fr) minmax(0,1.4fr);gap:8px;align-items:baseline;font-size:12px;padding:3px 0;border-top:1px solid var(--line)}
+  .ns-diff-row:first-child{border-top:none}
+  .ns-diff-ic{text-align:center}
+  .ns-diff-t{color:var(--ink2);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ns-diff-b{color:var(--muted)}
   .ns-art-rev{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 2px;line-height:1}.ns-art-rev:hover{color:var(--accent,#2E6E8E)}
   .ns-pt-crit{box-shadow:0 0 0 2px var(--accent,#2E6E8E),0 0 0 4px color-mix(in srgb,var(--accent,#2E6E8E) 30%,transparent)}
   .ns-ld-title{font-size:14px;font-weight:680;margin-bottom:14px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
@@ -1765,7 +1777,7 @@ let ME = null;            // кто вошёл (с сервера); null в де
 let TOTP2FA = false;      // включён ли у вошедшего второй фактор (из /api/auth/me)
 let ACTS = [];            // накопитель описаний действий (ревью v0.5: не терять при дебаунсе)
 let SYNCING = false;      // рендер по данным с сервера не должен порождать обратный пуш (эхо-цикл)
-const SHARED = ['orders','epics','seq','tasks','deals','suppliers','certs','notices','estimates','portalDocs','portalQA','connectors','agentLog','docs','projects','kbProjects','checklists','drawings','rules','notes','savedFilters','portalAccept','notifCh','elxLog','ns','org'];
+const SHARED = ['orders','epics','seq','tasks','deals','suppliers','certs','notices','estimates','portalDocs','portalQA','connectors','agentLog','docs','projects','kbProjects','checklists','drawings','rules','notes','savedFilters','portalAccept','notifCh','elxLog','ns','nsCheckpt','org'];
 // Дедуп автоматизаций живёт на самой задаче (t.autoFired) — задачи синкаются, поэтому
 // повторное срабатывание в другой вкладке/клиенте не задваивает комментарии и лог (ревью v1.15)
 function sharedData(){ const o={}; SHARED.forEach(k=>{ if(S[k]!==undefined) o[k]=S[k]; }); return o; }
@@ -3019,9 +3031,26 @@ function vNS(){
         <button class="btn ghost" data-nssched="${st.id}" style="font-size:12px" title="задать дату сдачи станции — система расставит сроки критериев назад по зависимостям, без конфликтов">📅 Сроки от даты сдачи</button>
         <button class="btn ghost" data-nsreport="${st.id}" style="font-size:12px" title="печатная справка о проработке — выносной документ для отчёта наверх/заказчику">🖨 Справка о проработке</button>
         <button class="btn ghost" data-nstask="${st.id}" style="font-size:12px" title="создать задачу на доске ИЦ (критерии — подзадачами), чтобы вести проработку в обычной очереди задач">${st.taskKey?('↗ Задача '+esc(st.taskKey)):'＋ На доску ИЦ'}</button>
-        <button class="btn ghost" data-nssnap="${st.id}" style="font-size:12px" title="выгрузить подписанный снимок статуса проработки — передаваемый пруф готовности для гейта/архива">📎 Снимок проработки (подпись)</button></div>
+        <button class="btn ghost" data-nssnap="${st.id}" style="font-size:12px" title="выгрузить подписанный снимок статуса проработки — передаваемый пруф готовности для гейта/архива">📎 Снимок проработки (подпись)</button>
+        ${(S.nsCheckpt||{})[st.id]?`<button class="btn ghost ${S._nsDiff===st.id?'on':''}" data-nsdiff="${st.id}" style="font-size:12px" title="что изменилось в проработке с момента последнего снимка — аудит-трейл для ВП/директора">🔍 Что изменилось с снимка</button>`:''}</div>
+      ${S._nsDiff===st.id?nsDiffPanel(st):''}
     </div>
   </div>`;
+}
+// Панель аудит-трейла: список изменений с прошлого снимка, сгруппировано по критериям.
+function nsDiffPanel(st){
+  const d=nsDiffSince(st); if(!d) return '';
+  const dd=d.doneNow-d.donePrev;
+  const icon={status:'●',due:'📅','dec':'✎','kd-rev':'📐','kd-add':'➕','kd-del':'➖',new:'✨',del:'🗑'};
+  const head=`<div class="ns-diff-head">С последнего снимка (${nsLogFmt(d.ts)}): готовность ${d.donePrev}/${d.total} → <b>${d.doneNow}/${d.total}</b>${dd?` <span class="ns-diff-delta ${dd>0?'up':'dn'}">${dd>0?'+':''}${dd} критериев</span>`:''} · изменений: ${d.changes.length}</div>`;
+  if(!d.changes.length) return `<div class="ns-diff">${head}<div class="ns-diff-empty">С момента снимка проработка не менялась — состояние совпадает с подписанным пакетом.</div></div>`;
+  const rows=d.changes.map(c=>{
+    const body = c.t==='status' ? `${esc(c.from)} → <b style="color:${c.up?'var(--good)':'var(--warn)'}">${esc(c.to)}</b>`
+      : c.t==='due' ? `срок ${esc(c.from)} → <b>${esc(c.to)}</b>`
+      : esc(c.note||'');
+    return `<div class="ns-diff-row"><span class="ns-diff-ic">${icon[c.t]||'•'}</span><span class="ns-diff-t">${esc(c.title)}</span><span class="ns-diff-b">${body}</span></div>`;
+  }).join('');
+  return `<div class="ns-diff">${head}<div class="ns-diff-list">${rows}</div></div>`;
 }
 // Канонический JSON как на бэкенде (sort_keys по code-points, без пробелов, ensure_ascii=false).
 function nsCanon(o){
@@ -3034,6 +3063,31 @@ function nsCanon(o){
 }
 async function nsSha256Hex(str){ const b=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
 function nsSnapKd(it){ const a=nsArtifacts(it); return a.map(x=>({code:String(x.code||''), rev:String(x.rev||'')})); }
+// Аудит-трейл проработки: чекпоинт при снятии снимка + дифф «что изменилось с прошлого снимка».
+// Руководитель ИЦ показывает ВП/директору сдвиг с последней контрольной точки (гейта/приёмки).
+function nsCheckptItems(st){ return (st.items||[]).map(it=>({id:String(it.id||''),title:String(it.title||''),status:String(it.status||''),due:String(it.due||''),dec:String(it.dec||''),kd:nsSnapKd(it)})); }
+function nsSaveCheckpt(st){ S.nsCheckpt=S.nsCheckpt||{}; S.nsCheckpt[st.id]={ts:new Date().toISOString(), items:nsCheckptItems(st)}; }
+function nsStLabel(s){ return (NS_STATUS[s]||['—'])[0]; }
+// Сравнивает текущее состояние станции с сохранённым чекпоинтом (по id критерия).
+function nsDiffSince(st){
+  const cp=(S.nsCheckpt||{})[st.id]; if(!cp) return null;
+  const prev={}; (cp.items||[]).forEach(p=>prev[p.id]=p);
+  const now=nsCheckptItems(st); const nowIds=new Set(now.map(n=>n.id));
+  const ch=[];
+  now.forEach(n=>{ const p=prev[n.id];
+    if(!p){ ch.push({t:'new', title:n.title, note:'добавлен критерий · '+nsStLabel(n.status)}); return; }
+    if(p.status!==n.status) ch.push({t:'status', title:n.title, from:nsStLabel(p.status), to:nsStLabel(n.status), up:NS_STATUS_ORDER.indexOf(n.status)>NS_STATUS_ORDER.indexOf(p.status)});
+    if(p.due!==n.due) ch.push({t:'due', title:n.title, from:p.due||'—', to:n.due||'—'});
+    if(p.dec!==n.dec) ch.push({t:'dec', title:n.title, note:'изменено решение'});
+    // КД: сравнение комплекта по коду документа (ревизия A→Б, добавлен/убран документ)
+    const pk={}; (p.kd||[]).forEach(k=>pk[k.code]=k.rev); const nk={}; (n.kd||[]).forEach(k=>nk[k.code]=k.rev);
+    Object.keys(nk).forEach(code=>{ if(!(code in pk)) ch.push({t:'kd-add', title:n.title, note:'КД добавлена: '+code+(nk[code]?(' рев.'+nk[code]):'')});
+      else if(pk[code]!==nk[code]) ch.push({t:'kd-rev', title:n.title, note:'КД '+code+': ревизия '+(pk[code]||'—')+'→'+(nk[code]||'—')}); });
+    Object.keys(pk).forEach(code=>{ if(!(code in nk)) ch.push({t:'kd-del', title:n.title, note:'КД убрана: '+code}); });
+  });
+  (cp.items||[]).forEach(p=>{ if(!nowIds.has(p.id)) ch.push({t:'del', title:p.title, note:'критерий удалён'}); });
+  return {ts:cp.ts, changes:ch, doneNow:now.filter(n=>n.status==='done').length, donePrev:(cp.items||[]).filter(p=>p.status==='done').length, total:now.length};
+}
 // Тело снимка проработки — та же структура, что build_ns на сервере (для офлайн-демо).
 function nsSnapBody(st){
   const items=(st.items||[]).map(it=>({title:String(it.title||''),role:String(it.role||''),status:String(it.status||''),due:String(it.due||''),dec:String(it.dec||''),kd:nsSnapKd(it)}));
@@ -3051,13 +3105,14 @@ function nsSnapshot(stId){ const st=nsById(stId); if(!st) return;
     if(!SRV.on){   // офлайн-демо: канонический body + реальный SHA-256, БЕЗ подписи (честно)
       const body=nsSnapBody(st); const digest=await nsSha256Hex(nsCanon(body)); const c=body.counts;
       nsSnapDownload({body, sig:'', pub:'', digest, note:'ДЕМО-ПАКЕТ: цифровая подпись Ed25519 формируется на сервере (Запустить_сервер.bat). SHA-256 канона тела ниже — целостность проверяема, но подписи в этом пакете нет.'}, st);
+      nsSaveCheckpt(st); save();   // контрольная точка для аудит-трейла «что изменилось»
       toast('Демо-пакет проработки выгружен ('+(c.done||0)+'/'+(c.total||0)+', digest '+digest.slice(0,8)+' · подпись — на сервере)','ok');
       return;
     }
     try{
       const r=await fetch('/api/ns/snapshot',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({station:st, title:st.name||''})});
       const j=await r.json().catch(()=>({}));
-      if(r.ok&&j.body){ nsSnapDownload(j, st); const c=j.body.counts||{}; ACTS.push('снимок проработки НС «'+(st.name||'')+'» подписан');
+      if(r.ok&&j.body){ nsSnapDownload(j, st); const c=j.body.counts||{}; ACTS.push('снимок проработки НС «'+(st.name||'')+'» подписан'); nsSaveCheckpt(st);
         toast('Снимок проработки выгружен ('+(c.done||0)+'/'+(c.total||0)+', подпись Ed25519)','ok');
       } else toast(j.error||'Не удалось сформировать снимок','bad');
     }catch(_){ toast('Сервер недоступен — снимок формируется на бэкенде','bad'); }
@@ -6582,6 +6637,7 @@ document.addEventListener('click', e=>{
   { const el=e.target.closest('[data-nsopen]'); if(el){ S.view='ns'; S.nsView='list'; S.nsActive=el.dataset.nsopen; render(); return; } }
   { const el=e.target.closest('[data-nsgoorder]'); if(el){ S.view='order'; S.orderId=el.dataset.nsgoorder; render(); return; } }
   { const el=e.target.closest('[data-nslog]'); if(el){ const k=el.dataset.nslog; S._nsLog = S._nsLog===k?null:k; render(); return; } }
+  { const el=e.target.closest('[data-nsdiff]'); if(el){ const k=el.dataset.nsdiff; S._nsDiff = S._nsDiff===k?null:k; render(); return; } }
   if(e.target.id==='aiBtn'){
     if(!(S.kbq||'').trim()){ S.kbMsg='Введите параметры ТЗ или ключевые слова.'; render(); return; }
     S.kbMsg=''; searchFiles(); analogRank();   // серверная ИИ-оценка трудоёмкости
