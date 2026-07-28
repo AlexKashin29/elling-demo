@@ -5383,7 +5383,7 @@ function vReports(){
   const maxL = Math.max(1,...loads.map(l=>l[1]));
   return `<div class="exp-bar" style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:14px;flex-wrap:wrap">
       <button class="btn ghost" id="expCSV">Выгрузить в Excel (CSV)</button>
-      <button class="btn ghost" id="expPrint">Печать / PDF</button>
+      <button class="btn ghost" id="expPrint" title="печатная сводка по портфелю одним листом — для дирекции/собственника">🖨 Сводка для дирекции (PDF)</button>
     </div>
     <div class="stats">
       <div class="stat"><div class="v">${S.orders.length}</div><div class="l">заказов в портфеле</div></div>
@@ -5408,6 +5408,51 @@ function vReports(){
     </div>`:`<div class="panel" style="margin-top:14px"><h3>Журнал аудита</h3>
       <div class="empty">🔒 Журнал действий доступен дирекции. Ваша роль — ${esc((PEOPLE[S.currentUser]||{}).role||'')}: аудит скрыт по матрице доступа.</div>
     </div>`}`;
+}
+// Печатная сводка по портфелю для дирекции/собственника — один лист, выносной документ.
+// Собирает ключевые метрики из отчётов + здоровье проработки НС в чистую pdoc-форму.
+function portfolioReportHTML(){
+  const o=org();
+  const ords=S.orders||[];
+  const estAll=S.estimates||[]; const ackOver=estAll.filter(e=>e.status==='new'&&estAckLeft(e)<0).length;
+  const slaPct=estAll.length?Math.round((estAll.length-ackOver)/estAll.length*100):100;
+  const dForecast=(S.deals||[]).filter(d=>d.stage!=='lost').reduce((a,d)=>a+d.sum*((DEAL_PROB[d.stage]||0)/100),0);
+  const savedCalls=ords.reduce((a,x)=>a+(x.feed||[]).filter(f=>f[2]).length,0);
+  const cRisk=ords.filter(x=>x.risk==='risk').length, cWarn=ords.filter(x=>x.risk==='warn').length, cOk=ords.filter(x=>x.risk==='ok').length;
+  const list=nsList();
+  const nsRk=list.map(st=>({st,r:nsStationRisk(st)}));
+  const nsCnt=l=>nsRk.filter(x=>x.r.level===l).length;
+  const nsOver=list.reduce((s,st)=>s+(st.items||[]).filter(nsIsOverdue).length,0);
+  const icf=(typeof nsICForecast==='function')?nsICForecast():null;
+  const riskOrders=ords.filter(x=>x.risk==='risk'||x.risk==='warn')
+    .map(x=>`<tr><td>${esc(x.num||x.id||'—')}</td><td>${esc(x.title||'—')}</td><td>${esc(x.customer||'—')}</td><td>${esc(x.due||'—')}</td><td class="p-r" style="color:${x.risk==='risk'?'#b00':'#a9660a'};font-weight:600">${x.risk==='risk'?'СРЫВ':'риск'}</td></tr>`).join('');
+  const num=`СВ-${new Date().toISOString().slice(0,10).replace(/-/g,'')}`;
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name)}</b><br>ИНН ${esc(o.inn)}${o.kpp?' · КПП '+esc(o.kpp):''} · ${esc(o.addr)}</div>
+    <div class="p-title">Сводка по портфелю заказов<br><span>№ ${num} от ${today()}</span></div>
+    <table class="p-tbl" style="margin-top:6px">
+      <tr><th>Показатель</th><th style="width:110px">Значение</th></tr>
+      <tr><td>Заказов в портфеле</td><td class="p-r">${ords.length}</td></tr>
+      <tr><td>В графике / риск срока / срыв</td><td class="p-r">${cOk} / ${cWarn} / <b style="color:${cRisk?'#b00':'inherit'}">${cRisk}</b></td></tr>
+      <tr><td>Просчётов ТКП в SLA отклика (4 ч)</td><td class="p-r" style="color:${slaPct>=80?'#0a7d0a':'#a9660a'}">${slaPct}%</td></tr>
+      <tr><td>Событий в системе вместо звонков</td><td class="p-r">${savedCalls}</td></tr>
+      ${canFin()?`<tr><td>Взвешенный прогноз воронки</td><td class="p-r">${fmtSum(dForecast)}</td></tr>`:''}
+    </table>
+    <div style="font-size:14px;font-weight:700;margin:14px 0 4px">Проработка станций (НС)</div>
+    <table class="p-tbl">
+      <tr><th>Показатель</th><th style="width:110px">Значение</th></tr>
+      <tr><td>Станций в проработке</td><td class="p-r">${list.length}</td></tr>
+      <tr><td>В графике / риск / срыв</td><td class="p-r">${nsCnt('ok')+nsCnt('done')} / ${nsCnt('warn')} / <b style="color:${nsCnt('risk')?'#b00':'inherit'}">${nsCnt('risk')}</b></td></tr>
+      <tr><td>Просроченных критериев проработки</td><td class="p-r" style="color:${nsOver?'#b00':'inherit'}">${nsOver}</td></tr>
+      ${icf?`<tr><td>Единая очередь ИЦ (проработка + просчёты)</td><td class="p-r">${icf.totalDays} инж-дн · ~${icf.perEng} дн/инж${icf.level==='over'?' · перегруз':icf.level==='high'?' · высокая':''}</td></tr>`:''}
+    </table>
+    ${riskOrders?`<div style="font-size:14px;font-weight:700;margin:14px 0 4px">Заказы под риском срока — требуют решения</div>
+    <table class="p-tbl"><tr><th style="width:70px">Заказ</th><th>Изделие</th><th style="width:150px">Заказчик</th><th style="width:96px">Срок</th><th style="width:66px">Статус</th></tr>${riskOrders}</table>`
+    :`<div class="p-note" style="margin-top:12px">Заказов под риском срока нет — портфель в графике.</div>`}
+    <div class="p-terms">Сводка сформирована на дату печати по данным системы. Финансовые показатели видны в соответствии с матрицей доступа. Детализация — в модулях «Заказы», «Проработка», «Отчёты».</div>
+    <div class="p-sign"><div>${esc(o.dirRole||'Директор')}<span class="p-line"></span>${esc(o.director||'')}</div><div>Дата<span class="p-line"></span></div></div>
+    <div class="p-foot">Сформировано в системе «Эллинг» · ${today()} · сводка для дирекции</div>
+  </div>`;
 }
 // Здоровье проработки НС в отчётах директора: риск-разбивка станций + просрочки/конфликты + прогноз ИЦ.
 // Связывает работу руководителя ИЦ (проработка) с аналитикой дирекции в одном месте.
@@ -6603,7 +6648,7 @@ document.addEventListener('click', e=>{
         render();
       }).catch(()=>{ S.notifMsg='Сервер недоступен.'; render(); }); return; }
   if(e.target.id==='expCSV'){ exportReportCSV(); toast('Отчёт выгружен в CSV','ok'); return; }
-  if(e.target.id==='expPrint'){ window.print(); return; }
+  if(e.target.id==='expPrint'){ printDoc(portfolioReportHTML()); ACTS.push('сводка по портфелю на печать'); save(); return; }
   const sha = e.target.closest('[data-shipact]');
   if(sha){ const [id,act]=sha.dataset.shipact.split('|');
     const s=(S.shipments||[]).find(x=>x.id===id);
