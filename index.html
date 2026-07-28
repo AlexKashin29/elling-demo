@@ -2430,7 +2430,8 @@ function analogPanel(){
     ? `<div class="an-est"><div class="an-est-v">${est.low}–${est.high}<span> н/ч</span></div><div class="an-est-l">ИИ-оценка трудоёмкости по ${est.relevant} аналог${est.relevant==1?'у':'ам'}. Опора — «${esc((byId[est.basis]||{}).izdelie||est.basis)}», масштаб по ведущему параметру. Готовая цифра для ТКП за секунды вместо дней просчёта.</div></div>`
     : `<div class="an-est"><div class="an-est-l">Близких аналогов для оценки не нашлось — уточните параметры ТЗ (подача, давление, мощность, материал, шифр).</div></div>`;
   const icf=(est.best!=null)?nsICForecast():null;
-  const icLine=icf?`<div class="an-ic${icf.level==='over'?' over':''}">Единая очередь ИЦ: <b>${icf.prorDays}</b> дн проработки + <b>${icf.estDays}</b> дн просчётов = <b>${icf.totalDays}</b> инженеро-дней на ${icf.engineers} инж. · ближайшее окно старта <b>~${nsFmtDay(icf.startDay)}</b>${icf.level==='over'?' — ⚠ ИЦ перегружен, новый заказ — риск срыва срока':' — реальный срок, когда возьмут заказ'}</div>`:'';
+  const estD=(est.best!=null)?Math.ceil((est.best||est.high||0)/Math.max(1,icCap().hpd||8)):0;
+  const icLine=icf?`<div class="an-ic${icf.level==='over'?' over':''}">Единая очередь ИЦ: <b>${icf.totalDays}</b> инженеро-дней (${icf.prorDays} проработка + ${icf.estDays} просчёты) на ${icf.engineers} инж.${estD?` · этот заказ <b>+${estD} дн</b>` :''} · окно старта <b>~${nsFmtDay(icf.startDay)}</b>${icf.level==='over'?' — ⚠ ИЦ перегружен, новый заказ рискует сорвать срок':' — реальный срок, когда ИЦ возьмёт заказ'}</div>`:'';
   const cats=(a.tz&&a.tz.cats)||{}; const ptype=(a.tz&&a.tz.ptype)||'';
   const typeChip=ptype?`<span class="tz-chip" style="border-color:var(--good);color:var(--good)">${esc(ptype)}</span>`:'';
   const catChips=typeChip+Object.keys(cats).map(k=>`<span class="tz-chip">${esc(cats[k])}</span>`).join('');
