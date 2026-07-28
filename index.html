@@ -2871,7 +2871,8 @@ function vNS(){
     <div style="font-size:15px;font-weight:640;margin:10px 0 6px">Проработка станций пуста</div>
     <div style="font-size:12.5px;color:var(--muted);max-width:540px;margin:0 auto 16px">Выберите тип станции — получите готовый график критериев с зависимостями, длительностями и авто-расстановкой сроков. Каждый тип свой: у КНС приёмный резервуар и решётки, у пожарной — расчёт НПВ и автоматика пуска АУП.</div>
     ${nsTypeMenu('center')}</div></div>`;
-  const view=S.nsView||'list';
+  // дефолт вида по роли: руководителю ИЦ — портфель (обзор всех станций), инженеру — список
+  const view=S.nsView || (((PEOPLE[S.currentUser]||{}).role==='рук. ИЦ')?'portfolio':'list');
   const toggle=`<div class="ns-viewtog"><button class="ns-vt ${view==='list'?'on':''}" data-nsview="list">Список</button><button class="ns-vt ${view==='timeline'?'on':''}" data-nsview="timeline">График</button><button class="ns-vt ${view==='load'?'on':''}" data-nsview="load">Нагрузка</button><button class="ns-vt ${view==='portfolio'?'on':''}" data-nsview="portfolio">Портфель</button></div>`;
   const addBtn=`<button class="btn ghost" data-nsverify="1" title="загрузить полученный подписанный снимок проработки и проверить подлинность">🛡 Проверить снимок</button><div class="ns-add-wrap"><button class="btn" data-nsadd="1">+ Станция</button>${S._nsAddOpen?nsTypeMenu():''}</div>`;
   const vf=S._nsVerify;
