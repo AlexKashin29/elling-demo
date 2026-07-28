@@ -3795,8 +3795,13 @@ function dealLastDay(d){
   const last=String(acts[acts.length-1][0]||'');
   if(/сейчас|сегодня/i.test(last)) return nsDay(todayISO());
   const m=last.match(/(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?/); if(!m) return null;
-  const y=m[3]?(m[3].length===2?2000+(+m[3]):+m[3]):(+(todayISO().slice(0,4)));
-  return nsDay(y+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0'));
+  const mm=String(m[2]).padStart(2,'0'), dd=String(m[1]).padStart(2,'0');
+  if(m[3]){ const y=m[3].length===2?2000+(+m[3]):+m[3]; return nsDay(y+'-'+mm+'-'+dd); }
+  // год не указан: берём текущий; если получилась дата в будущем — значит запись из прошлого года
+  const t=nsDay(todayISO()); const curY=+(todayISO().slice(0,4));
+  let day=nsDay(curY+'-'+mm+'-'+dd);
+  if(day!=null && t!=null && day>t) day=nsDay((curY-1)+'-'+mm+'-'+dd);
+  return day;
 }
 function dealStaleDays(d){
   if(!d||d.stage==='contract'||d.stage==='lost') return 0;
@@ -3805,7 +3810,7 @@ function dealStaleDays(d){
 }
 function dealIsStale(d){ return dealStaleDays(d)>14; }
 // DD.MM сегодняшней даты для штампа движения (сбрасывает застой).
-function dealStamp(){ const t=todayISO(); const p=t.split('-'); return p[2]+'.'+p[1]; }
+function dealStamp(){ const t=todayISO(); const p=t.split('-'); return p[2]+'.'+p[1]+'.'+p[0].slice(2); }
 const DEAL_PROB = {lead:20,assess:40,kp:60,nego:75,contract:100,lost:0};
 function moveDeal(d, stage){
   const from=d.stage; d.stage=stage; d.prob=DEAL_PROB[stage]!=null?DEAL_PROB[stage]:d.prob;
@@ -5103,7 +5108,7 @@ function nsPortalReadiness(num){
   const RC={risk:'var(--warn)', warn:'var(--warn)', ok:'var(--good)', done:'var(--good)'};
   const SL={risk:'в работе', warn:'в работе', ok:'по графику', done:'готово'};
   return `<h4 class="psec">Готовность проработки КД</h4>
-    ${sts.map(s=>{ const p=nsProgress(s); const r=nsStationRisk(s); const vp=(s.items||[]).some(it=>/военпред|ВП|приёмка/i.test(it.title||''));
+    ${sts.map(s=>{ const p=nsProgress(s); const r=nsStationRisk(s);
       return `<div class="kbdoc-row"><div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--ink);font-size:13px">${esc(s.name)}${s.goz?' · <span style="color:#8a6d1f;font-size:10px;font-weight:700">ГОЗ · ВП</span>':''}</div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:5px"><span style="flex:1;max-width:220px;height:6px;border-radius:4px;background:var(--line);overflow:hidden"><i style="display:block;height:100%;width:${p.pct}%;background:${RC[r.level]}"></i></span>
           <span style="font-size:11.5px;color:var(--muted);font-family:var(--mono)">${p.pct}%</span></div></div>
