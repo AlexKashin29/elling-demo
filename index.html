@@ -626,6 +626,8 @@
   .panel h3{font-size:15.5px;margin:0 0 12px;font-weight:700;letter-spacing:-.015em}
   .panel{padding:20px 22px}
   .gozpill{display:inline-block;font-family:var(--mono);font-size:9px;padding:1px 7px;border-radius:99px;border:1px solid var(--accent);color:var(--accent);margin-left:6px;vertical-align:1px}
+  .deal-stale{box-shadow:inset 3px 0 0 var(--warn)}
+  .deal-stale-b{font-size:9.5px;font-weight:700;color:var(--warn);background:var(--warn-soft);border-radius:5px;padding:1px 6px;margin-left:4px;white-space:nowrap}
 
   /* KB */
   .kb-tools{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
@@ -3786,11 +3788,29 @@ const DEAL_STAGES = [['lead','Лид','var(--muted)'],['assess','Оценка Т
 const DST = Object.fromEntries(DEAL_STAGES.map(s=>[s[0],s]));
 function fmtSum(v){ return v>=1e6 ? (v/1e6).toFixed(1).replace('.0','')+' млн ₽' : Math.round(v/1e3)+' тыс ₽'; }
 function dealById(id){ return (S.deals||[]).find(d=>d.id===id); }
+// Застой сделки: гниение воронки — главная утечка продаж. Дата последнего движения берётся
+// из последней записи acts (DD.MM[.ГГ]); «сейчас» = сегодня. >14 кал. дней без движения = застряла.
+function dealLastDay(d){
+  const acts=d.acts||[]; if(!acts.length) return null;
+  const last=String(acts[acts.length-1][0]||'');
+  if(/сейчас|сегодня/i.test(last)) return nsDay(todayISO());
+  const m=last.match(/(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?/); if(!m) return null;
+  const y=m[3]?(m[3].length===2?2000+(+m[3]):+m[3]):(+(todayISO().slice(0,4)));
+  return nsDay(y+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0'));
+}
+function dealStaleDays(d){
+  if(!d||d.stage==='contract'||d.stage==='lost') return 0;
+  const dd=dealLastDay(d); if(dd==null) return 0;
+  const days=nsDay(todayISO())-dd; return days>0?days:0;
+}
+function dealIsStale(d){ return dealStaleDays(d)>14; }
+// DD.MM сегодняшней даты для штампа движения (сбрасывает застой).
+function dealStamp(){ const t=todayISO(); const p=t.split('-'); return p[2]+'.'+p[1]; }
 const DEAL_PROB = {lead:20,assess:40,kp:60,nego:75,contract:100,lost:0};
 function moveDeal(d, stage){
   const from=d.stage; d.stage=stage; d.prob=DEAL_PROB[stage]!=null?DEAL_PROB[stage]:d.prob;
   const sn=s=>DST[s]?DST[s][1]:(s==='lost'?'Проиграно':s);
-  d.acts=d.acts||[]; d.acts.push(['сейчас',`${sn(from)} → ${sn(stage)}`]);
+  d.acts=d.acts||[]; d.acts.push([dealStamp(),`${sn(from)} → ${sn(stage)}`]);   // дата-штамп сбрасывает застой
   ACTS.push(`сделка ${d.id}: ${sn(from)} → ${sn(stage)}`);
   save();
 }
@@ -3805,6 +3825,7 @@ function vDeals(){
       <div class="stat"><div class="v">${canMoney?fmtSum(total):'≈≈≈'}</div><div class="l">сумма воронки</div></div>
       <div class="stat"><div class="v">${canMoney?fmtSum(forecast):'≈≈≈'}</div><div class="l">честный прогноз (взвешен по стадиям)</div></div>
       <div class="stat"><div class="v" style="-webkit-text-fill-color:var(--good);color:var(--good)">${canMoney?fmtSum(won):'≈≈≈'}</div><div class="l">в контракте</div></div>
+      ${(()=>{ const st=active.filter(dealIsStale).length; return `<div class="stat"><div class="v" style="-webkit-text-fill-color:${st?'var(--warn)':'var(--good)'};color:${st?'var(--warn)':'var(--good)'}">${st}</div><div class="l">застряло &gt;14 дн без движения</div></div>`; })()}
     </div>
     <div style="display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap">
       <button class="btn" data-dealnew="1">+ Новая сделка</button>
@@ -3831,15 +3852,17 @@ function vDeals(){
       const ds=active.filter(d=>d.stage===sk);
       const sum=ds.reduce((a,d)=>a+d.sum,0);
       return `<div class="col" data-dealcol="${sk}"><h3>${sn} · ${ds.length}${canMoney&&sum?` <span style="color:${sc}">${fmtSum(sum)}</span>`:''}</h3>
-        ${ds.map(d=>`<div class="tcard" draggable="true" data-deal="${d.id}">
+        ${ds.map(d=>{ const stale=dealStaleDays(d);
+          return `<div class="tcard ${stale>14?'deal-stale':''}" draggable="true" data-deal="${d.id}">
           <div class="top"><span class="key">${d.id}</span>${d.goz?'<span class="gozpill" style="margin:0">ГОЗ</span>':''}
+            ${stale>14?`<span class="deal-stale-b" title="без движения ${stale} дн — риск потери сделки">⏳ застряла ${stale} дн</span>`:''}
             <span class="est" style="margin-left:auto">${d.prob}%</span></div>
           <div class="ttl">${esc(d.title)}</div>
           <div style="font-size:12px;color:var(--ink2);margin-bottom:8px">${esc(d.company)}</div>
           <div class="meta"><span style="font-weight:700;color:var(--ink);font-size:13px">${canMoney?fmtSum(d.sum):'≈≈≈'}</span>
             <span class="est" style="margin-left:auto">${av(d.who)}</span></div>
           ${d.next?`<div style="font-size:11px;color:var(--accent);margin-top:6px">→ ${esc(d.next)}</div>`:''}
-        </div>`).join('')||'<div class="empty">пусто</div>'}
+        </div>`; }).join('')||'<div class="empty">пусто</div>'}
       </div>`;
     }).join('')}
     </div></div>
