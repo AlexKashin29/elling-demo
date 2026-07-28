@@ -2477,9 +2477,17 @@ async function orderFromAnalog(analogId){
       o.feed.push(['сейчас', (b.count||0)>0?('Состав перенесён из аналога — '+b.count+' позиций, правьте под новое ТЗ'):'Состав аналога не загружен в БЗ — заполните состав вручную или из PLM', (b.count||0)>0?1:0]);
     } else toast(j.error||'Не удалось перенести состав','bad');
   }catch(_){ toast('Сервер недоступен — заказ создан без состава','bad'); }
+  // Governance: заказ принят при ПЕРЕГРУЗКЕ ИЦ → осознанное решение фиксируется в ленту
+  // (контроль над «продажи обещают вслепую») + заказ стартует как «риск срока».
+  const icf=nsICForecast();
+  if(icf.level==='over'){
+    o.risk='warn';
+    o.feed.push(['сейчас','⚠ <b>Принят при перегрузке ИЦ</b> — очередь '+icf.totalDays+' инженеро-дней, окно старта ~'+nsFmtDay(icf.startDay)+'. Осознанное решение: '+esc((PEOPLE[S.currentUser]||{}).full||S.currentUser)+'. Срок под риском.',0]);
+    ACTS.push('заказ '+num+' принят при перегрузке ИЦ ('+icf.totalDays+' инженеро-дней)');
+  }
   S.orders=S.orders||[]; S.orders.unshift(o); save();
   S.view='order'; S.orderId=o.id; render(); ensureL3(o.id);
-  toast('Заказ '+num+' создан по аналогу','ok');
+  toast(icf.level==='over'?('Заказ '+num+' создан — ⚠ при перегрузке ИЦ (зафиксировано)'):('Заказ '+num+' создан по аналогу'),icf.level==='over'?'bad':'ok');
 }
 
 /* ── Проработка насосных станций (custdev рук. ИЦ, 20.07.2026) ──────────────
