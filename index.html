@@ -991,6 +991,17 @@
   .ns-pf-clear:hover{text-decoration:underline}
   .ns-pf-fnote{font-size:11.5px;color:var(--muted);margin-bottom:8px}
   .ns-pf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .onec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:11px}
+  .onec-card{border:1px solid var(--line);border-radius:11px;background:var(--panel2);padding:13px 14px}
+  .onec-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+  .onec-nm{font-weight:640;font-size:13.5px;color:var(--ink);line-height:1.3}
+  .onec-st{flex:none;font-size:10px;font-weight:600;border:1px solid;border-radius:20px;padding:2px 9px;white-space:nowrap}
+  .onec-goz{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;color:var(--goz);background:var(--goz-soft);border-radius:5px;padding:1px 7px;margin-bottom:8px}
+  .onec-row{display:grid;grid-template-columns:60px 1fr;gap:8px;align-items:baseline;font-size:12px;color:var(--ink2);padding:4px 0;border-top:1px solid var(--line2)}
+  .onec-lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .onec-role{display:inline-block;font-size:10.5px;color:var(--ink2);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 7px;margin:0 4px 3px 0}
+  .onec-conn{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:5px;padding:1px 7px;margin:0 4px 3px 0}
+  .onec-note{font-size:11px;color:var(--muted);margin-top:7px;padding-top:6px;border-top:1px dashed var(--line2)}
   .ns-pf-card{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;transition:border-color .15s;display:flex;flex-direction:column;gap:6px}
   .ns-pf-card:hover{border-color:var(--line2)}
   .ns-pf-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -4127,6 +4138,44 @@ const AGENT_MAP=[
   ['ИГК (ГОЗ)','ИГК / ИдентификаторГосконтракта','ИГК'],
   ['Себестоимость','—','не забираем: учёт остаётся в 1С'],
 ];
+// Каталог прикладных конфигураций 1С (помимо платформы «Предприятие») для поставщика СКО.
+// Готовность интеграции по каждой конфигурации: какие сущности приносим, каким ролям, каким методом.
+// Эллинг не заменяет 1С — читает нужное, раздельный учёт и бухгалтерия остаются в 1С.
+const ONEC_CONN={odata:'OData (REST, 8.3+)', edata:'EnterpriseData (XML-обмен)', http:'HTTP-сервис', soap:'Web-сервис (SOAP)', com:'COM / внешнее соединение', file:'Файловый обмен (папка)', rib:'План обмена (РИБ)'};
+const ONEC_CONFIGS=[
+  {code:'erp', name:'1С:ERP Управление предприятием 2', ver:'2.4 / 2.5',
+   entities:['заказы на производство','этапы/статусы','номенклатура и спецификации','раздельный учёт ГОЗ (статус)','ИГК'],
+   roles:['директор','рук. ИЦ','закупки','бухгалтерия'], conn:['odata','edata','http'], goz:true, status:'ready'},
+  {code:'upp', name:'1С:УПП (Управление производственным предприятием)', ver:'1.3',
+   entities:['заказы','производственные заказы','номенклатура','контрагенты'],
+   roles:['директор','рук. ИЦ','закупки'], conn:['odata','com','file'], goz:true, status:'ready',
+   note:'частая на оборонных заводах (8.2/8.3, legacy)'},
+  {code:'ka', name:'1С:Комплексная автоматизация 2', ver:'2.4+',
+   entities:['заказы','закупки','взаиморасчёты','номенклатура'],
+   roles:['директор','закупки','продажи'], conn:['odata','edata'], goz:false, status:'ready'},
+  {code:'buhgoz', name:'1С:Бухгалтерия предприятия (в т.ч. ГОЗ)', ver:'3.0',
+   entities:['раздельный учёт по 275-ФЗ','отдельные счета','ИГК','статус оплат'],
+   roles:['бухгалтерия','директор'], conn:['odata','edata','file'], goz:true, status:'ready',
+   note:'источник статуса раздельного учёта — сам учёт остаётся в 1С'},
+  {code:'ut', name:'1С:Управление торговлей', ver:'11',
+   entities:['сделки/заказы покупателей','контрагенты','цены','отгрузки'],
+   roles:['продажи','закупки'], conn:['odata','edata'], goz:false, status:'ready'},
+  {code:'zup', name:'1С:Зарплата и управление персоналом', ver:'3.1',
+   entities:['справочник сотрудников','должности/подразделения','роли для учётных записей'],
+   roles:['HR','все (учётки)'], conn:['odata','edata'], goz:false, status:'ready',
+   note:'источник ФИО/должностей для именных учёток (152-ФЗ: оператор — предприятие)'},
+  {code:'do', name:'1С:Документооборот', ver:'2.1 / 3.0',
+   entities:['КД и документы','извещения об изменении','маршруты согласования','ЭЦП'],
+   roles:['рук. ИЦ','нормоконтроль','ВП'], conn:['odata','http','soap'], goz:true, status:'ready'},
+  {code:'pdm', name:'1С:PDM / Appius-PLM (на платформе 1С)', ver:'—',
+   entities:['состав изделия','ревизии КД','извещения ГОСТ 2.503'],
+   roles:['рук. ИЦ','инженер'], conn:['odata','http','file'], goz:false, status:'ready',
+   note:'единый PDM-адаптер (см. также T-FLEX/Intermech)'},
+  {code:'uh', name:'1С:Управление холдингом', ver:'3',
+   entities:['консолидация по предприятиям группы','казначейство'],
+   roles:['директор'], conn:['edata','http'], goz:false, status:'setup',
+   note:'для групп/холдингов — по запросу'},
+];
 function resCol(r){ return r==='ok'?'var(--good)':r==='warn'?'var(--warn)':'var(--risk)'; }
 function vAgent(){
   const conns=S.connectors||[];
@@ -4173,6 +4222,22 @@ function vAgent(){
         <span class="elx-id">${esc(p.id)}</span>
         <span class="elx-note">${esc(p.note)} · ${p.events} событ.</span>
         <span class="elx-sig">SHA ${esc(p.sig)}</span></div>`).join('')||'<div class="empty" style="margin-top:10px">обмена пакетами ещё не было</div>'}
+    </div>
+    <div class="panel" style="margin-bottom:14px"><h3>Готовность к конфигурациям 1С <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· помимо платформы «Предприятие» — по ролям и методу подключения</span></h3>
+      <p style="font-size:12.5px;color:var(--ink2);margin:0 0 12px">Эллинг подключается к той прикладной конфигурации 1С, что стоит на заводе, — читает нужные сущности для нужных ролей. <b>Раздельный учёт и бухгалтерия остаются в 1С</b>; мы отражаем статус, а не дублируем. Метод обмена выбирается под контур (для закрытого — файловый обмен/EnterpriseData без выхода наружу).</p>
+      <div class="onec-grid">
+        ${ONEC_CONFIGS.map(c=>{ const st=c.status==='ready'?['готов к интеграции','var(--good)']:['по запросу','var(--warn)'];
+          return `<div class="onec-card">
+            <div class="onec-h"><span class="onec-nm">${esc(c.name)}${c.ver&&c.ver!=='—'?` <span class="mono" style="font-size:10px;color:var(--muted)">${esc(c.ver)}</span>`:''}</span>
+              <span class="onec-st" style="color:${st[1]};border-color:${st[1]}55;background:${st[1]}14">${st[0]}</span></div>
+            ${c.goz?'<span class="onec-goz">ГОЗ · 275-ФЗ</span>':''}
+            <div class="onec-row"><span class="onec-lbl">Данные</span><span>${c.entities.map(esc).join(' · ')}</span></div>
+            <div class="onec-row"><span class="onec-lbl">Роли</span><span>${c.roles.map(r=>`<span class="onec-role">${esc(r)}</span>`).join('')}</span></div>
+            <div class="onec-row"><span class="onec-lbl">Обмен</span><span>${c.conn.map(k=>`<span class="onec-conn">${esc(ONEC_CONN[k]||k)}</span>`).join('')}</span></div>
+            ${c.note?`<div class="onec-note">${esc(c.note)}</div>`:''}
+          </div>`; }).join('')}
+      </div>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:10px">Методы подключения: ${Object.values(ONEC_CONN).map(esc).join(' · ')}. Конкретная конфигурация и метод выбираются на внедрении; маппинг полей ниже настраивается под неё.</p>
     </div>
     <div class="panel" style="margin-bottom:14px"><h3>Маппинг полей · 1С ↔ Эллинг <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· настраивается под вашу конфигурацию</span></h3>
       <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px">
