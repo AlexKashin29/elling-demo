@@ -4176,6 +4176,33 @@ const ONEC_CONFIGS=[
    roles:['директор'], conn:['edata','http'], goz:false, status:'setup',
    note:'для групп/холдингов — по запросу'},
 ];
+// Каталог готовности к российским PDM/PLM/САПР (инженерная сторона): состав изделия, ревизии КД,
+// извещения ГОСТ 2.503. Эллинг НЕ заменяет САПР — читает структуру и КД единым адаптером.
+const PDM_CONN={api:'API (REST/SOAP)', xml:'Выгрузка XML (состав/спецификация)', db:'Прямое чтение БД', file:'Файловый обмен (папка)', onec:'Через 1С-платформу'};
+const PDM_CONFIGS=[
+  {code:'loodsman', name:'ЛОЦМАН:PLM + КОМПАС-3D (АСКОН)', vendor:'АСКОН',
+   entities:['состав изделия (BOM)','ревизии КД','извещения ГОСТ 2.503','спецификации','чертежи'],
+   roles:['рук. ИЦ','инженер','нормоконтроль'], conn:['api','xml','db'], status:'ready',
+   note:'доминирующий российский САПР+PLM; основной путь чтения структуры и КД'},
+  {code:'tflex', name:'T-FLEX PLM / T-FLEX DOCs (Топ Системы)', vendor:'Топ Системы',
+   entities:['структура изделия','документы и ревизии','маршруты согласования'],
+   roles:['рук. ИЦ','инженер'], conn:['api','xml'], status:'ready'},
+  {code:'appius', name:'Appius-PLM (на платформе 1С)', vendor:'Appius',
+   entities:['состав изделия','спецификации','извещения'],
+   roles:['рук. ИЦ','инженер','снабжение'], conn:['onec','api','xml'], status:'ready',
+   note:'работает на 1С — общий транспорт с бизнес-контуром'},
+  {code:'intermech', name:'Intermech (Search / TechCard / Avionics)', vendor:'Intermech',
+   entities:['архив КД','состав','технологические данные'],
+   roles:['рук. ИЦ','технолог'], conn:['api','db','file'], status:'ready'},
+  {code:'polynom', name:'Полином:MDM + Вертикаль (АСКОН)', vendor:'АСКОН',
+   entities:['справочники материалов и ПКИ','технологические процессы'],
+   roles:['снабжение','технолог'], conn:['api','xml'], status:'ready',
+   note:'нормативно-справочная информация (НСИ) и технология'},
+  {code:'nanocad', name:'nanoCAD + модули', vendor:'Нанософт',
+   entities:['чертежи','спецификации'],
+   roles:['инженер'], conn:['file','xml'], status:'setup',
+   note:'чертёжный контур — по запросу'},
+];
 function resCol(r){ return r==='ok'?'var(--good)':r==='warn'?'var(--warn)':'var(--risk)'; }
 function vAgent(){
   const conns=S.connectors||[];
@@ -4238,6 +4265,21 @@ function vAgent(){
           </div>`; }).join('')}
       </div>
       <p style="font-size:11.5px;color:var(--muted);margin-top:10px">Методы подключения: ${Object.values(ONEC_CONN).map(esc).join(' · ')}. Конкретная конфигурация и метод выбираются на внедрении; маппинг полей ниже настраивается под неё.</p>
+    </div>
+    <div class="panel" style="margin-bottom:14px"><h3>Готовность к PDM / PLM / САПР <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· инженерная сторона — состав изделия, ревизии КД, извещения</span></h3>
+      <p style="font-size:12.5px;color:var(--ink2);margin:0 0 12px">Единый адаптер к российским PDM/САПР: читаем структуру изделия и КД без переезда с вашей САПР. <b>Эллинг не заменяет КОМПАС/T-FLEX</b> — приносит состав, ревизии и извещения в «Проработку НС» и «Базу знаний».</p>
+      <div class="onec-grid">
+        ${PDM_CONFIGS.map(c=>{ const st=c.status==='ready'?['готов к интеграции','var(--good)']:['по запросу','var(--warn)'];
+          return `<div class="onec-card">
+            <div class="onec-h"><span class="onec-nm">${esc(c.name)}</span>
+              <span class="onec-st" style="color:${st[1]};border-color:${st[1]}55;background:${st[1]}14">${st[0]}</span></div>
+            <div class="onec-row"><span class="onec-lbl">Данные</span><span>${c.entities.map(esc).join(' · ')}</span></div>
+            <div class="onec-row"><span class="onec-lbl">Роли</span><span>${c.roles.map(r=>`<span class="onec-role">${esc(r)}</span>`).join('')}</span></div>
+            <div class="onec-row"><span class="onec-lbl">Обмен</span><span>${c.conn.map(k=>`<span class="onec-conn">${esc(PDM_CONN[k]||k)}</span>`).join('')}</span></div>
+            ${c.note?`<div class="onec-note">${esc(c.note)}</div>`:''}
+          </div>`; }).join('')}
+      </div>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:10px">Методы: ${Object.values(PDM_CONN).map(esc).join(' · ')}. Извещения ГОСТ 2.503 и ревизии КД связываются с проработкой станций и составом заказа.</p>
     </div>
     <div class="panel" style="margin-bottom:14px"><h3>Маппинг полей · 1С ↔ Эллинг <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· настраивается под вашу конфигурацию</span></h3>
       <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px">
