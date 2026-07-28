@@ -839,6 +839,8 @@
   .an-est-v{font-size:30px;font-weight:780;letter-spacing:-.02em;color:var(--accent,#C24309);font-variant-numeric:tabular-nums;white-space:nowrap}
   .an-est-v span{font-size:14px;font-weight:600;color:var(--muted)}
   .an-est-l{font-size:12.5px;color:var(--ink2);flex:1;min-width:220px;line-height:1.4}
+  .ic-prio{background:transparent;border:1px solid var(--line);border-radius:20px;color:var(--muted);font-size:10.5px;padding:2px 8px;cursor:pointer;white-space:nowrap}
+  .ic-prio:hover{border-color:var(--bad);color:var(--bad)} .ic-prio.on{background:color-mix(in srgb,var(--bad) 12%,transparent);border-color:var(--bad);color:var(--bad)}
   .an-ic{font-size:12px;color:var(--ink2);margin:8px 0 4px;padding:8px 11px;border-radius:9px;background:color-mix(in srgb,var(--warn) 9%,transparent);border:1px solid color-mix(in srgb,var(--warn) 26%,transparent)}
   .an-ic b{color:var(--ink);font-variant-numeric:tabular-nums}
   .an-ic.over{background:color-mix(in srgb,var(--bad) 10%,transparent);border-color:color-mix(in srgb,var(--bad) 32%,transparent);color:var(--bad)}
@@ -3481,10 +3483,12 @@ function estResFill(e){ const h=e.resHours!=null?e.resHours:40; const s=e.resSum
 // Загрузка ИЦ: очередь просчётов (не завершённых) → прогноз сроков (детерм. load.py).
 function icCap(){ S.icCap=S.icCap||{eng:2,hpd:8}; return S.icCap; }
 function icQueue(){
-  return (S.estimates||[]).filter(e=>e.status==='new'||e.status==='wip').map(e=>({
-    id:e.id, name:e.title, hours:e.resHours||0,
-    due_days:Math.max(0, Math.round((estDueLeft(e)||0)/1440))   // мин остатка SLA → дни
-  }));
+  // срочные (prio='hi') — вперёд очереди (порядок решает: срочный за крупным срывается);
+  // сортировка стабильна → внутри групп порядок сохранён.
+  return (S.estimates||[]).filter(e=>e.status==='new'||e.status==='wip').slice()
+    .sort((a,b)=>(b.prio==='hi'?1:0)-(a.prio==='hi'?1:0))
+    .map(e=>({ id:e.id, name:e.title, hours:e.resHours||0, prio:e.prio||'',
+      due_days:Math.max(0, Math.round((estDueLeft(e)||0)/1440)) }));
 }
 // Клиентский двойник load.py.plan (офлайн-демо): та же арифметика — очередь в порядке,
 // накопление н/ч, день готовности = ceil(накоплено/мощность), срыв = позже due_days.
@@ -3516,11 +3520,13 @@ function vLoadPanel(){
   if(L&&L.items){
     const rows=L.items.map(x=>{
       const e=byId[x.id]||{}; const col=x.overdue?'var(--risk)':(x.slack>=0&&x.slack<3?'var(--warn)':'var(--good)');
-      return `<div class="anrow" style="grid-template-columns:1fr 70px 90px 90px;cursor:default">
-        <span class="annm">${esc(x.name||x.id)}</span>
+      const hi=e.prio==='hi';
+      return `<div class="anrow" style="grid-template-columns:1fr 70px 90px 90px 76px;cursor:default">
+        <span class="annm">${hi?'<span title="срочно" style="color:var(--bad)">🔴 </span>':''}${esc(x.name||x.id)}</span>
         <span class="anh">${x.hours} н/ч</span>
         <span class="anh" style="color:${col}">день ${x.done_day}</span>
-        <span class="anh" style="color:${col}">${x.overdue?'СРЫВ '+x.slack:(x.due_days>=0?'запас '+x.slack:'—')}</span></div>`;
+        <span class="anh" style="color:${col}">${x.overdue?'СРЫВ '+x.slack:(x.due_days>=0?'запас '+x.slack:'—')}</span>
+        <button class="ic-prio ${hi?'on':''}" data-icprio="${esc(x.id)}" title="${hi?'снять срочность':'сделать срочным — двинуть в начало очереди'}">${hi?'снять':'↑ срочно'}</button></div>`;
     }).join('');
     body=`<div class="an-est" style="border:none;padding:0 0 10px">
         <div class="an-est-v" style="color:${L.overdue?'var(--risk)':'var(--good)'}">${L.overdue} <span>срыв${L.overdue===1?'':'ов'}</span></div>
@@ -6501,6 +6507,7 @@ document.addEventListener('click', e=>{
   if(kbp){ vKbProject(kbp.dataset.kbproj); return; }
   if(e.target.closest('[data-roicalc]')){ roiCalc(); return; }
   if(e.target.closest('[data-loadplan]')){ loadPlan(); return; }
+  { const el=e.target.closest('[data-icprio]'); if(el){ const es=(S.estimates||[]).find(x=>x.id===el.dataset.icprio); if(es){ es.prio=es.prio==='hi'?'':'hi'; ACTS.push('просчёт '+(es.title||es.id)+(es.prio==='hi'?': срочно':': снята срочность')); save(); loadPlan(); } return; } }
   if(e.target.closest('[data-estsheet]')){ if(S.analog) printDoc(estimateSheetHTML()); return; }
   const fromAn=e.target.closest('[data-fromanalog]'); if(fromAn){ orderFromAnalog(fromAn.dataset.fromanalog); return; }
   // ── Проработка НС ──
