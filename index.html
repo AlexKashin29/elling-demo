@@ -2429,7 +2429,7 @@ function analogPanel(){
     ? `<div class="an-est"><div class="an-est-v">${est.low}–${est.high}<span> н/ч</span></div><div class="an-est-l">ИИ-оценка трудоёмкости по ${est.relevant} аналог${est.relevant==1?'у':'ам'}. Опора — «${esc((byId[est.basis]||{}).izdelie||est.basis)}», масштаб по ведущему параметру. Готовая цифра для ТКП за секунды вместо дней просчёта.</div></div>`
     : `<div class="an-est"><div class="an-est-l">Близких аналогов для оценки не нашлось — уточните параметры ТЗ (подача, давление, мощность, материал, шифр).</div></div>`;
   const icf=(est.best!=null)?nsICForecast():null;
-  const icLine=icf?`<div class="an-ic">Инженерный центр: <b>${icf.totalDays}</b> инженеро-дней проработки в очереди · ближайшее окно инженера <b>~${nsFmtDay(icf.startDay)}</b> — реальный старт работы над заказом (сделка не «зависает на просчёте»)</div>`:'';
+  const icLine=icf?`<div class="an-ic">Единая очередь ИЦ: <b>${icf.prorDays}</b> дн проработки + <b>${icf.estDays}</b> дн просчётов = <b>${icf.totalDays}</b> инженеро-дней на ${icf.engineers} инж. · ближайшее окно старта <b>~${nsFmtDay(icf.startDay)}</b> — реальный срок, когда возьмут заказ (сделка не «зависает на просчёте»)</div>`:'';
   const cats=(a.tz&&a.tz.cats)||{}; const ptype=(a.tz&&a.tz.ptype)||'';
   const typeChip=ptype?`<span class="tz-chip" style="border-color:var(--good);color:var(--good)">${esc(ptype)}</span>`:'';
   const catChips=typeChip+Object.keys(cats).map(k=>`<span class="tz-chip">${esc(cats[k])}</span>`).join('');
@@ -2706,15 +2706,19 @@ function nsMyDeadlines(me){ const over=[],soon=[]; const t=nsDay(todayISO());
     if(d<t) over.push({st,it,d}); else if(d-t<=7) soon.push({st,it,d}); }));
   over.sort((a,b)=>a.d-b.d); soon.sort((a,b)=>a.d-b.d); return {over,soon}; }
 function nsList(){ return S.ns=S.ns||[]; }
-// Прогноз доступности ИЦ для НОВОЙ работы (связка «продажи → ИЦ»): суммарная очередь
-// проработки в инженеро-днях + ближайшее окно (самый рано освобождающийся инженер берёт
-// новое). Делает ИЦ прозрачным для продаж: не «чёрный ящик», а реальный старт по загрузке.
+// Прогноз доступности ИЦ для НОВОЙ работы (связка «продажи → ИЦ»). ЕДИНАЯ очередь ИЦ:
+// проработка НС + просчёты ТКП — оба типа работ на тех же инженеров. Общая загрузка в
+// инженеро-днях, распределённая на инженеров → ближайшее окно старта. Клиентски (офлайн).
 function nsICForecast(){
   const ids=new Set(); nsList().forEach(st=>{ if(st.proj) ids.add(st.proj); if(st.asu) ids.add(st.asu); });
-  const loads=[...ids].map(nsEngineerLoad); const t=nsDay(todayISO());
-  const totalDays=loads.reduce((s,l)=>s+l.days,0);
-  const frees=loads.map(l=>l.freeDay!=null?l.freeDay:t);
-  return {totalDays, startDay: frees.length?Math.min.apply(null,frees):t, engineers:loads.length};
+  const prorDays=[...ids].map(nsEngineerLoad).reduce((s,l)=>s+l.days,0);
+  const c=icCap(); const hpd=Math.max(1,c.hpd||8); const eng=Math.max(1,c.eng||ids.size||2);
+  const estHours=(S.estimates||[]).filter(e=>e.status==='new'||e.status==='wip').reduce((s,e)=>s+(e.resHours||0),0);
+  const estDays=Math.ceil(estHours/hpd);
+  const totalDays=prorDays+estDays;
+  const perEng=Math.ceil(totalDays/eng);   // очередь распределена на инженеров, параллельно
+  const t=nsDay(todayISO());
+  return {prorDays, estDays, totalDays, engineers:eng, startDay: perEng>0?nsAddWork(t,perEng):t};
 }
 function nsById(id){ return nsList().find(x=>x.id===id); }
 function nsActive(){ const l=nsList(); if(!l.length) return null; const a=nsById(S.nsActive); return a||l[0]; }
@@ -3057,12 +3061,10 @@ function vNSLoad(){
       <div class="ns-ld-legend">${l.overdue.length?`<span class="od">просроч. ${l.overdue.length}</span>`:''}${l.soon.length?`<span class="sn">≤7 дн ${l.soon.length}</span>`:''}${l.next.length?`<span class="nx">8–14 дн ${l.next.length}</span>`:''}${l.later.length?`<span class="lt">позже ${l.later.length}</span>`:''}</div>
       ${nearest?`<div class="ns-ld-list">${nearest}</div>`:''}
     </div>`; };
-  const totalDays=loads.reduce((s,l)=>s+l.days,0);
-  const bottleneck=loads.slice().sort((a,b)=>b.days-a.days)[0];
-  const icFree=bottleneck&&bottleneck.freeDay!=null?bottleneck.freeDay:null;   // ИЦ свободен, когда закрыл самый загруженный
+  const icf=nsICForecast();
   return `<div class="an-panel">
     <div class="ns-ld-title">Нагрузка инженеров по срокам <span class="mono" style="font-size:10px;color:var(--muted)">активные критерии по всем станциям · пик = просроч.+ближайшие 7 дней</span></div>
-    <div class="ns-ld-total"><b>${totalDays}</b> инженеро-дней проработки в очереди ИЦ${icFree!=null?` · разгрузится ~<b>${nsFmtDay(icFree)}</b> (по узкому месту: ${esc((PEOPLE[bottleneck.u]||{}).full||bottleneck.u)})`:''}</div>
+    <div class="ns-ld-total">Единая очередь ИЦ: <b>${icf.prorDays}</b> дн проработки + <b>${icf.estDays}</b> дн просчётов = <b>${icf.totalDays}</b> инженеро-дней на ${icf.engineers} инж. · разгрузится ~<b>${nsFmtDay(icf.startDay)}</b></div>
     <div class="ns-ld-grid">${loads.map(card).join('')}</div>
   </div>`;
 }
