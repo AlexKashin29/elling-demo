@@ -954,9 +954,22 @@
   .ns-ld-legend .od{color:var(--bad)} .ns-ld-legend .sn{color:var(--warn)} .ns-ld-legend .nx{color:var(--accent,#2E6E8E)} .ns-ld-legend .lt{color:var(--muted)}
   .ns-ld-list{border-top:1px solid var(--line2);padding-top:8px;display:flex;flex-direction:column;gap:4px}
   .ns-ld-it{font-size:11.5px;color:var(--ink2)} .ns-ld-st{color:var(--muted)} .ns-ld-it b{font-variant-numeric:tabular-nums}
-  .ns-pf-summary{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--muted)}
+  .ns-pf-summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--muted)}
+  .ns-pf-sc{font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:4px 12px;cursor:pointer;transition:border-color .12s,background .12s}
+  .ns-pf-sc:hover{border-color:var(--accent,#2E6E8E)}
+  .ns-pf-sc.on{border-color:var(--accent,#2E6E8E);background:color-mix(in srgb,var(--accent,#2E6E8E) 10%,transparent);color:var(--ink2)}
   .ns-pf-sc b{font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums;margin-right:4px}
   .ns-pf-sc.ok b{color:var(--good)} .ns-pf-sc.warn b{color:var(--warn)} .ns-pf-sc.bad b{color:var(--bad)}
+  .ns-pf-filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .ns-pf-flabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .ns-pf-tchip{font-size:11.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:3px 10px;cursor:pointer;transition:border-color .12s,color .12s}
+  .ns-pf-tchip:hover{border-color:var(--accent,#2E6E8E)}
+  .ns-pf-tchip.on{border-color:var(--accent,#2E6E8E);color:var(--ink2);background:color-mix(in srgb,var(--accent,#2E6E8E) 9%,transparent)}
+  .ns-pf-tchip.goz{color:#8a6d1f;border-color:color-mix(in srgb,#c8a63e 40%,transparent)}
+  .ns-pf-tchip.goz.on{background:color-mix(in srgb,#c8a63e 16%,transparent)}
+  .ns-pf-clear{font-size:11.5px;color:var(--bad);background:transparent;border:none;cursor:pointer;padding:3px 6px}
+  .ns-pf-clear:hover{text-decoration:underline}
+  .ns-pf-fnote{font-size:11.5px;color:var(--muted);margin-bottom:8px}
   .ns-pf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
   .ns-pf-card{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;transition:border-color .15s;display:flex;flex-direction:column;gap:6px}
   .ns-pf-card:hover{border-color:var(--line2)}
@@ -3223,7 +3236,16 @@ function vNSPortfolio(){
     .sort((a,b)=>(rank[a.r.level]-rank[b.r.level]) || ((b.r.finish||0)-(a.r.finish||0)));
   const cnt=l=>rows.filter(x=>x.r.level===l).length;
   const RC={risk:'var(--bad)', warn:'var(--warn)', ok:'var(--good)', done:'var(--muted)'};
-  const cards=rows.map(({st,r})=>{ const crit=nsCriticalPath(st);
+  // фильтр портфеля: по риску (клик по счётчику), типу НС и ГОЗ — руководителю ИЦ отсеять сегмент
+  const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false});
+  const riskMatch=(lvl)=> F.risk==='graph' ? (lvl==='ok'||lvl==='done') : (lvl===F.risk);
+  const shown=rows.filter(x=> (!F.risk||riskMatch(x.r.level)) && (!F.type||x.st.type===F.type) && (!F.goz||x.st.goz));
+  const typesPresent=[...new Set(rows.map(x=>x.st.type).filter(t=>t&&NS_TYPES[t]))];
+  const sc=(key,cls,label,val)=>`<button class="ns-pf-sc ${cls} ${F.risk===key?'on':''}" data-nspfrisk="${key}" title="показать только: ${label}"><b>${val}</b> ${label}</button>`;
+  const typeChips=typesPresent.map(t=>`<button class="ns-pf-tchip ${F.type===t?'on':''}" data-nspftype="${t}">${esc((NS_TYPES[t]||NS_TYPES.base).label)}</button>`).join('');
+  const gozN=rows.filter(x=>x.st.goz).length;
+  const filtered=!!(F.risk||F.type||F.goz);
+  const cards=shown.map(({st,r})=>{ const crit=nsCriticalPath(st);
     const critDays=crit.reduce((s,c)=>s+nsDurFor(c),0);
     const typeLabel=(NS_TYPES[st.type]||NS_TYPES.base).label;
     const eng=[st.proj?((PEOPLE[st.proj]||{}).full||st.proj):'', st.asu?((PEOPLE[st.asu]||{}).full||st.asu):''].filter(Boolean).join(' · ');
@@ -3237,8 +3259,19 @@ function vNSPortfolio(){
       ${eng?`<div class="ns-pf-eng">${esc(eng)}</div>`:''}
     </button>`; }).join('');
   return `<div class="an-panel">
-    <div class="ns-pf-summary"><span class="ns-pf-sc"><b>${list.length}</b> станц.</span><span class="ns-pf-sc ok"><b>${cnt('ok')+cnt('done')}</b> в графике</span><span class="ns-pf-sc warn"><b>${cnt('warn')}</b> риск</span><span class="ns-pf-sc bad"><b>${cnt('risk')}</b> срыв</span></div>
-    <div class="ns-pf-grid">${cards}</div>
+    <div class="ns-pf-summary">
+      <button class="ns-pf-sc ${!F.risk?'on':''}" data-nspfrisk="" title="все станции"><b>${list.length}</b> станц.</button>
+      ${sc('graph','ok','в графике',cnt('ok')+cnt('done'))}
+      ${sc('warn','warn','риск',cnt('warn'))}
+      ${sc('risk','bad','срыв',cnt('risk'))}
+    </div>
+    <div class="ns-pf-filters">
+      <span class="ns-pf-flabel">Тип:</span>${typeChips}
+      ${gozN?`<button class="ns-pf-tchip goz ${F.goz?'on':''}" data-nspfgoz="1" title="только ГОЗ (военная приёмка)">ГОЗ · ВП (${gozN})</button>`:''}
+      ${filtered?`<button class="ns-pf-clear" data-nspfclear="1">✕ сбросить фильтр</button>`:''}
+    </div>
+    ${filtered?`<div class="ns-pf-fnote">Показано ${shown.length} из ${rows.length} станций</div>`:''}
+    <div class="ns-pf-grid">${cards||'<div class="empty" style="padding:20px;text-align:center;color:var(--muted)">Нет станций под фильтр — сбросьте условия</div>'}</div>
   </div>`;
 }
 function vRoi(){
@@ -6652,6 +6685,11 @@ document.addEventListener('click', e=>{
   { const el=e.target.closest('[data-nsgoorder]'); if(el){ S.view='order'; S.orderId=el.dataset.nsgoorder; render(); return; } }
   { const el=e.target.closest('[data-nslog]'); if(el){ const k=el.dataset.nslog; S._nsLog = S._nsLog===k?null:k; render(); return; } }
   { const el=e.target.closest('[data-nsdiff]'); if(el){ const k=el.dataset.nsdiff; S._nsDiff = S._nsDiff===k?null:k; render(); return; } }
+  // фильтр портфеля НС
+  { const el=e.target.closest('[data-nspfrisk]'); if(el){ const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false}); const v=el.dataset.nspfrisk||null; F.risk=(F.risk===v?null:v); render(); return; } }
+  { const el=e.target.closest('[data-nspftype]'); if(el){ const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false}); const v=el.dataset.nspftype; F.type=(F.type===v?null:v); render(); return; } }
+  { const el=e.target.closest('[data-nspfgoz]'); if(el){ const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false}); F.goz=!F.goz; render(); return; } }
+  { const el=e.target.closest('[data-nspfclear]'); if(el){ S.nsPfFilter={risk:null,type:null,goz:false}; render(); return; } }
   if(e.target.id==='aiBtn'){
     if(!(S.kbq||'').trim()){ S.kbMsg='Введите параметры ТЗ или ключевые слова.'; render(); return; }
     S.kbMsg=''; searchFiles(); analogRank();   // серверная ИИ-оценка трудоёмкости
