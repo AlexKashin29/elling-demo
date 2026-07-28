@@ -2195,6 +2195,18 @@ function exportReportCSV(){
   sec.push(['Сделка','Заказчик','Стадия','Вероятность %','Сумма'].map(S1).join(';'));
   (S.deals||[]).forEach(d=>sec.push([d.title,d.company,(DST[d.stage]?DST[d.stage][1]:'проиграно'),
     (DEAL_PROB[d.stage]!=null?DEAL_PROB[d.stage]:''),M(d.sum)].map(S1).join(';')));
+  const nsl=nsList();
+  if(nsl.length){
+    const RL={risk:'СРЫВ',warn:'риск',ok:'в графике',done:'готово'};
+    sec.push('');
+    sec.push('Проработка станций (НС)');
+    sec.push(['Станция','Тип','ГОЗ','Заказ №','Проектировщик','Инженер АСУ','Готово критериев','Всего','Готовность %','Состояние','План готовности','Просрочено','Конфликты сроков'].map(S1).join(';'));
+    nsl.forEach(st=>{ const p=nsProgress(st); const r=nsStationRisk(st);
+      const eng=u=>u?((PEOPLE[u]||{}).full||u):'';
+      const over=(st.items||[]).filter(nsIsOverdue).length; const conf=nsStationConflicts(st);
+      sec.push([st.name,(NS_TYPES[st.type]||NS_TYPES.base).label,st.goz?'да':'нет',st.order||'',eng(st.proj),eng(st.asu),
+        p.done,p.total,p.pct,RL[r.level]||'',r.finish!=null?nsFmtDay(r.finish):'',over,conf].map(S1).join(';')); });
+  }
   const csv='﻿'+sec.join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
