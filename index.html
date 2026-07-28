@@ -2832,7 +2832,7 @@ function nsReportHTML(st){
 // Справка из ПОЛУЧЕННОГО подписанного снимка (сторона получателя): рендер из тела body
 // проверенного пакета. Критпуть/конфликты не считаем — их нет в снимке; показываем
 // заверенные факты (статус + комплект КД с ревизиями + ГОЗ) + штамп подлинности.
-function nsReportFromSnapshot(body, digest, valid){
+function nsReportFromSnapshot(body, digest, valid, offline){
   const o=org(); const st=(body&&body.station)||{}; const items=(body&&body.items)||[]; const c=(body&&body.counts)||{};
   const nm=u=>u?((PEOPLE[u]||{}).full||u):'—';
   const ownerName=it=> it.role==='asu'?nm(st.asu): it.role==='both'?(nm(st.proj)+' / '+nm(st.asu)):nm(st.proj);
@@ -2841,7 +2841,9 @@ function nsReportFromSnapshot(body, digest, valid){
     const kd=(it.kd||[]).map(a=>esc(a.code)+(a.rev?(' рев.'+esc(a.rev)):'')).join(', ')||'—';
     return `<tr><td>${i+1}</td><td>${esc(it.title||'')}</td><td>${esc(ownerName(it))}</td><td>${sm[0]}</td><td class="p-r">${it.due?esc(it.due):'—'}</td><td>${kd}</td><td class="p-note">${esc(it.dec||'')}</td></tr>`;
   }).join('');
-  const stamp = valid ? '<span style="color:#0a7d0a;font-weight:700">✔ ПОДПИСЬ ПОДЛИННА (Ed25519)</span>' : '<span style="color:#b00;font-weight:700">✖ ПОДПИСЬ НЕ ПРОШЛА — ПАКЕТ ИЗМЕНЁН</span>';
+  const stamp = valid
+    ? (offline?'<span style="color:#0a7d0a;font-weight:700">✔ ЦЕЛОСТНОСТЬ ПОДТВЕРЖДЕНА (SHA-256; подпись Ed25519 — на сервере)</span>':'<span style="color:#0a7d0a;font-weight:700">✔ ПОДПИСЬ ПОДЛИННА (Ed25519)</span>')
+    : '<span style="color:#b00;font-weight:700">✖ ПАКЕТ ИЗМЕНЁН</span>';
   return `<div class="pdoc">
     <div class="p-org"><b>${esc(o.full||o.name)}</b><br>${esc(o.addr||'')}</div>
     <div class="p-title">Справка о проработке (из подписанного снимка)<br><span>станция «${esc(st.name||'')}» · ${today()}</span></div>
@@ -2878,6 +2880,12 @@ function nsVerifyPrompt(){
     try{ const txt=await f.text(); const pkg=JSON.parse(txt);
       const body=pkg.body||pkg, sig=pkg.sig||'', pub=pkg.pub||'';
       if(!body||typeof body!=='object'||body.kind!=='elling-ns-snapshot'){ toast('Не похоже на снимок проработки НС','bad'); return; }
+      if(!SRV.on){   // офлайн: проверяем ЦЕЛОСТНОСТЬ пересчётом SHA-256 канона (детект подделки); подпись Ed25519 — на сервере
+        const digest=await nsSha256Hex(nsCanon(body));
+        const ok = pkg.digest ? (digest===pkg.digest) : true;
+        S._nsVerify={valid:ok, body, digest, offline:true}; S.view='ns'; S.nsView='list'; render();
+        toast(ok?'Целостность подтверждена — digest совпал':'Пакет изменён — digest НЕ совпал','ok'); return;
+      }
       const r=await fetch('/api/order/snapshot/verify',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify({body,sig,pub})});
       const j=await r.json().catch(()=>({}));
       if(r.ok){ S._nsVerify={valid:!!j.valid, body, digest:j.digest||''}; S.view='ns'; S.nsView='list'; render();
@@ -2906,7 +2914,10 @@ function vNS(){
   const toggle=`<div class="ns-viewtog"><button class="ns-vt ${view==='list'?'on':''}" data-nsview="list">Список</button><button class="ns-vt ${view==='timeline'?'on':''}" data-nsview="timeline">График</button><button class="ns-vt ${view==='load'?'on':''}" data-nsview="load">Нагрузка</button><button class="ns-vt ${view==='portfolio'?'on':''}" data-nsview="portfolio">Портфель</button></div>`;
   const addBtn=`<button class="btn ghost" data-nsverify="1" title="загрузить полученный подписанный снимок проработки и проверить подлинность">🛡 Проверить снимок</button><div class="ns-add-wrap"><button class="btn" data-nsadd="1">+ Станция</button>${S._nsAddOpen?nsTypeMenu():''}</div>`;
   const vf=S._nsVerify;
-  const verifyBanner = vf ? `<div class="ns-vf ${vf.valid?'ok':'bad'}"><div>${vf.valid?'✔ Снимок подлинный':'✖ Подпись не прошла — пакет изменён'} · станция «${esc((vf.body.station||{}).name||'')}» · ${(vf.body.counts||{}).done||0}/${(vf.body.counts||{}).total||0} готово${(vf.body.station||{}).goz?' · ГОЗ':''} · digest ${esc((vf.digest||'').slice(0,12))}</div><div style="display:flex;gap:6px">${vf.valid?`<button class="btn ghost" data-nsvfreport="1" style="font-size:11px">🖨 Справка из снимка</button>`:''}<button class="btn ghost" data-nsvfclose="1" style="font-size:11px">закрыть</button></div></div>` : '';
+  const vfMsg = vf ? (vf.offline
+    ? (vf.valid?'✔ Целостность подтверждена (digest совпал) · подпись Ed25519 — на сервере':'✖ Пакет изменён — digest не совпал')
+    : (vf.valid?'✔ Снимок подлинный (подпись Ed25519)':'✖ Подпись не прошла — пакет изменён')) : '';
+  const verifyBanner = vf ? `<div class="ns-vf ${vf.valid?'ok':'bad'}"><div>${vfMsg} · станция «${esc((vf.body.station||{}).name||'')}» · ${(vf.body.counts||{}).done||0}/${(vf.body.counts||{}).total||0} готово${(vf.body.station||{}).goz?' · ГОЗ':''} · digest ${esc((vf.digest||'').slice(0,12))}</div><div style="display:flex;gap:6px">${vf.valid?`<button class="btn ghost" data-nsvfreport="1" style="font-size:11px">🖨 Справка из снимка</button>`:''}<button class="btn ghost" data-nsvfclose="1" style="font-size:11px">закрыть</button></div></div>` : '';
   const intro = S._nsIntroHid ? '' : `<div class="ns-intro"><div><b>Проработка насосных станций</b> — инженерная проработка изделия: статусы критериев, зависимости (кто на кого ждёт), сроки и комплект КД. Виды: <b>Список</b> — детально по станции · <b>График</b> — сроки на оси · <b>Нагрузка</b> — по инженерам · <b>Портфель</b> — все станции с риском.</div><button class="ns-intro-x" data-nsintroclose="1" title="скрыть">×</button></div>`;
   if(view==='timeline') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${intro}${verifyBanner}${vNSTimeline()}</div>`;
   if(view==='load') return `<div class="ns-wrap"><div class="ns-head"><div class="ns-tabs"></div>${toggle}${addBtn}</div>${intro}${verifyBanner}${vNSLoad()}</div>`;
@@ -6496,7 +6507,7 @@ document.addEventListener('click', e=>{
   { const el=e.target.closest('[data-nsreport]'); if(el){ const st=nsById(el.dataset.nsreport); if(st) printDoc(nsReportHTML(st)); return; } }
   { const el=e.target.closest('[data-nstask]'); if(el){ nsStationToTask(el.dataset.nstask); return; } }
   if(e.target.closest('[data-nsverify]')){ nsVerifyPrompt(); return; }
-  if(e.target.closest('[data-nsvfreport]')){ const v=S._nsVerify; if(v&&v.body) printDoc(nsReportFromSnapshot(v.body, v.digest, v.valid)); return; }
+  if(e.target.closest('[data-nsvfreport]')){ const v=S._nsVerify; if(v&&v.body) printDoc(nsReportFromSnapshot(v.body, v.digest, v.valid, v.offline)); return; }
   if(e.target.closest('[data-nsvfclose]')){ S._nsVerify=null; render(); return; }
   if(e.target.closest('[data-nsintroclose]')){ S._nsIntroHid=1; render(); return; }
   { const el=e.target.closest('[data-nsopen]'); if(el){ S.view='ns'; S.nsView='list'; S.nsActive=el.dataset.nsopen; render(); return; } }
