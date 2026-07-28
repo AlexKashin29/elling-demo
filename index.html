@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.83 «Все роли в потоке · НС · CRM · снабжение» — рабочий MVP</title>
+﻿<title>Эллинг v1.84 «Извещения ГОСТ 2.503 · все роли · НС · CRM» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -3770,8 +3770,9 @@ function vNotices(){
         <span class="stchip" style="color:${st[1]};border:1px solid ${st[1]}">${st[0]}</span>
       </div>
       <div style="font-size:13px;color:var(--ink2);margin:10px 0">Причина: ${NREASON[n.reason]||n.reason}. ${esc(n.note)}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-        ${(n.orders||[]).map(o=>`<span class="stchip" style="font-size:10px">заказ №${esc(o)}</span>`).join('')}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+        ${(n.orders||[]).map(o=>`<span class="stchip" style="font-size:10px">заказ №${esc(o)}</span>`).join('')}
+        <button class="btn ghost" style="padding:4px 11px;font-size:11px;margin-left:auto" data-notdoc="${n.id}" title="сформировать печатное извещение об изменении по ГОСТ 2.503">🖨 Извещение (ГОСТ 2.503)</button></div>
       ${(()=>{ const bt='padding-top:10px;border-top:1px solid var(--line2)';
         if(n.status==='draft'||n.status==='review')
           return `<div style="${bt}"><button class="btn ghost" style="padding:5px 12px;font-size:12px" data-notadv="${n.id}">→ ${NST[NST_NEXT[n.status]][0]}</button></div>`;
@@ -4598,6 +4599,39 @@ const PSI_ROWS=[
   ['Уровень шума','≤ норм по ТЗ','шумомер, 1 м'],
   ['Наработка на стенде (обкатка)','без замечаний','непрерывный прогон'],
 ];
+// Печатное «Извещение об изменении» по ГОСТ 2.503 — формальный инженерный деливерабл.
+// Замыкает жизненный цикл КД: проработка НС (создание) → извещение (изменение) → приёмка.
+function noticeDocHTML(n){
+  if(!n) return '<div class="pdoc"><div class="p-title">Извещение не найдено</div></div>';
+  const o=org();
+  const kind=(NKIND[n.kind]||['—'])[0];
+  const reason=NREASON[n.reason]||n.reason||'—';
+  const ords=(n.orders||[]);
+  const goz=ords.some(num=>(S.orders||[]).some(x=>String(x.num)===String(num)&&x.goz));
+  const num=esc(n.num||('ИИ-'+new Date().toISOString().slice(0,10).replace(/-/g,'')));
+  const model = n.modelSync ? 'Электронная модель приведена в соответствие с бумажным архивом.'
+    : 'Требуется привести электронную модель в соответствие с архивом (не сведена на дату выпуска).';
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name)}</b><br>ИНН ${esc(o.inn)}${o.kpp?' · КПП '+esc(o.kpp):''} · ${esc(o.addr)}</div>
+    <div class="p-title">Извещение об изменении<br><span>№ ${num} · ГОСТ 2.503-2013 · от ${esc(n.date)||today()}</span></div>
+    <table class="p-tbl" style="margin-top:6px">
+      <tr><th style="width:190px">Обозначение документа</th><td class="mono">${esc(n.code||'—')}</td></tr>
+      <tr><th>Наименование</th><td>${esc(n.doc||'—')}</td></tr>
+      <tr><th>Изменение №</th><td>${esc(String(n.chg!=null?n.chg:'—'))}</td></tr>
+      <tr><th>Указание о выпуске</th><td><b>${esc(kind)}</b></td></tr>
+      <tr><th>Причина изменения</th><td>${esc(reason)}</td></tr>
+    </table>
+    <div style="font-size:14px;font-weight:700;margin:14px 0 4px">Содержание изменения</div>
+    <div class="p-to" style="min-height:38px">${esc(n.note||'—')}</div>
+    <div class="p-note" style="margin:10px 0 4px"><b>Указание о заделе:</b> изготовленный задел использовать/доработать по решению технолога; вновь запускаемые — по изменённой КД.</div>
+    <div class="p-note" style="margin:0 0 4px"><b>Электронная модель (ЭМ):</b> ${model}</div>
+    ${ords.length?`<div class="p-note" style="margin:8px 0 4px"><b>Затрагиваемые заказы:</b> ${ords.map(x=>'№'+esc(x)).join(', ')}${goz?' · <b>в т.ч. ГОЗ (275-ФЗ)</b>':''}</div>`:''}
+    <div class="p-terms">Извещение выпущено по ГОСТ 2.503-2013. Изменения внесены во все экземпляры документа и учтены в структуре изделия (спецификация/состав). ${goz?'Для ГОЗ-заказов извещение согласуется с военным представительством (ВП).':''}</div>
+    <div class="p-sign"><div>Разработал<span class="p-line"></span>${esc((PEOPLE[n.owner]||{}).full||'')}</div><div>Проверил<span class="p-line"></span></div></div>
+    <div class="p-sign" style="margin-top:8px"><div>Нормоконтроль<span class="p-line"></span></div><div>${goz?'Согласовано ВП':'Утвердил'}<span class="p-line"></span></div></div>
+    <div class="p-foot">Сформировано в системе «Эллинг» · ${today()} · извещение об изменении ГОСТ 2.503</div>
+  </div>`;
+}
 function psiProtocolHTML(act){
   const o=org();
   const ord=(S.orders||[]).find(x=>x.id===(act&&act.orderId))||{};
@@ -4885,6 +4919,8 @@ function vToday(){
         return lost?[{t:'Перезакладка в радаре',n:lost+' наших позиций перезаложены на конкурента — судьба сделок решается до тендера, нужен ход продаж',c:'var(--risk)',go:'radar'}]:[]; })(),
       ...(()=>{ const exp=(S.certs||[]).filter(c=>certDays(c)<0).length;
         return exp?[{t:'Сертификат РМРС просрочен',n:exp+' сертификат(ов) аннулированы — продукцию не примут при освидетельствовании судна',c:'var(--risk)',go:'supply'}]:[]; })(),
+      ...(()=>{ const des=(S.notices||[]).filter(noticeDesync).length;
+        return des?[{t:'Модель не сведена с архивом',n:des+' извещений внедрены, но ЭМ не приведена к архиву — риск приёмки ВП и отгрузки по неверной КД',c:'var(--warn)',go:'notices'}]:[]; })(),
     ];
     return `<div class="stats" style="margin:8px 0 16px">
       <div class="stat"><div class="v">${ords.length}</div><div class="l">заказов в портфеле</div></div>
@@ -6441,6 +6477,8 @@ document.addEventListener('click', e=>{
   }
   const nf = e.target.closest('[data-notfilter]');
   if(nf){ S.notFilter=nf.dataset.notfilter; render(); return; }
+  { const el=e.target.closest('[data-notdoc]'); if(el){ const n=notById(el.dataset.notdoc);
+      if(n){ printDoc(noticeDocHTML(n)); ACTS.push('извещение '+esc(n.num||'')+' на печать (ГОСТ 2.503)'); save(); } return; } }
   const nadv = e.target.closest('[data-notadv]');
   if(nadv){ const n=notById(nadv.dataset.notadv);
     if(n && NST_NEXT[n.status]){ const from=n.status; n.status=NST_NEXT[n.status];
