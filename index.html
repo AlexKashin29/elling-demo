@@ -4815,6 +4815,12 @@ function vToday(){
       const adv={todo:['Взять в работу','wip'],wip:['На проверку','check'],check:['Готово ✓','done']}[x.it.status];
       const advBtn = (cs.state!=='blocked' && adv) ? `<button class="btn big" data-nsadvance="${x.st.id}:${x.it.id}">${adv[0]}</button>` : `<span class="stchip">открыть →</span>`;
       return `<div class="wcard ${over?'urgent':''}" data-nav2="ns" style="cursor:pointer"><div class="body"><span class="k">${esc(x.st.name)}</span><div class="t">${esc(x.it.title||'')}</div><div class="why">${over?'<b>просрочено</b>':'срок'} ${nsFmtDay(x.d)} · ${sm[0]}${csx}</div></div>${advBtn}</div>`; }).join('')||'<div class="zero">Нет ближайших сроков проработки.</div>'}</div>` : '';
+  // радар для продажника: перезаложенные/под угрозой позиции — прямо в дневном экране (боль продаж)
+  const inSales = /продаж/i.test(p.dept||'');
+  const rHot = (inSales && !isBoss) ? (S.projects||[]).flatMap(pr=>(pr.positions||[]).filter(x=>x.st!=='ok').map(x=>({pr,x})))
+    .sort((a,b)=>(({lost:0,warn:1}[a.x.st])-({lost:0,warn:1}[b.x.st])) || ((b.pr.stage||0)-(a.pr.stage||0))) : [];
+  const radarCard = (inSales && !isBoss) ? `<div class="tsec" style="margin-top:18px"><h3>Радар закладок — требуют действий ${rHot.length?`<span class="cnt">${rHot.length}</span>`:''}</h3>
+    ${rHot.slice(0,6).map(({pr,x})=>`<div class="wcard ${x.st==='lost'?'urgent':''}" data-nav2="radar" style="cursor:pointer"><div class="body"><span class="k">${esc(x.nm)}</span><div class="t">${esc(pr.name)} · ${esc(RSTAGES[pr.stage]||'—')}</div><div class="why"><b style="color:${PST[x.st][0]}">${PST[x.st][1]}</b>${x.note?' · '+esc(x.note):''}</div></div><button class="btn big" data-mktask="${esc(pr.name)}|${esc(x.nm)}">→ Задача</button></div>`).join('')||'<div class="zero">Все позиции держатся — перезаложенных нет.</div>'}</div>` : '';
   const pulse = isBoss ? (()=>{
     const ords=S.orders||[];
     const cOk=ords.filter(o=>o.risk==='ok').length, cWarn=ords.filter(o=>o.risk==='warn').length, cRisk=ords.filter(o=>o.risk==='risk').length;
@@ -4832,6 +4838,8 @@ function vToday(){
       ...(nsOver?[{t:'Просрочка проработки НС',n:nsOver+' критериев проработки просрочено по станциям',c:'var(--risk)',go:'ns'}]:[]),
       ...(nsConf?[{t:'Конфликт сроков проработки',n:nsConf+' критериев стоят раньше своих предшественников — план нереалистичен',c:'var(--warn)',go:'ns'}]:[]),
       ...(icf&&icf.level==='over'?[{t:'ИЦ перегружен',n:'единая очередь '+icf.totalDays+' инженеро-дней (~'+icf.perEng+' раб.дн на инженера) — новые сделки под риском срыва: двигать сроки / усилить ИЦ',c:'var(--risk)',go:'ns'}]:[]),
+      ...(()=>{ const lost=(S.projects||[]).flatMap(pr=>pr.positions||[]).filter(x=>x.st==='lost').length;
+        return lost?[{t:'Перезакладка в радаре',n:lost+' наших позиций перезаложены на конкурента — судьба сделок решается до тендера, нужен ход продаж',c:'var(--risk)',go:'radar'}]:[]; })(),
     ];
     return `<div class="stats" style="margin:8px 0 16px">
       <div class="stat"><div class="v">${ords.length}</div><div class="l">заказов в портфеле</div></div>
@@ -4862,6 +4870,7 @@ function vToday(){
         <div class="tsec" style="margin-top:18px"><h3>Ваша очередь ${queue.length?`<span class="cnt">${queue.length}</span>`:''}</h3>
           ${queue.map(t=>wcard(t)).join('')||'<div class="zero">✓ Очередь пуста.</div>'}</div>
         ${nsCard}
+        ${radarCard}
       </div>
       <div class="tsec"><h3>Пока вы работали</h3>
         <div class="evfeed">${events.map(({o,f})=>`<div class="ev"><span class="t">${esc(f[0])}</span>
