@@ -5247,11 +5247,16 @@ function vBoard(){
 function parseHours(s){ if(!s) return 0; const m=String(s).replace(',','.').match(/(\d+(?:\.\d+)?)/); return m?parseFloat(m[1]):0; }
 function dueVal(d){ const m=String(d||'').match(/(\d{2})\.(\d{2})\.(\d{4})/); return m?(+m[3])*10000+(+m[2])*100+(+m[1]):9e9; }
 function vPlan(){
-  const CAP=80;                                   // ёмкость инженера на спринт (2 недели), н/ч
-  const ppl=Object.keys(PEOPLE).filter(k=>S.tasks.some(t=>t.who===k&&t.col!=='done'));
+  const CAP=80, HPD=8;                            // ёмкость инженера на спринт (2 недели), н/ч
+  // единая очередь ИЦ: задачи доски + проработка НС (как в nsICForecast) — иначе загрузка занижена
+  const engSet=new Set(Object.keys(PEOPLE).filter(k=>S.tasks.some(t=>t.who===k&&t.col!=='done')));
+  nsList().forEach(st=>{ if(st.proj&&PEOPLE[st.proj]) engSet.add(st.proj); if(st.asu&&PEOPLE[st.asu]) engSet.add(st.asu); });
+  const ppl=[...engSet].filter(k=>PEOPLE[k]);
   const load=ppl.map(uid=>{ const ts=S.tasks.filter(t=>t.who===uid&&t.col!=='done');
-    const h=ts.reduce((a,t)=>a+parseHours(t.est),0);
-    return {uid,h:Math.round(h*10)/10,n:ts.length,pct:Math.round(h/CAP*100)}; }).sort((a,b)=>b.pct-a.pct);
+    const taskH=ts.reduce((a,t)=>a+parseHours(t.est),0);
+    const nsL=(typeof nsEngineerLoad==='function')?nsEngineerLoad(uid):{days:0,total:0};
+    const nsH=(nsL.days||0)*HPD; const h=taskH+nsH;
+    return {uid,h:Math.round(h*10)/10,taskH:Math.round(taskH*10)/10,nsH:Math.round(nsH*10)/10,n:ts.length,nsN:nsL.total||0,pct:Math.round(h/CAP*100)}; }).sort((a,b)=>b.pct-a.pct);
   const totH=Math.round(load.reduce((a,x)=>a+x.h,0)), capTot=Math.max(1,load.length*CAP);
   const totPct=Math.round(totH/capTot*100); const overN=load.filter(x=>x.pct>100).length;
   const mil=(S.orders||[]).filter(o=>o.stage<10).slice().sort((a,b)=>dueVal(a.due)-dueVal(b.due));
@@ -5264,14 +5269,14 @@ function vPlan(){
       <div class="stat"><div class="v" style="${cc(overN?'var(--risk)':'var(--good)')}">${overN}</div><div class="l">перегружено людей</div></div>
       <div class="stat"><div class="v" style="${cc(atRisk?'var(--warn)':'var(--good)')}">${atRisk}</div><div class="l">вех под риском срока</div></div>
     </div>
-    <div class="panel" style="margin-bottom:14px"><h3>Загрузка инженерного центра <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· спринт 14 · ёмкость ${CAP} н/ч на человека${canView('board')?' · клик — задачи человека':''}</span></h3>
+    <div class="panel" style="margin-bottom:14px"><h3>Загрузка инженерного центра <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· спринт 14 · ёмкость ${CAP} н/ч · задачи + проработка НС${canView('board')?' · клик — задачи человека':''}</span></h3>
       ${load.map(x=>`<div class="loadrow" style="align-items:center;gap:12px${canView('board')?';cursor:pointer':''}" ${canView('board')?`data-teamboard="${x.uid}"`:''}>
         <span class="nm" style="flex:0 0 178px;min-width:0">${av(x.uid)} ${esc(PEOPLE[x.uid].full)}</span>
         <span class="tm-bar" style="flex:1;margin:0"><i style="width:${Math.min(100,x.pct)}%;background:${pcol(x.pct)}"></i></span>
-        <span style="flex:none;width:104px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">${x.h} н/ч · ${x.n} зад.</span>
+        <span style="flex:none;width:150px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--muted)">${x.h} н/ч${x.nsH>0?` <span title="в т.ч. проработка НС: ${x.nsH} н/ч (${x.nsN} критериев)" style="color:var(--accent)">·${x.nsH}пр</span>`:''} · ${x.n} зад.</span>
         <span class="tm-badge ${x.pct>100?'over':''}" style="width:52px;text-align:center">${x.pct}%</span>
       </div>`).join('')||'<div class="empty">открытых задач нет — очередь пуста</div>'}
-      <p style="font-size:12px;color:var(--muted);margin-top:10px">Перегруз (&gt;100%) — сигнал перераспределить задачи или двигать срок заранее, а не по факту срыва. Оценка берётся из поля «Трудоёмкость» задачи.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Загрузка — единая очередь ИЦ: задачи доски + проработка станций (НС), в н/ч. «·Nпр» — доля проработки. Перегруз (&gt;100%) — сигнал перераспределить или двигать срок заранее, а не по факту срыва.</p>
     </div>
     <div class="panel" style="margin-bottom:14px"><h3>Вехи заказов <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· ближайший срок сверху</span></h3>
       ${mil.map(o=>{ const r=RISK[o.risk]||['var(--muted)','—'];
