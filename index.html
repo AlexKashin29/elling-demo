@@ -856,6 +856,7 @@
   .an-panel{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:0 0 16px;background:var(--panel2)}
   .an-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
   .an-est{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:10px 0 14px;border-bottom:1px solid var(--line2);margin-bottom:10px}
+  .an-estapply{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 30%,transparent);border-radius:9px;padding:9px 13px;margin:0 0 12px}
   .an-est-v{font-size:30px;font-weight:780;letter-spacing:-.02em;color:var(--accent,#C24309);font-variant-numeric:tabular-nums;white-space:nowrap}
   .an-est-v span{font-size:14px;font-weight:600;color:var(--muted)}
   .an-est-l{font-size:12.5px;color:var(--ink2);flex:1;min-width:220px;line-height:1.4}
@@ -2570,6 +2571,11 @@ function analogPanel(){
   const head = (est.best!=null)
     ? `<div class="an-est"><div class="an-est-v">${est.low}–${est.high}<span> н/ч</span></div><div class="an-est-l">ИИ-оценка трудоёмкости по ${est.relevant} аналог${est.relevant==1?'у':'ам'}. Опора — «${esc((byId[est.basis]||{}).izdelie||est.basis)}», масштаб по ведущему параметру. Готовая цифра для ТКП за секунды вместо дней просчёта.</div></div>`
     : `<div class="an-est"><div class="an-est-l">Близких аналогов для оценки не нашлось — уточните параметры ТЗ (подача, давление, мощность, материал, шифр).</div></div>`;
+  // возврат оценки в заявку просчёта, откуда пришли (замыкает петлю Просчёт → аналог → просчитано)
+  const estApply=(est.best!=null && S._estAnalogFor && (typeof estById==='function') && estById(S._estAnalogFor))
+    ? `<div class="an-estapply">↩ Оценка для заявки <b>${esc(S._estAnalogFor)}</b> — применить готовую цифру:
+        <button class="btn" data-estapply="${esc(S._estAnalogFor)}|${est.best}" style="font-size:12px;padding:6px 14px">Просчитано: ${est.best} н/ч →</button></div>`
+    : '';
   const icf=(est.best!=null)?nsICForecast():null;
   const estD=(est.best!=null)?Math.ceil((est.best||est.high||0)/Math.max(1,icCap().hpd||8)):0;
   const icLine=icf?`<div class="an-ic${icf.level==='over'?' over':''}">Единая очередь ИЦ: <b>${icf.totalDays}</b> инженеро-дней (${icf.prorDays} проработка + ${icf.estDays} просчёты) на ${icf.engineers} инж.${estD?` · этот заказ <b>+${estD} дн</b>` :''} · окно старта <b>~${nsFmtDay(icf.startDay)}</b>${icf.level==='over'?' — ⚠ ИЦ перегружен, новый заказ рискует сорвать срок':' — реальный срок, когда ИЦ возьмёт заказ'}</div>`:'';
@@ -2580,7 +2586,7 @@ function analogPanel(){
   const mkOrder=(est.best!=null&&byId[est.basis])?`<div style="margin:2px 0 12px"><button class="btn" data-fromanalog="${esc(est.basis)}" style="font-size:12px">Создать заказ по аналогу «${esc((byId[est.basis]||{}).izdelie||est.basis)}»</button> <span style="font-size:11px;color:var(--muted)">— перенесёт состав аналога в новый заказ как основу</span></div>`:'';
   const demoBanner=a.demo?`<div class="an-demo">🔹 <b>Демо-пример</b>: готовый результат ИИ-оценки для ТЗ «${esc(a.demoTz||'')}». В публичном демо без сервера показан один пример; <b>детерминированное ядро на сервере считает ЛЮБОЙ ваш ТЗ</b> за секунды (без облака, для закрытого ОПК-контура — <span class="mono">Запустить_сервер.bat</span>).</div>`:'';
   return `<div class="an-panel"><div class="an-title">⚙ Оценка по аналогам <span class="mono" style="font-size:10px;color:var(--muted)">гибрид: тип + параметры + шифр + вектор-смысл + категории, БЕЗ облака</span>
-    ${est.best!=null?`<button class="btn ghost" data-estsheet="1" style="font-size:11px;margin-left:auto">🖨 Оценочный лист</button>`:''}</div>${demoBanner}${head}${icLine}${mkOrder}${catLine}<div class="anrows">${rows}</div></div>`;
+    ${est.best!=null?`<button class="btn ghost" data-estsheet="1" style="font-size:11px;margin-left:auto">🖨 Оценочный лист</button>`:''}</div>${demoBanner}${head}${estApply}${icLine}${mkOrder}${catLine}<div class="anrows">${rows}</div></div>`;
 }
 // ROI-калькулятор для discovery-звонка: числа поставщика → ₽/год (детерм. roi.py).
 const ROI_FIELDS=[
@@ -7225,14 +7231,25 @@ document.addEventListener('click', e=>{
   { const el=e.target.closest('[data-nspfclear]'); if(el){ S.nsPfFilter={risk:null,type:null,goz:false}; render(); return; } }
   // связка Просчёт → ИИ-оценка: заявка несёт ТЗ, подбираем аналог и оценку трудоёмкости
   { const el=e.target.closest('[data-estanalog]'); if(el){ const est=(S.estimates||[]).find(x=>x.id===el.dataset.estanalog);
-      if(est){ S.kbq=[est.title,est.note].filter(Boolean).join('. ').slice(0,400); S.view='kb'; S.kbTab='search'; S.kbMsg='';
+      if(est){ S._estAnalogFor=est.id;   // помним заявку, чтобы вернуть оценку аналога обратно
+        S.kbq=[est.title,est.note].filter(Boolean).join('. ').slice(0,400); S.view='kb'; S.kbTab='search'; S.kbMsg='';
         try{ searchFiles(); }catch(_){} try{ analogRank(); }catch(_){}
         let reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(x){}
         if(reduce){ S.kbAI=true; S.kbThinking=false; render(); }
         else { S.kbThinking=true; S.kbAI=false; render(); setTimeout(()=>{ S.kbThinking=false; S.kbAI=true; render(); },720); } }
       return; } }
+  // применить оценку аналога к заявке просчёта → «просчитано» (замыкание петли)
+  { const el=e.target.closest('[data-estapply]'); if(el){ const parts=String(el.dataset.estapply).split('|'); const en=estById(parts[0]);
+      if(en){ const h=parseInt(parts[1],10)||en.resHours||40; const sv=(en.dealId&&dealById(en.dealId))?dealById(en.dealId).sum:(en.resSum||5000000);
+        en.status='done'; en.resHours=h; en.resSum=sv;
+        ACTS.push('просчёт '+en.id+' готов по ИИ-аналогу: '+h+' н/ч');
+        if(en.dealId){ const d=dealById(en.dealId); if(d){ d.next='Оценка ИЦ (ИИ-аналог): '+h+' н/ч — отправить ТКП'; d.acts=d.acts||[]; d.acts.push([dealStamp(),'Оценка ИЦ по ИИ-аналогу: '+h+' н/ч']); try{ notify(['sokolova'],'оценка по ИИ-аналогу: '+String(en.title||'').slice(0,40)+' ('+h+' н/ч)',null); }catch(_){} } }
+        S._estAnalogFor=null; S.analog=null; S.view='estimates'; save(); render();
+        toast('Заявка '+en.id+' просчитана по ИИ-аналогу: '+h+' н/ч','ok'); }
+      return; } }
   if(e.target.id==='aiBtn'){
     if(!(S.kbq||'').trim()){ S.kbMsg='Введите параметры ТЗ или ключевые слова.'; render(); return; }
+    S._estAnalogFor=null;   // ручной поиск не относится к конкретной заявке
     S.kbMsg=''; searchFiles(); analogRank();   // серверная ИИ-оценка трудоёмкости
     let reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(x){}
     if(reduce){ S.kbAI=true; S.kbThinking=false; render(); return; }
