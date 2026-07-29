@@ -3806,8 +3806,9 @@ function vEstimates(){
       <div style="font-size:13px;color:var(--ink2);margin:10px 0">${esc(e.note)}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:10px;border-top:1px solid var(--line2)">
         ${ackChip}${dueChip}
+        ${(e.status==='new'||e.status==='wip')?`<button class="btn ghost" style="padding:5px 12px;font-size:12px${e.status==='new'?';margin-left:auto':''}" data-estanalog="${e.id}" title="подобрать исполненный аналог по ТЗ и получить оценку трудоёмкости за секунды — вместо ручного просчёта">🔍 Аналог по ТЗ</button>`:''}
         ${e.status==='done'?`<span class="stchip" style="color:var(--good);border:1px solid var(--good)">${e.resHours} н/ч · ТКП ${canFin()?fmtSum(e.resSum):'•••'}</span>${e.dealId?`<button class="chip" data-deal="${e.dealId}" style="margin-left:auto">↗ Сделка ${esc(e.dealId)}</button><button class="chip" data-tkp="${e.dealId}">🖨 ТКП</button>`:''}`:''}
-        ${e.status==='new'?`<button class="btn" style="padding:5px 12px;font-size:12px;margin-left:auto" data-esttake="${e.id}">Взять в работу</button><button class="btn ghost" style="padding:5px 12px;font-size:12px" data-estdecline="${e.id}">Не наша компетенция</button>`:''}
+        ${e.status==='new'?`<button class="btn" style="padding:5px 12px;font-size:12px" data-esttake="${e.id}">Взять в работу</button><button class="btn ghost" style="padding:5px 12px;font-size:12px" data-estdecline="${e.id}">Не наша компетенция</button>`:''}
         ${e.status==='wip'?`<button class="btn" style="padding:5px 12px;font-size:12px;margin-left:auto" data-estdone="${e.id}">Отметить просчитанным →</button>`:''}
       </div></div>`; }).join('')||emptyBox('i-est','Нет заявок под этот фильтр','Переключите фильтр выше на «Все», чтобы увидеть весь просчёт. Заявки приходят сюда из сделок при запросе оценки ТЗ в ИЦ.')}`;
 }
@@ -7222,6 +7223,14 @@ document.addEventListener('click', e=>{
   { const el=e.target.closest('[data-nspftype]'); if(el){ const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false}); const v=el.dataset.nspftype; F.type=(F.type===v?null:v); render(); return; } }
   { const el=e.target.closest('[data-nspfgoz]'); if(el){ const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false}); F.goz=!F.goz; render(); return; } }
   { const el=e.target.closest('[data-nspfclear]'); if(el){ S.nsPfFilter={risk:null,type:null,goz:false}; render(); return; } }
+  // связка Просчёт → ИИ-оценка: заявка несёт ТЗ, подбираем аналог и оценку трудоёмкости
+  { const el=e.target.closest('[data-estanalog]'); if(el){ const est=(S.estimates||[]).find(x=>x.id===el.dataset.estanalog);
+      if(est){ S.kbq=[est.title,est.note].filter(Boolean).join('. ').slice(0,400); S.view='kb'; S.kbTab='search'; S.kbMsg='';
+        try{ searchFiles(); }catch(_){} try{ analogRank(); }catch(_){}
+        let reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(x){}
+        if(reduce){ S.kbAI=true; S.kbThinking=false; render(); }
+        else { S.kbThinking=true; S.kbAI=false; render(); setTimeout(()=>{ S.kbThinking=false; S.kbAI=true; render(); },720); } }
+      return; } }
   if(e.target.id==='aiBtn'){
     if(!(S.kbq||'').trim()){ S.kbMsg='Введите параметры ТЗ или ключевые слова.'; render(); return; }
     S.kbMsg=''; searchFiles(); analogRank();   // серверная ИИ-оценка трудоёмкости
