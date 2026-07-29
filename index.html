@@ -4657,6 +4657,13 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
         <h3 style="margin-bottom:2px">${esc(dc.title)}</h3>
         <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">${esc(dc.sub)}</div>
         <div style="font-size:13px;color:var(--ink2);line-height:1.6">${dc.html}</div></div>`; }).join('')}
+      <div class="panel" style="margin-bottom:14px;border-color:color-mix(in srgb,var(--risk) 30%,transparent)">
+        <h3 style="margin-bottom:2px">Отзыв согласия на обработку ПДн</h3>
+        <p style="font-size:12.5px;color:var(--ink2);margin:6px 0 10px">Вы вправе отозвать согласие на обработку персональных данных (ст. 9 № 152-ФЗ). Запрос передаётся оператору — <b>${esc(org().full||org().name)}</b>. ${S._pdnRevoked?'':'<b style="color:var(--risk)">Отзыв влечёт прекращение доступа к системе</b> в соответствии с Политикой (обработка в рамках трудовых отношений — на законном основании — прекращается по факту увольнения).'}</p>
+        ${S._pdnRevoked
+          ? `<div class="stchip" style="color:var(--warn);border:1px solid var(--warn)">✓ Запрос на отзыв согласия зарегистрирован — передан оператору</div>`
+          : `<button class="btn ghost" data-pdnrevoke="1" style="color:var(--risk);border-color:color-mix(in srgb,var(--risk) 40%,transparent)">Отозвать согласие на обработку ПДн</button>`}
+      </div>
     </section>
     <section class="set-sec" data-sec="system" ${tab==='system'?'':'hidden'}><div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
@@ -6427,6 +6434,15 @@ document.addEventListener('click', e=>{
   if(e.target.closest('[data-chipwho]')){ S.chips.who=null; render(); return; }
   const stab = e.target.closest('[data-settab]');
   if(stab){ S.setTab=stab.dataset.settab; render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
+  // отзыв согласия на обработку ПДн (152-ФЗ ст. 9): фиксируем запрос в аудит + уведомляем оператора
+  { const el=e.target.closest('[data-pdnrevoke]'); if(el){
+      let go=true; try{ go=window.confirm('Отозвать согласие на обработку персональных данных? Запрос будет передан оператору; отзыв влечёт прекращение доступа к системе.'); }catch(_){}
+      if(!go) return;
+      const me=(PEOPLE[S.currentUser]||{}).full||S.currentUser||'—';
+      ACTS.push('запрос на отзыв согласия ПДн (152-ФЗ) от '+me+' (ред. '+CONSENT_VER+')');
+      try{ const admins=Object.keys(PEOPLE).filter(u=>(PEOPLE[u]||{}).lvl===0); if(admins.length) notify(admins,'Запрос на отзыв согласия ПДн: '+me,null); }catch(_){}
+      S._pdnRevoked=true; save(); render();
+      toast('Запрос на отзыв согласия зарегистрирован и передан оператору','ok'); return; } }
   // ---- 2FA (второй фактор) ----
   if(e.target.closest('[data-2fa-setup]')){
     (async()=>{ try{
