@@ -4203,7 +4203,51 @@ const PDM_CONFIGS=[
    roles:['инженер'], conn:['file','xml'], status:'setup',
    note:'чертёжный контур — по запросу'},
 ];
+// Каталог готовности к регуляторным и ЭДО-системам (третий контур помимо 1С и PDM):
+// госзакупки, реестровость ПП 719, юридически значимый ЭДО, казначейское сопровождение ГОЗ, РМРС.
+const EXT_CONN={api:'API системы', lk:'Личный кабинет / выгрузка', roaming:'Роуминг ЭДО', bank:'Банк-клиент (выписки)', reestr:'Реестр (открытые данные)'};
+const EXT_CONFIGS=[
+  {code:'eis', name:'ЕИС · Госзакупки (zakupki.gov.ru)',
+   entities:['тендеры 44/223-ФЗ','контракты','планы-графики','дедлайны'],
+   roles:['продажи','директор'], conn:['api','reestr'], goz:true, status:'ready',
+   note:'источник тендеров и дедлайнов для радара закладок и CRM'},
+  {code:'gisp', name:'ГИС Промышленности (ГИСП)',
+   entities:['реестр ПП 719','баллы локализации','подтверждение производства'],
+   roles:['закупки','директор'], conn:['api','lk'], goz:false, status:'ready',
+   note:'реестровость ПКИ — статус в модуле снабжения (аннулирование без уведомления)'},
+  {code:'edo', name:'ЭДО: Диадок / СБИС / Такском / 1С-ЭДО',
+   entities:['УПД','счета-фактуры','акты','договоры'],
+   roles:['бухгалтерия','продажи'], conn:['api','roaming'], goz:false, status:'ready',
+   note:'юридически значимый документооборот с контрагентами'},
+  {code:'goztreas', name:'Казначейское сопровождение ГОЗ / ГИС ГОЗ',
+   entities:['ИГК','отдельные/спецсчета','статус оплат по ГОЗ'],
+   roles:['бухгалтерия','директор'], conn:['bank','lk'], goz:true, status:'ready',
+   note:'275-ФЗ раздельные счета; отражаем статус, учёт — в 1С'},
+  {code:'rmrs', name:'РМРС · Российский морской регистр судоходства',
+   entities:['сертификаты','освидетельствования','сроки действия'],
+   roles:['качество / ОТК','закупки'], conn:['lk','reestr'], goz:false, status:'ready',
+   note:'связано с контролем сроков сертификатов РМРС'},
+];
 function resCol(r){ return r==='ok'?'var(--good)':r==='warn'?'var(--warn)':'var(--risk)'; }
+// Общий рендер каталога готовности интеграции (1С / PDM / регуляторные). title/sub/footer — доверенный HTML.
+function intgCatalog(title, sub, configs, connMap, footer){
+  return `<div class="panel" style="margin-bottom:14px"><h3>${title}</h3>
+    <p style="font-size:12.5px;color:var(--ink2);margin:0 0 12px">${sub}</p>
+    <div class="onec-grid">
+      ${configs.map(c=>{ const st=c.status==='ready'?['готов к интеграции','var(--good)']:['по запросу','var(--warn)'];
+        return `<div class="onec-card">
+          <div class="onec-h"><span class="onec-nm">${esc(c.name)}${c.ver&&c.ver!=='—'?` <span class="mono" style="font-size:10px;color:var(--muted)">${esc(c.ver)}</span>`:''}</span>
+            <span class="onec-st" style="color:${st[1]};border-color:${st[1]}55;background:${st[1]}14">${st[0]}</span></div>
+          ${c.goz?'<span class="onec-goz">ГОЗ · 275-ФЗ</span>':''}
+          <div class="onec-row"><span class="onec-lbl">Данные</span><span>${c.entities.map(esc).join(' · ')}</span></div>
+          <div class="onec-row"><span class="onec-lbl">Роли</span><span>${c.roles.map(r=>`<span class="onec-role">${esc(r)}</span>`).join('')}</span></div>
+          <div class="onec-row"><span class="onec-lbl">Обмен</span><span>${c.conn.map(k=>`<span class="onec-conn">${esc(connMap[k]||k)}</span>`).join('')}</span></div>
+          ${c.note?`<div class="onec-note">${esc(c.note)}</div>`:''}
+        </div>`; }).join('')}
+    </div>
+    ${footer?`<p style="font-size:11.5px;color:var(--muted);margin-top:10px">${footer}</p>`:''}
+  </div>`;
+}
 function vAgent(){
   const conns=S.connectors||[];
   return `${SRV.on&&canManage()?`<div class="panel" style="margin-bottom:14px"><h3>Импорт заказов из Excel <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· для заводов без 1С</span></h3>
@@ -4250,37 +4294,18 @@ function vAgent(){
         <span class="elx-note">${esc(p.note)} · ${p.events} событ.</span>
         <span class="elx-sig">SHA ${esc(p.sig)}</span></div>`).join('')||'<div class="empty" style="margin-top:10px">обмена пакетами ещё не было</div>'}
     </div>
-    <div class="panel" style="margin-bottom:14px"><h3>Готовность к конфигурациям 1С <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· помимо платформы «Предприятие» — по ролям и методу подключения</span></h3>
-      <p style="font-size:12.5px;color:var(--ink2);margin:0 0 12px">Эллинг подключается к той прикладной конфигурации 1С, что стоит на заводе, — читает нужные сущности для нужных ролей. <b>Раздельный учёт и бухгалтерия остаются в 1С</b>; мы отражаем статус, а не дублируем. Метод обмена выбирается под контур (для закрытого — файловый обмен/EnterpriseData без выхода наружу).</p>
-      <div class="onec-grid">
-        ${ONEC_CONFIGS.map(c=>{ const st=c.status==='ready'?['готов к интеграции','var(--good)']:['по запросу','var(--warn)'];
-          return `<div class="onec-card">
-            <div class="onec-h"><span class="onec-nm">${esc(c.name)}${c.ver&&c.ver!=='—'?` <span class="mono" style="font-size:10px;color:var(--muted)">${esc(c.ver)}</span>`:''}</span>
-              <span class="onec-st" style="color:${st[1]};border-color:${st[1]}55;background:${st[1]}14">${st[0]}</span></div>
-            ${c.goz?'<span class="onec-goz">ГОЗ · 275-ФЗ</span>':''}
-            <div class="onec-row"><span class="onec-lbl">Данные</span><span>${c.entities.map(esc).join(' · ')}</span></div>
-            <div class="onec-row"><span class="onec-lbl">Роли</span><span>${c.roles.map(r=>`<span class="onec-role">${esc(r)}</span>`).join('')}</span></div>
-            <div class="onec-row"><span class="onec-lbl">Обмен</span><span>${c.conn.map(k=>`<span class="onec-conn">${esc(ONEC_CONN[k]||k)}</span>`).join('')}</span></div>
-            ${c.note?`<div class="onec-note">${esc(c.note)}</div>`:''}
-          </div>`; }).join('')}
-      </div>
-      <p style="font-size:11.5px;color:var(--muted);margin-top:10px">Методы подключения: ${Object.values(ONEC_CONN).map(esc).join(' · ')}. Конкретная конфигурация и метод выбираются на внедрении; маппинг полей ниже настраивается под неё.</p>
-    </div>
-    <div class="panel" style="margin-bottom:14px"><h3>Готовность к PDM / PLM / САПР <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· инженерная сторона — состав изделия, ревизии КД, извещения</span></h3>
-      <p style="font-size:12.5px;color:var(--ink2);margin:0 0 12px">Единый адаптер к российским PDM/САПР: читаем структуру изделия и КД без переезда с вашей САПР. <b>Эллинг не заменяет КОМПАС/T-FLEX</b> — приносит состав, ревизии и извещения в «Проработку НС» и «Базу знаний».</p>
-      <div class="onec-grid">
-        ${PDM_CONFIGS.map(c=>{ const st=c.status==='ready'?['готов к интеграции','var(--good)']:['по запросу','var(--warn)'];
-          return `<div class="onec-card">
-            <div class="onec-h"><span class="onec-nm">${esc(c.name)}</span>
-              <span class="onec-st" style="color:${st[1]};border-color:${st[1]}55;background:${st[1]}14">${st[0]}</span></div>
-            <div class="onec-row"><span class="onec-lbl">Данные</span><span>${c.entities.map(esc).join(' · ')}</span></div>
-            <div class="onec-row"><span class="onec-lbl">Роли</span><span>${c.roles.map(r=>`<span class="onec-role">${esc(r)}</span>`).join('')}</span></div>
-            <div class="onec-row"><span class="onec-lbl">Обмен</span><span>${c.conn.map(k=>`<span class="onec-conn">${esc(PDM_CONN[k]||k)}</span>`).join('')}</span></div>
-            ${c.note?`<div class="onec-note">${esc(c.note)}</div>`:''}
-          </div>`; }).join('')}
-      </div>
-      <p style="font-size:11.5px;color:var(--muted);margin-top:10px">Методы: ${Object.values(PDM_CONN).map(esc).join(' · ')}. Извещения ГОСТ 2.503 и ревизии КД связываются с проработкой станций и составом заказа.</p>
-    </div>
+    ${intgCatalog('Готовность к конфигурациям 1С <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· помимо платформы «Предприятие» — по ролям и методу подключения</span>',
+      'Эллинг подключается к той прикладной конфигурации 1С, что стоит на заводе, — читает нужные сущности для нужных ролей. <b>Раздельный учёт и бухгалтерия остаются в 1С</b>; мы отражаем статус, а не дублируем. Метод обмена выбирается под контур (для закрытого — файловый обмен/EnterpriseData без выхода наружу).',
+      ONEC_CONFIGS, ONEC_CONN,
+      'Методы подключения: '+Object.values(ONEC_CONN).map(esc).join(' · ')+'. Конкретная конфигурация и метод выбираются на внедрении; маппинг полей ниже настраивается под неё.')}
+    ${intgCatalog('Готовность к PDM / PLM / САПР <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· инженерная сторона — состав изделия, ревизии КД, извещения</span>',
+      'Единый адаптер к российским PDM/САПР: читаем структуру изделия и КД без переезда с вашей САПР. <b>Эллинг не заменяет КОМПАС/T-FLEX</b> — приносит состав, ревизии и извещения в «Проработку НС» и «Базу знаний».',
+      PDM_CONFIGS, PDM_CONN,
+      'Методы: '+Object.values(PDM_CONN).map(esc).join(' · ')+'. Извещения ГОСТ 2.503 и ревизии КД связываются с проработкой станций и составом заказа.')}
+    ${intgCatalog('Готовность к регуляторным и ЭДО-системам <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· ЕИС · ГИСП · ЭДО · казначейство ГОЗ · РМРС</span>',
+      'Внешний контур поставщика ГОЗ: госзакупки, реестровость, юридически значимый документооборот, казначейское сопровождение. Эллинг подтягивает статусы и дедлайны — <b>деньги и учёт остаются в банке и 1С</b>.',
+      EXT_CONFIGS, EXT_CONN,
+      'Методы: '+Object.values(EXT_CONN).map(esc).join(' · ')+'. Тендеры ЕИС питают радар закладок и CRM; реестровость ГИСП и сроки РМРС — модуль снабжения.')}
     <div class="panel" style="margin-bottom:14px"><h3>Маппинг полей · 1С ↔ Эллинг <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· настраивается под вашу конфигурацию</span></h3>
       <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px">
         <tr>${['Поле','Объект 1С','Поле Эллинг'].map(h=>`<th style="font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)">${h}</th>`).join('')}</tr>
