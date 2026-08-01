@@ -1714,6 +1714,7 @@ function seed(){
       {id:'R1',name:'Просрочка → комментарий + уведомить наблюдателей и исполнителя',trigger:'overdue',act:{comment:1,notify:1,prio:0},enabled:1},
       {id:'R2',name:'Задача «на согласовании» → уведомить руководителя ИЦ',trigger:'to_rev',act:{comment:0,notify:1,prio:0},enabled:1},
       {id:'R3',name:'Просрочка задачи с SLA → поднять приоритет до высокого',trigger:'overdue',act:{comment:0,notify:0,prio:1},enabled:0},
+      {id:'R4',name:'Проработка НС завершена → уведомить руководителя ИЦ',trigger:'ns_done',act:{comment:0,notify:1,prio:0},enabled:1},
     ],
     checklists:[
       {id:'CL1',title:'Приёмка сварного шва корпусной секции',ntd:'ГОСТ Р ИСО 5817 · РД 5.9091',role:'сварка / ОТК',author:'передал мастер участка перед уходом на пенсию',
@@ -3069,7 +3070,9 @@ function nsCycleStatus(stId,itId){ const st=nsById(stId); if(!st) return;
   const it=(st.items||[]).find(x=>x.id===itId); if(!it) return;
   const i=NS_STATUS_ORDER.indexOf(it.status); it.status=NS_STATUS_ORDER[(i+1)%NS_STATUS_ORDER.length];
   nsLog(it, 'статус → '+(NS_STATUS[it.status]||['?'])[0]); nsTouch(it);
-  if(it.status==='done') nsNotifyReady(st, it.id);   // разблокировал зависящие → пуш их исполнителям
+  if(it.status==='done'){ nsNotifyReady(st, it.id);   // разблокировал зависящие → пуш их исполнителям
+    try{ runAutomations('ns_done'); }catch(_){}   // проработка станции завершена? → правило R4
+  }
   save(); render(); }
 const nsTypeMenu=(cls)=>`<div class="ns-add-menu ${cls||''}"><button class="ns-goz-tog ${S._nsAddGoz?'on':''}" data-nsgoztoggle title="гособоронзаказ: добавит согласование КД с военпредом">${S._nsAddGoz?'☑':'☐'} ГОЗ · военпред (ВП)</button>${Object.keys(NS_TYPES).map(k=>`<button class="ns-add-t" data-nsaddtype="${k}">${esc(NS_TYPES[k].label)}</button>`).join('')}</div>`;
 function vNS(){
@@ -3505,6 +3508,16 @@ function runAutomations(trigger, task){
         if(di && di.over && !(rule.id==='R3' && !t.sla)) fire(rule, t, rule.id+':'+t.key+':'+t.due); });
     } else if(rule.trigger==='to_rev' && trigger==='to_rev' && task && task.col==='rev'){
       fire(rule, task, rule.id+':'+task.key+':rev:'+(task.log.length));
+    } else if(rule.trigger==='ns_done'){
+      // проработка станции завершена (все критерии done) → однократно уведомить рук. ИЦ / поднять флаг
+      nsList().forEach(st=>{ const items=st.items||[]; if(!items.length) return;
+        if(!items.every(it=>it.status==='done')) return;
+        st.autoFired = st.autoFired || []; const key=rule.id;
+        if(st.autoFired.includes(key)) return;
+        st.autoFired.push(key); changed=true;
+        if(rule.act.notify){ try{ notify(['maksimov'], 'проработка НС завершена: '+String(st.name||'').slice(0,50), null); }catch(_){} }
+        ACTS.push('автоматизация: '+rule.name.slice(0,30)+' → '+String(st.name||''));
+      });
     }
   });
   if(changed) save();
@@ -4627,7 +4640,7 @@ function vSettings(){
         <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;flex:1">
           <input type="checkbox" data-rule="${r.id}" ${r.enabled?'checked':''} style="accent-color:var(--accent);margin-top:3px;width:16px;height:16px">
           <span style="font-size:13px;color:var(--ink)">${esc(r.name)}
-            <span style="display:block;font-family:var(--mono);font-size:10px;color:var(--muted)">триггер: ${r.trigger==='overdue'?'просрочка':r.trigger==='to_rev'?'переход на согласование':r.trigger} · действия: ${[r.act.comment&&'комментарий',r.act.notify&&'уведомление',r.act.prio&&'приоритет'].filter(Boolean).join(', ')||'—'}</span>
+            <span style="display:block;font-family:var(--mono);font-size:10px;color:var(--muted)">триггер: ${r.trigger==='overdue'?'просрочка':r.trigger==='to_rev'?'переход на согласование':r.trigger==='ns_done'?'проработка НС завершена':r.trigger} · действия: ${[r.act.comment&&'комментарий',r.act.notify&&'уведомление',r.act.prio&&'приоритет'].filter(Boolean).join(', ')||'—'}</span>
           </span></label></div>`).join('')}
       <button class="chip" id="runAuto" style="margin-top:8px">▶ Прогнать сейчас</button>
       ${S.autoMsg?`<div class="ai-box" style="margin-top:8px">${esc(S.autoMsg)}</div>`:''}
