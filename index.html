@@ -4086,8 +4086,10 @@ function vDeals(){
     </div>
     <div style="display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap">
       <button class="btn" data-dealnew="1">+ Новая сделка</button>
+      <button class="btn ghost ${S._roiOpen?'on':''}" data-roiopen="1" title="ROI за минуту по числам поставщика — для discovery-звонка">₽ ROI-калькулятор</button>
       <p style="font-size:12.5px;color:var(--muted);margin:0;flex:1;min-width:240px">Прогноз считается из стадий и вероятностей, а не из ручного ввода менеджера. Перетащите карточку между стадиями. Клик — открыть сделку.</p>
     </div>
+    ${S._roiOpen?`<div style="margin-bottom:14px">${vRoi()}</div>`:''}
     ${S.dealForm?`<div class="panel" style="margin-bottom:14px">
       <h3>Новая сделка</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:10px">
@@ -7421,6 +7423,7 @@ document.addEventListener('click', e=>{
   }
   const kbp = e.target.closest('[data-kbproj]');
   if(kbp){ vKbProject(kbp.dataset.kbproj); return; }
+  { const el=e.target.closest('[data-roiopen]'); if(el){ S._roiOpen=!S._roiOpen; render(); return; } }
   if(e.target.closest('[data-roicalc]')){ roiCalc(); return; }
   if(e.target.closest('[data-roiprint]')){ printDoc(roiJustifyHTML()); ACTS.push('печать ROI-обоснования'); save(); return; }
   if(e.target.closest('[data-loadplan]')){ loadPlan(); return; }
