@@ -3971,7 +3971,7 @@ function vEstimates(){
       <div style="font-size:13px;color:var(--ink2);margin:10px 0">${esc(e.note)}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:10px;border-top:1px solid var(--line2)">
         ${ackChip}${dueChip}
-        ${(e.status==='new'||e.status==='wip')?`<button class="btn ghost" style="padding:5px 12px;font-size:12px${e.status==='new'?';margin-left:auto':''}" data-estanalog="${e.id}" title="подобрать исполненный аналог по ТЗ и получить оценку трудоёмкости за секунды — вместо ручного просчёта">🔍 Аналог по ТЗ</button>`:''}
+        ${((e.status==='new'||e.status==='wip')&&canView('kb'))?`<button class="btn ghost" style="padding:5px 12px;font-size:12px${e.status==='new'?';margin-left:auto':''}" data-estanalog="${e.id}" title="подобрать исполненный аналог по ТЗ и получить оценку трудоёмкости за секунды — вместо ручного просчёта">🔍 Аналог по ТЗ</button>`:''}
         ${e.status==='done'?`<span class="stchip" style="color:var(--good);border:1px solid var(--good)">${e.resHours} н/ч · ТКП ${canFin()?fmtSum(e.resSum):'•••'}</span>${e.dealId?`<button class="chip" data-deal="${e.dealId}" style="margin-left:auto">↗ Сделка ${esc(e.dealId)}</button><button class="chip" data-tkp="${e.dealId}">🖨 ТКП</button>`:''}`:''}
         ${e.status==='new'?`<button class="btn" style="padding:5px 12px;font-size:12px" data-esttake="${e.id}">Взять в работу</button><button class="btn ghost" style="padding:5px 12px;font-size:12px" data-estdecline="${e.id}">Не наша компетенция</button>`:''}
         ${e.status==='wip'?`<button class="btn" style="padding:5px 12px;font-size:12px;margin-left:auto" data-estdone="${e.id}">Отметить просчитанным →</button>`:''}
@@ -6421,6 +6421,8 @@ function vBench(){
     <div class="bm-grid">${list.map(card).join('')||emptyBox('i-bench','Нет данных','По этому сегменту пока нет эталонов.','Показать все','data-benchf=\"all\"')}</div>`;
 }
 function render(){
+  // защита доступа: ни один путь навигации не должен показать роли недоступный экран (матрица ROLE_VIEWS)
+  if(S.view && S.view!=='order' && !canView(S.view)) S.view='today';
   if(S._navRole!==S.currentUser){ buildNav(); S._navRole=S.currentUser; }
   syncNavOpen();
   document.querySelectorAll('#nav [data-nav]').forEach(b=>b.setAttribute('aria-current', b.dataset.nav===S.view));
