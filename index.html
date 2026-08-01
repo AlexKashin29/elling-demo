@@ -2023,6 +2023,52 @@ function legalDocText(kind){
   }
   return {title:'Лицензионное соглашение на ПО «Эллинг»', sub:'лицензионный договор', html:'<p>Документ формируется.</p>'};
 }
+// Технический паспорт ПО — формальный документ для оценочной комиссии заказчика (ИБ/ИТ/закупки).
+function techPassportHTML(){
+  const o=(typeof org==='function')?org():{};
+  const rows=(pairs)=>pairs.map(([k,v])=>`<tr><th style="width:210px">${esc(k)}</th><td>${v}</td></tr>`).join('');
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name||'')}</b>${o.inn?'<br>ИНН '+esc(o.inn):''}${o.addr?' · '+esc(o.addr):''}</div>
+    <div class="p-title">Технический паспорт программного обеспечения «Эллинг»<br><span>редакция ${esc(VENDOR.version)} · ${today()}</span></div>
+    <div style="font-size:14px;font-weight:700;margin:14px 0 4px">1. Назначение и состав</div>
+    <table class="p-tbl">${rows([
+      ['Наименование','Программа для ЭВМ «Эллинг» — операционная система производственного заказа для судостроения'],
+      ['Класс ПО','трекер + CRM проектных продаж + инженерная база знаний с ИИ (единая ось заказа)'],
+      ['Правообладатель',esc(VENDOR.holder)],
+      ['Реестр российского ПО',esc(VENDOR.reg)],
+      ['Модули','Заказы, Проработка НС, Просчёт (SLA), База знаний (ИИ-оценка/OCR), Извещения (ГОСТ 2.503), Снабжение (ПП 719), Портал заказчика/ВП, Отчёты, Автоматизации'],
+    ])}</table>
+    <div style="font-size:14px;font-weight:700;margin:14px 0 4px">2. Требования к развёртыванию</div>
+    <table class="p-tbl">${rows([
+      ['Модель','on-premise (закрытый контур предприятия); облачный вариант опционально'],
+      ['ОС','Astra Linux / совместимые; Windows Server (для стенда)'],
+      ['Среда исполнения','JDK 21 (Liberica/совместимая)'],
+      ['СУБД','SQLite + FTS5 (в поставке); внешних сервисов не требуется'],
+      ['Внешние зависимости','отсутствуют; ИИ-оценка работает офлайн, без облака'],
+      ['Развёртывание','единый jar + БД; первый администратор — ELLING_ADMIN_PASS либо bootstrap-регистрация'],
+    ])}</table>
+    <div style="font-size:14px;font-weight:700;margin:14px 0 4px">3. Информационная безопасность</div>
+    <table class="p-tbl">${rows([
+      ['Аутентификация','именные учётные записи; сессия HttpOnly; 2FA (TOTP); OIDC/SSO; служебный токен для интеграций'],
+      ['Разграничение доступа','ролевая модель; финансовые данные — по матрице доступа'],
+      ['Аудит','неизменяемый журнал; хеш-цепочка ГОСТ Р 34.11-2012 «Стрибог» (ELLING_AUDIT_GOST)'],
+      ['Целостность','подписанные пакеты готовности; байт-в-байт между рантаймами'],
+      ['КИИ (ФЗ-187)','пригодно для значимых объектов КИИ; данные не покидают периметр'],
+      ['ПДн (ФЗ-152)','обработка on-premise; оператор — предприятие; трансграничная передача не используется'],
+    ])}</table>
+    <div style="font-size:14px;font-weight:700;margin:14px 0 4px">4. Интеграции (готовность)</div>
+    <table class="p-tbl">${rows([
+      ['1С','ERP УП2, УПП, Комплексная автоматизация, Бухгалтерия ГОЗ, УТ, ЗУП, Документооборот — OData/EnterpriseData/HTTP-сервис/COM/файл'],
+      ['PDM/САПР','ЛОЦМАН:PLM+КОМПАС, T-FLEX, Appius-PLM, Intermech, Полином:MDM — API/XML/БД/файл'],
+      ['Регуляторика/ЭДО','ЕИС, ГИСП (ПП 719), ЭДО (Диадок/СБИС/Такском), казначейское сопровождение ГОЗ, РМРС'],
+      ['Публичный API','REST v1 (задачи, состояние, поиск); вебхуки'],
+    ])}</table>
+    <div style="font-size:14px;font-weight:700;margin:14px 0 4px">5. Нормативное и правовое соответствие</div>
+    <div class="p-terms">${VENDOR.ntd.map(esc).join(' · ')}. Лицензирование — неисключительная лицензия (лицензионный договор, ст. 1235-1286 ГК РФ). Правовой пакет (Политика ПДн, Пользовательское соглашение, Лицензионное соглашение) предоставляется отдельно.</div>
+    <div class="p-sign"><div>Правообладатель${' '}(представитель)<span class="p-line"></span></div><div>${esc(o.dirRole||'Руководитель')} лицензиата<span class="p-line"></span>${esc(o.director||'')}</div></div>
+    <div class="p-foot">ПО «Эллинг» · технический паспорт · редакция ${esc(VENDOR.version)} · © ${esc(VENDOR.year)} ${esc(VENDOR.holder)} · ${today()}</div>
+  </div>`;
+}
 // Печатная форма правового документа (для передачи юристу/закупкам заказчика).
 function legalPrintHTML(kind){
   const o=(typeof org==='function')?org():{}; const dc=legalDocText(kind);
@@ -4767,6 +4813,7 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
           <div class="sys-row"><span class="sys-k">Развёртывание</span><span>Astra Linux · SQLite/FTS5 · ГОСТ-Стрибог (аудит) · ноль внешних зависимостей · ИИ офлайн</span></div>
           <div class="sys-row"><span class="sys-k">Контакты</span><span class="mono">${esc(VENDOR.contact)}</span></div>
         </div>
+        <div style="margin-top:12px"><button class="btn ghost" data-techpass="1" style="font-size:12px" title="печатный технический паспорт ПО — для оценочной комиссии заказчика (ИБ/ИТ/закупки)">🖨 Технический паспорт (для ИБ/закупок)</button></div>
         <div style="font-size:11px;color:var(--muted);margin-top:12px;border-top:1px solid var(--line2);padding-top:10px">© ${esc(VENDOR.year)} ${esc(VENDOR.holder)}. Все права защищены. Программа для ЭВМ «Эллинг» охраняется в соответствии с гл. 70 ГК РФ.</div>
       </div>
       <div class="panel"><h3>Система</h3>
@@ -6558,6 +6605,7 @@ document.addEventListener('click', e=>{
   if(stab){ S.setTab=stab.dataset.settab; render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
   { const el=e.target.closest('[data-legalprint]'); if(el){ printDoc(legalPrintHTML(el.dataset.legalprint)); ACTS.push('печать правового документа: '+el.dataset.legalprint); save(); return; } }
   { const el=e.target.closest('[data-legalpack]'); if(el){ printDoc(legalPackHTML()); ACTS.push('печать юридического пакета (ПДн+соглашение+EULA)'); save(); return; } }
+  { const el=e.target.closest('[data-techpass]'); if(el){ printDoc(techPassportHTML()); ACTS.push('печать технического паспорта ПО'); save(); return; } }
   // отзыв согласия на обработку ПДн (152-ФЗ ст. 9): фиксируем запрос в аудит + уведомляем оператора
   { const el=e.target.closest('[data-pdnrevoke]'); if(el){
       let go=true; try{ go=window.confirm('Отозвать согласие на обработку персональных данных? Запрос будет передан оператору; отзыв влечёт прекращение доступа к системе.'); }catch(_){}
