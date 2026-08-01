@@ -3463,14 +3463,14 @@ function blockersOf(t){
 }
 
 /* ---- v0.9: уведомления + движок автоматизаций ---- */
-function notify(userIds, text, taskKey){
+function notify(userIds, text, taskKey, go){
   S.notes = S.notes || [];
   const nc = S.notifCh||{}; const ch = []; if(nc.mail) ch.push('почта'); if(nc.tg) ch.push('Telegram');
   const ids = [...new Set(userIds.filter(u=>PEOPLE[u]))];
   ids.forEach(u=>{
     // дедуп по содержимому: два клиента на своих таймерах не создадут дубль (ревью v0.9)
     if(S.notes.some(n=>n.to===u && n.text===text && n.taskKey===taskKey && !n.read)) return;
-    S.notes.unshift({id:'N'+(S.seq=(S.seq||2470)+1)+'-'+u, to:u, text, taskKey, read:0, ch:ch.slice()});
+    S.notes.unshift({id:'N'+(S.seq=(S.seq||2470)+1)+'-'+u, to:u, text, taskKey, go:go||null, read:0, ch:ch.slice()});
   });
   if(S.notes.length>200) S.notes.length = 200;
 }
@@ -3515,7 +3515,7 @@ function runAutomations(trigger, task){
         st.autoFired = st.autoFired || []; const key=rule.id;
         if(st.autoFired.includes(key)) return;
         st.autoFired.push(key); changed=true;
-        if(rule.act.notify){ try{ notify(['maksimov'], 'проработка НС завершена: '+String(st.name||'').slice(0,50), null); }catch(_){} }
+        if(rule.act.notify){ try{ notify(['maksimov'], 'проработка НС завершена: '+String(st.name||'').slice(0,50), null, 'ns'); }catch(_){} }
         ACTS.push('автоматизация: '+rule.name.slice(0,30)+' → '+String(st.name||''));
       });
     }
@@ -6831,7 +6831,7 @@ document.addEventListener('click', e=>{
       ACTS.push(`просчёт ${en.id} готов: ${h} н/ч · ТКП ${fmtSum(sv)}`);
       if(en.dealId){ const d=dealById(en.dealId); if(d){ d.next=`Оценка ИЦ готова: ${h} н/ч · ТКП ${fmtSum(sv)} — отправить ТКП`;
         d.acts=d.acts||[]; d.acts.push(['сейчас',`Оценка ИЦ: ${h} н/ч, ТКП ${fmtSum(sv)}`]);
-        notify(['sokolova'],`оценка ИЦ готова: ${en.title.slice(0,40)} (${h} н/ч)`,null); } }
+        notify(['sokolova'],`оценка ИЦ готова: ${en.title.slice(0,40)} (${h} н/ч)`,null,'estimates'); } }
       // верфи уходит ФАКТ готовности ТКП, без суммы: деньги не пересекают границу
       if(en.dealId){ const d0=dealById(en.dealId); const ord=d0&&d0.orderNum?d0.orderNum:null;
         if(ord) fedEmit('tkp', 'ТКП подготовлено, срок оценки соблюдён', PEOPLE[S.currentUser].full, ord); }
@@ -6905,7 +6905,7 @@ document.addEventListener('click', e=>{
   if(e.target.id==='portalAskBtn'){ const oid=curPortalOrder(); const o=(S.orders||[]).find(x=>x.id===oid);
     const v=($('portalAsk').value||'').trim();
     if(o && v){ S.portalQA=S.portalQA||[]; S.portalQA.unshift({id:'PQ'+(S.seq=(S.seq||2470)+1), orderId:oid, from:o.customer, m:v.slice(0,200), a:null, ts:'сейчас'});
-      ACTS.push('вопрос заказчика по заказу №'+o.num); notify(['sokolova'],'вопрос заказчика (№'+o.num+'): '+v.slice(0,40),null); save(); render(); } return;
+      ACTS.push('вопрос заказчика по заказу №'+o.num); notify(['sokolova'],'вопрос заказчика (№'+o.num+'): '+v.slice(0,40),null,'portal'); save(); render(); } return;
   }
   const dw=e.target.closest('[data-dealwin]');
   if(dw){ const d=dealById(dw.dataset.dealwin);
@@ -6943,7 +6943,10 @@ document.addEventListener('click', e=>{
   if(e.target.id==='markAll'){ myNotes().forEach(n=>n.read=1); save(); renderBell(); return; }
   const nt = e.target.closest('[data-note]');
   if(nt){ const n=(S.notes||[]).find(x=>x.id===nt.dataset.note); if(n){ n.read=1; save();
-    $('bellDrop').classList.remove('open'); if(n.taskKey && task(n.taskKey)) openTask(n.taskKey); else renderBell(); } return; }
+    $('bellDrop').classList.remove('open');
+    if(n.taskKey && task(n.taskKey)) openTask(n.taskKey);
+    else if(n.go && canView(n.go)){ S.view=n.go; render(); }   // НС и др. не-задачные уведомления ведут в свой модуль
+    else renderBell(); } return; }
   if(!e.target.closest('.bell-wrap')){ const d=$('bellDrop'); if(d) d.classList.remove('open'); }
   const rc = e.target.closest('[data-rule]');
   if(rc){ /* checkbox сам обрабатывается в change */ }
@@ -7292,7 +7295,7 @@ document.addEventListener('click', e=>{
         if(!en.who) en.who=S.currentUser;   // атрибуция: кто фактически закрыл просчёт (apply минует esttake)
         en.status='done'; en.resHours=h; en.resSum=sv;
         ACTS.push('просчёт '+en.id+' готов по ИИ-аналогу: '+h+' н/ч');
-        if(en.dealId){ const d=dealById(en.dealId); if(d){ d.next='Оценка ИЦ (ИИ-аналог): '+h+' н/ч — отправить ТКП'; d.acts=d.acts||[]; d.acts.push([dealStamp(),'Оценка ИЦ по ИИ-аналогу: '+h+' н/ч']); try{ notify(['sokolova'],'оценка по ИИ-аналогу: '+String(en.title||'').slice(0,40)+' ('+h+' н/ч)',null); }catch(_){}
+        if(en.dealId){ const d=dealById(en.dealId); if(d){ d.next='Оценка ИЦ (ИИ-аналог): '+h+' н/ч — отправить ТКП'; d.acts=d.acts||[]; d.acts.push([dealStamp(),'Оценка ИЦ по ИИ-аналогу: '+h+' н/ч']); try{ notify(['sokolova'],'оценка по ИИ-аналогу: '+String(en.title||'').slice(0,40)+' ('+h+' н/ч)',null,'estimates'); }catch(_){}
           const ord=d.orderNum||null; if(ord){ try{ fedEmit('tkp','ТКП подготовлено (ИИ-оценка), срок соблюдён',(PEOPLE[S.currentUser]||{}).full||S.currentUser,ord); }catch(_){} } } }   // верфи — факт готовности ТКП (как в штатном estdone)
         S._estAnalogFor=null; S._estAnalogTz=null; S.analog=null; S.view='estimates'; save(); render();
         toast('Заявка '+en.id+' просчитана по ИИ-аналогу: '+h+' н/ч','ok'); }
