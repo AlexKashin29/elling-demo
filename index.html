@@ -5757,7 +5757,7 @@ function vKB(){
       : res===null ? `<div class="empty" style="padding:26px 4px">Введите параметры нового ТЗ и нажмите «Найти аналоги» — здесь появятся похожие исполненные проекты с их документами и трудоёмкостью.</div>`
       : res.length ? `${extractTZParams(S.kbq).length?`<div class="tz-extract"><span class="tz-lbl">Извлечено из ТЗ</span>${extractTZParams(S.kbq).map(v=>`<span class="tz-chip">${esc(v)}</span>`).join('')}</div>`:''}
         ${S.analog?analogPanel():''}
-        ${vRoi()}
+        ${canFin()?vRoi():''}
         <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Найдено аналогов: <b style="color:var(--ink)">${res.length}</b> · ранжировано гибридно: точное обозначение + параметры + смысл. Клик — открыть.</div>
         ${res.map(analogCard).join('')}
         ${S.kbFiles&&S.kbFiles.length?`<h3 style="font-size:14px;margin:22px 0 10px">Совпадения в загруженных файлах</h3>
