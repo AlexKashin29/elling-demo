@@ -2003,7 +2003,8 @@ function legalDocText(kind){
     <p><b>2. Учётная запись.</b> Учётная запись <b>именная</b>. Передача логина, пароля и доступа иным лицам запрещена. Пользователь несёт ответственность за действия, совершённые под его учётной записью.</p>
     <p><b>3. Журналирование.</b> Действия пользователя фиксируются в неизменяемом журнале аудита под его именем в целях безопасности и прослеживаемости. Пользователь уведомлён и согласен с журналированием.</p>
     <p><b>4. Конфиденциальность.</b> Сведения, ставшие известными в системе (в т. ч. составляющие коммерческую тайну и сведения по гособоронзаказу — 275-ФЗ), не подлежат разглашению. Обработка сведений ГОЗ ведётся с учётом требований о защите государственной тайны и раздельного учёта.</p>
-    <p><b>5. Прекращение доступа.</b> Оператор вправе прекратить доступ при увольнении, нарушении настоящего Соглашения либо отзыве согласия на обработку персональных данных.</p>`};
+    <p><b>5. Технические файлы.</b> Для работы система использует <b>функциональные</b> сессионные cookie и локальное хранилище браузера (сессия, настройки интерфейса). Аналитические и рекламные cookie, трекеры и передача данных третьим лицам <b>не применяются</b> — согласие на технические файлы не требуется (ст. 6 № 152-ФЗ, функциональная необходимость).</p>
+    <p><b>6. Прекращение доступа.</b> Оператор вправе прекратить доступ при увольнении, нарушении настоящего Соглашения либо отзыве согласия на обработку персональных данных.</p>`};
   }
   if(kind==='eula'){
     return {title:'Лицензионное соглашение на ПО «Эллинг»', sub:'лицензионный договор (ст. 1235–1238, 1286 ГК РФ)',
@@ -2027,6 +2028,20 @@ function legalPrintHTML(kind){
     <div style="font-size:13px;color:#1a1a1a;line-height:1.65;margin-top:10px">${dc.html}</div>
     <div class="p-sign"><div>Правообладатель<span class="p-line"></span></div><div>Лицензиат / ${esc(o.dirRole||'Руководитель')}<span class="p-line"></span>${esc(o.director||'')}</div></div>
     <div class="p-foot">ПО «Эллинг» · редакция ${esc(VENDOR.version)} · ${esc(CONSENT_VER)} · сформировано ${today()}</div>
+  </div>`;
+}
+// Весь юридический пакет одним документом — для юриста/закупок заказчика.
+function legalPackHTML(){
+  const o=(typeof org==='function')?org():{};
+  const parts=['pdn','terms','eula'].map(k=>{ const dc=legalDocText(k);
+    return `<div style="page-break-inside:avoid;margin-bottom:18px"><div style="font-size:15px;font-weight:700;margin:0 0 2px">${esc(dc.title)}</div>
+      <div style="font-size:11px;color:#555;margin-bottom:8px">${esc(dc.sub)}</div>
+      <div style="font-size:12.5px;line-height:1.6">${dc.html}</div></div>`; }).join('<hr style="border:none;border-top:1px solid #ccc;margin:14px 0">');
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name||'')}</b>${o.inn?'<br>ИНН '+esc(o.inn):''}${o.addr?' · '+esc(o.addr):''}</div>
+    <div class="p-title">Правовой пакет ПО «Эллинг»<br><span>Политика ПДн · Пользовательское соглашение · Лицензионное соглашение · ${today()}</span></div>
+    <div style="margin-top:12px;color:#1a1a1a">${parts}</div>
+    <div class="p-foot">ПО «Эллинг» · редакция ${esc(VENDOR.version)} · ${esc(CONSENT_VER)} · © ${esc(VENDOR.year)} ${esc(VENDOR.holder)}</div>
   </div>`;
 }
 function legalOverlayHTML(kind){
@@ -4720,7 +4735,8 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
     </div></section>
     <section class="set-sec" data-sec="legal" ${tab==='legal'?'':'hidden'}>
       <div class="panel" style="margin-bottom:14px"><h3>Правовые документы <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· 152-ФЗ · доступны в любой момент</span></h3>
-        <p style="font-size:12.5px;color:var(--ink2);margin:0 0 6px">Документы, с которыми вы согласились при активации учётной записи. Субъект персональных данных вправе знакомиться с ними в любое время (ст. 14 № 152-ФЗ). Оператор — ${esc(org().full||org().name)}. Действующая редакция: <span class="mono">${esc(CONSENT_VER)}</span>.</p>
+        <p style="font-size:12.5px;color:var(--ink2);margin:0 0 10px">Документы, с которыми вы согласились при активации учётной записи. Субъект персональных данных вправе знакомиться с ними в любое время (ст. 14 № 152-ФЗ). Оператор — ${esc(org().full||org().name)}. Действующая редакция: <span class="mono">${esc(CONSENT_VER)}</span>.</p>
+        <button class="btn ghost" data-legalpack="1" style="font-size:12px" title="печать всех правовых документов одним пакетом — для передачи юристу/закупкам">🖨 Печать всего юридического пакета</button>
       </div>
       ${['pdn','terms','eula'].map(k=>{ const dc=legalDocText(k); return `<div class="panel" style="margin-bottom:14px">
         <h3 style="margin-bottom:2px">${esc(dc.title)}</h3>
@@ -6537,6 +6553,7 @@ document.addEventListener('click', e=>{
   const stab = e.target.closest('[data-settab]');
   if(stab){ S.setTab=stab.dataset.settab; render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
   { const el=e.target.closest('[data-legalprint]'); if(el){ printDoc(legalPrintHTML(el.dataset.legalprint)); ACTS.push('печать правового документа: '+el.dataset.legalprint); save(); return; } }
+  { const el=e.target.closest('[data-legalpack]'); if(el){ printDoc(legalPackHTML()); ACTS.push('печать юридического пакета (ПДн+соглашение+EULA)'); save(); return; } }
   // отзыв согласия на обработку ПДн (152-ФЗ ст. 9): фиксируем запрос в аудит + уведомляем оператора
   { const el=e.target.closest('[data-pdnrevoke]'); if(el){
       let go=true; try{ go=window.confirm('Отозвать согласие на обработку персональных данных? Запрос будет передан оператору; отзыв влечёт прекращение доступа к системе.'); }catch(_){}
