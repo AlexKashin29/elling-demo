@@ -344,6 +344,10 @@
   .pdoc .p-sign > div{flex:1}
   .pdoc .p-line{display:inline-block;width:60mm;border-bottom:1px solid #000;margin:0 8px;height:14px}
   .pdoc .p-foot{margin-top:26px;font-size:8.5pt;color:#555;border-top:1px solid #999;padding-top:6px}
+  /* качество печати многостраничных документов: не рвать строки/подписи между страницами */
+  .pdoc tr,.pdoc .p-sign,.pdoc .p-goz{page-break-inside:avoid;break-inside:avoid}
+  .pdoc .p-title,.pdoc .p-tbl th{page-break-after:avoid}
+  .pdoc .p-tbl{page-break-inside:auto}
   /* Поля форм создания */
   .fld{display:flex;flex-direction:column;gap:5px}
   .fld > span{font-size:11px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
