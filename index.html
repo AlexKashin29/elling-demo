@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.86 «Интеграции 1С/PDM/регуляторка · 152-ФЗ · НС» — рабочий MVP</title>
+﻿<title>Эллинг v1.87 «Юр-пакет: EULA · паспорт продукта · 152-ФЗ» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -397,6 +397,13 @@
   .legal-body b{color:var(--ink);font-weight:600}
   .legal-ver{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:8px}
   .legal-foot{padding:14px 22px;border-top:1px solid var(--line);text-align:right}
+  .sys-grid{display:flex;flex-direction:column;gap:2px}
+  .sys-row{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:baseline;font-size:13px;color:var(--ink2);padding:7px 0;border-top:1px solid var(--line2)}
+  .sys-row:first-child{border-top:none}
+  .sys-k{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .sys-ntd{display:inline-block;font-size:11px;color:var(--ink2);background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 8px;margin:0 5px 4px 0}
+  @media(max-width:560px){.sys-row{grid-template-columns:1fr}}
+  .lg-copy{font-size:10.5px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.5}
   .appship{position:fixed;right:-26px;bottom:-14px;width:min(44vw,540px);height:auto;z-index:0;pointer-events:none;
     stroke:var(--ink);fill:none;stroke-width:1.3;opacity:.05;stroke-linecap:round;stroke-linejoin:round}
   :root[data-theme="dark"] .appship{opacity:.07}
@@ -1990,12 +1997,37 @@ function legalDocText(kind){
       <p><b>5. Срок обработки.</b> На период трудовых отношений и срок хранения, установленный нормативными актами; по истечении — обезличивание либо удаление.</p>
       <p><b>6. Права субъекта.</b> Право на доступ, уточнение, блокирование, удаление персональных данных и <b>отзыв согласия</b> (ст. 9, 14 № 152-ФЗ) путём обращения к оператору. Отзыв согласия влечёт прекращение доступа к системе.</p>`};
   }
-  return {title:'Пользовательское соглашение', sub:'условия использования информационной системы «Эллинг»',
+  if(kind==='terms'){
+    return {title:'Пользовательское соглашение', sub:'условия использования информационной системы «Эллинг»',
     html:`<p><b>1. Предмет.</b> Соглашение регулирует использование сотрудником информационной системы «Эллинг», эксплуатируемой ${op}, в рамках служебных обязанностей.</p>
     <p><b>2. Учётная запись.</b> Учётная запись <b>именная</b>. Передача логина, пароля и доступа иным лицам запрещена. Пользователь несёт ответственность за действия, совершённые под его учётной записью.</p>
     <p><b>3. Журналирование.</b> Действия пользователя фиксируются в неизменяемом журнале аудита под его именем в целях безопасности и прослеживаемости. Пользователь уведомлён и согласен с журналированием.</p>
     <p><b>4. Конфиденциальность.</b> Сведения, ставшие известными в системе (в т. ч. составляющие коммерческую тайну и сведения по гособоронзаказу — 275-ФЗ), не подлежат разглашению. Обработка сведений ГОЗ ведётся с учётом требований о защите государственной тайны и раздельного учёта.</p>
     <p><b>5. Прекращение доступа.</b> Оператор вправе прекратить доступ при увольнении, нарушении настоящего Соглашения либо отзыве согласия на обработку персональных данных.</p>`};
+  }
+  if(kind==='eula'){
+    return {title:'Лицензионное соглашение на ПО «Эллинг»', sub:'лицензионный договор (ст. 1235–1238, 1286 ГК РФ)',
+      html:`<p><b>Стороны.</b> <b>Правообладатель</b> — ${esc(VENDOR.holder)} (обладатель исключительного права на программу для ЭВМ «${esc(VENDOR.product)}»). <b>Лицензиат</b> — ${op}${inn!=='—'?', ИНН '+inn:''}.</p>
+      <p><b>1. Предмет.</b> Правообладатель предоставляет Лицензиату <b>неисключительную лицензию</b> на использование программы для ЭВМ «Эллинг» (далее — ПО) в объёме и на срок, установленные договором. ПО передаётся для установки и эксплуатации <b>в закрытом контуре Лицензиата (on-premise)</b>.</p>
+      <p><b>2. Способы использования.</b> Воспроизведение и запуск ПО на серверах Лицензиата в пределах количества приобретённых лицензий; использование по функциональному назначению для ведения производственного заказа.</p>
+      <p><b>3. Ограничения.</b> Запрещены: модификация, декомпиляция и дизассемблирование ПО (за исключением случаев, прямо разрешённых ст. 1280 ГК РФ); передача прав третьим лицам, сублицензирование и предоставление ПО как сервиса третьим лицам без письменного согласия Правообладателя; удаление сведений об авторстве и правообладателе.</p>
+      <p><b>4. Данные и приватность.</b> ПО функционирует автономно в контуре Лицензиата; Правообладатель <b>не получает доступа к данным</b> Лицензиата и обрабатываемым в ПО персональным данным. Оператором персональных данных является Лицензиат. Облачные сервисы и трансграничная передача не используются.</p>
+      <p><b>5. Гарантии и ответственность.</b> ПО предоставляется в состоянии «как есть» в части, не противоречащей императивным нормам законодательства РФ. Ответственность Правообладателя ограничена в пределах, допускаемых законом; Правообладатель не отвечает за косвенные убытки. Гарантийные обязательства и техническая поддержка определяются договором.</p>
+      <p><b>6. Импортонезависимость.</b> ПО не содержит обязательных внешних (в т. ч. зарубежных облачных) зависимостей и пригодно для эксплуатации в закрытом контуре и на объектах КИИ (ФЗ-187). ${esc(VENDOR.reg)}.</p>
+      <p><b>7. Применимое право.</b> К договору применяется право Российской Федерации; споры разрешаются в порядке, установленном законодательством РФ и договором.</p>`};
+  }
+  return {title:'Лицензионное соглашение на ПО «Эллинг»', sub:'лицензионный договор', html:'<p>Документ формируется.</p>'};
+}
+// Печатная форма правового документа (для передачи юристу/закупкам заказчика).
+function legalPrintHTML(kind){
+  const o=(typeof org==='function')?org():{}; const dc=legalDocText(kind);
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name||'')}</b>${o.inn?'<br>ИНН '+esc(o.inn):''}${o.addr?' · '+esc(o.addr):''}</div>
+    <div class="p-title">${esc(dc.title)}<br><span>${esc(dc.sub)} · ${today()}</span></div>
+    <div style="font-size:13px;color:#1a1a1a;line-height:1.65;margin-top:10px">${dc.html}</div>
+    <div class="p-sign"><div>Правообладатель<span class="p-line"></span></div><div>Лицензиат / ${esc(o.dirRole||'Руководитель')}<span class="p-line"></span>${esc(o.director||'')}</div></div>
+    <div class="p-foot">ПО «Эллинг» · редакция ${esc(VENDOR.version)} · ${esc(CONSENT_VER)} · сформировано ${today()}</div>
+  </div>`;
 }
 function legalOverlayHTML(kind){
   const d=legalDocText(kind);
@@ -2045,7 +2077,7 @@ function renderLoginMode(mode, err, opts){
   if(mode!=='claim') links.push('<a href="#" data-lgmode="claim">У меня код приглашения</a>');
   if(opts.bootstrap && mode!=='register') links.push('<a href="#" data-lgmode="register">Создать администратора</a>');
   const footer = `<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:14px;font-size:12.5px">${links.map(l=>l.replace('<a ','<a style="color:var(--accent);text-decoration:none" ')).join('')}</div>`;
-  $('lgWrap').innerHTML = `<form class="lg-card" id="lgForm"><div class="lg-brand">Эллинг</div><div class="lg-sub">${sub}</div>${errBox}${inner}${footer}</form>`;
+  $('lgWrap').innerHTML = `<form class="lg-card" id="lgForm"><div class="lg-brand">Эллинг</div><div class="lg-sub">${sub}</div>${errBox}${inner}${footer}<div class="lg-copy">© ${esc(VENDOR.year)} ${esc(VENDOR.holder)} · ПО «Эллинг» v${esc(VENDOR.version)}<br><a href="#" data-legal="eula" style="color:var(--muted);text-decoration:underline">Лицензионное соглашение</a></div></form>`;
 
   $('lgWrap').querySelectorAll('[data-lgmode]').forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); renderLoginMode(a.dataset.lgmode, '', opts); }));
   // правовые документы: открыть оверлей поверх формы, закрыть по кнопке/фону
@@ -4690,10 +4722,11 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
       <div class="panel" style="margin-bottom:14px"><h3>Правовые документы <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· 152-ФЗ · доступны в любой момент</span></h3>
         <p style="font-size:12.5px;color:var(--ink2);margin:0 0 6px">Документы, с которыми вы согласились при активации учётной записи. Субъект персональных данных вправе знакомиться с ними в любое время (ст. 14 № 152-ФЗ). Оператор — ${esc(org().full||org().name)}. Действующая редакция: <span class="mono">${esc(CONSENT_VER)}</span>.</p>
       </div>
-      ${['pdn','terms'].map(k=>{ const dc=legalDocText(k); return `<div class="panel" style="margin-bottom:14px">
+      ${['pdn','terms','eula'].map(k=>{ const dc=legalDocText(k); return `<div class="panel" style="margin-bottom:14px">
         <h3 style="margin-bottom:2px">${esc(dc.title)}</h3>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">${esc(dc.sub)}</div>
-        <div style="font-size:13px;color:var(--ink2);line-height:1.6">${dc.html}</div></div>`; }).join('')}
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">${esc(dc.sub)}${k==='eula'?' · сторона договора — предприятие-лицензиат, не сотрудник':''}</div>
+        <div style="font-size:13px;color:var(--ink2);line-height:1.6">${dc.html}</div>
+        ${k==='eula'?`<div style="margin-top:12px"><button class="btn ghost" data-legalprint="eula" style="font-size:12px">🖨 Печать лицензионного соглашения</button></div>`:''}</div>`; }).join('')}
       ${(function(){ const revoked=(S._pdnRevoked||{})[S.currentUser];   // per-user: отзыв конкретного субъекта, не общий флаг сессии
         return `<div class="panel" style="margin-bottom:14px;border-color:color-mix(in srgb,var(--risk) 30%,transparent)">
         <h3 style="margin-bottom:2px">Отзыв согласия на обработку ПДн</h3>
@@ -4703,7 +4736,20 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
           : `<button class="btn ghost" data-pdnrevoke="1" style="color:var(--risk);border-color:color-mix(in srgb,var(--risk) 40%,transparent)">Отозвать согласие на обработку ПДн</button>`}
       </div>`; })()}
     </section>
-    <section class="set-sec" data-sec="system" ${tab==='system'?'':'hidden'}><div class="panel"><h3>Система</h3>
+    <section class="set-sec" data-sec="system" ${tab==='system'?'':'hidden'}>
+      <div class="panel" style="margin-bottom:14px"><h3>О системе <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· паспорт продукта</span></h3>
+        <div class="sys-grid">
+          <div class="sys-row"><span class="sys-k">Продукт</span><span><b>Эллинг</b> — операционная система заказа для судостроения · v${esc(VENDOR.version)}</span></div>
+          <div class="sys-row"><span class="sys-k">Правообладатель</span><span>${esc(VENDOR.holder)} <span style="color:var(--muted);font-size:11px">(указывается в лицензионном договоре)</span></span></div>
+          <div class="sys-row"><span class="sys-k">Лицензия</span><span>Неисключительная, on-premise (закрытый контур). <a href="#" data-legal="eula" style="color:var(--accent)">Лицензионное соглашение</a> · <button class="btn ghost" data-legalprint="eula" style="font-size:11px;padding:3px 10px">🖨 печать</button></span></div>
+          <div class="sys-row"><span class="sys-k">Реестр ПО</span><span>${esc(VENDOR.reg)}</span></div>
+          <div class="sys-row"><span class="sys-k">Соответствие НТД</span><span>${VENDOR.ntd.map(n=>`<span class="sys-ntd">${esc(n)}</span>`).join('')}</span></div>
+          <div class="sys-row"><span class="sys-k">Развёртывание</span><span>Astra Linux · SQLite/FTS5 · ГОСТ-Стрибог (аудит) · ноль внешних зависимостей · ИИ офлайн</span></div>
+          <div class="sys-row"><span class="sys-k">Контакты</span><span class="mono">${esc(VENDOR.contact)}</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:12px;border-top:1px solid var(--line2);padding-top:10px">© ${esc(VENDOR.year)} ${esc(VENDOR.holder)}. Все права защищены. Программа для ЭВМ «Эллинг» охраняется в соответствии с гл. 70 ГК РФ.</div>
+      </div>
+      <div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
         Версия: Эллинг v${APP_VER} · данные: ${SRV.on?'сервер (elling.db) + локальная копия':'localStorage этого браузера'}<br>
@@ -4731,6 +4777,17 @@ const ORG_DEF = {name:'АО «Завод судового оборудовани
   addr:'190000, Санкт-Петербург, наб. реки Пряжки, д. 1',
   phone:'+7 (812) 000-00-00', email:'sales@zavod.ru',
   bank:'', bik:'', acc:'', director:'Орлов О. О.', dirRole:'Генеральный директор'};
+// Правообладатель ПО «Эллинг» (вендор) — отдельная сторона от лицензиата-предприятия (org()).
+// Конкретное юрлицо/ИП правообладателя указывается в лицензионном договоре.
+const VENDOR = {
+  product:'Эллинг',
+  holder:'Правообладатель ПО «Эллинг»',
+  version:'1.86',
+  year:'2025–2026',
+  reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
+  contact:'alexkashin29.github.io/elling',
+  ntd:['ГОСТ 2.503-2013 — извещения об изменении','ГОСТ 2.106 — спецификации','ГОСТ 24634, ГОСТ ISO 10816 — ПСИ насосов','ГОСТ Р 34.11-2012 «Стрибог» — цепочка аудита','ФЗ-152 — обработка ПДн (on-premise)','ФЗ-187 — требования КИИ']
+};
 function org(){
   const o = Object.assign({}, ORG_DEF, S.org||{});
   // Пустые поля пользователя не должны «проваливаться» в демо-дефолты там, где
@@ -6479,6 +6536,7 @@ document.addEventListener('click', e=>{
   if(e.target.closest('[data-chipwho]')){ S.chips.who=null; render(); return; }
   const stab = e.target.closest('[data-settab]');
   if(stab){ S.setTab=stab.dataset.settab; render(); try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(x){} return; }
+  { const el=e.target.closest('[data-legalprint]'); if(el){ printDoc(legalPrintHTML(el.dataset.legalprint)); ACTS.push('печать правового документа: '+el.dataset.legalprint); save(); return; } }
   // отзыв согласия на обработку ПДн (152-ФЗ ст. 9): фиксируем запрос в аудит + уведомляем оператора
   { const el=e.target.closest('[data-pdnrevoke]'); if(el){
       let go=true; try{ go=window.confirm('Отозвать согласие на обработку персональных данных? Запрос будет передан оператору; отзыв влечёт прекращение доступа к системе.'); }catch(_){}
