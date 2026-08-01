@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.93 «Пульт по роли · доступ · Что нового» — рабочий MVP</title>
+﻿<title>Эллинг v1.94 «Безопасность доступа · пульт по роли» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1307,7 +1307,9 @@ const ROLE_VIEWS = {
   'закупки':        ['today','supply','ship','flow','portal','settings'],
   'логист':         ['today','ship','flow','supply','portal','settings'],
 };
-function canView(v){ const role=(PEOPLE[S.currentUser]||{}).role; const a=ROLE_VIEWS[role]||ALL_VIEWS; return (v==='order'?a.indexOf('flow'):a.indexOf(v))>=0; }
+// Безопасность: неизвестная/опечатанная роль получает МИНИМАЛЬНЫЙ доступ (не ALL_VIEWS) —
+// иначе опечатка в роли при приглашении = эскалация привилегий до полного доступа.
+function canView(v){ const role=(PEOPLE[S.currentUser]||{}).role; const a=ROLE_VIEWS[role]||['today','settings']; return (v==='order'?(a.indexOf('flow')>=0):a.indexOf(v))>=0; }
 /* финансовая видимость (маржа, суммы, ТКП): дирекция + продажи; остальным скрыто */
 function canFin(){ const r=(PEOPLE[S.currentUser]||{}).role; return r==='директор'||r==='зам. директора'||r==='рук. продаж'||r==='продажи'; }
 /* управленческие функции: интеграции, миграция, автоматизации, API — руководители и дирекция */
@@ -4160,10 +4162,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.93';
+const APP_VER = '1.94';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'1.94', d:'август 2026', items:['Безопасность: неизвестная/опечатанная роль получает минимальный доступ (закрыта эскалация привилегий); роль в приглашении — из списка допустимых']},
   {v:'1.93', d:'август 2026', items:['Пульт «Требует внимания» руководителя отдела показывает только алерты его модулей (без карточек, ведущих в недоступные экраны)']},
   {v:'1.92', d:'август 2026', items:['«Что нового» в приложении — история релизов по клику на версию; синхронизация версий (под логотипом теперь всегда отражает изменения)']},
   {v:'1.91', d:'август 2026', items:['Разграничение доступа по ролям: гард навигации + финансовая конфиденциальность (суммы/ставки скрыты не-финансовым ролям)','ROI-калькулятор доступен продажам из «Сделок», считает офлайн, печать экономобоснования','Технический паспорт ПО и лицензионное соглашение (EULA) для оценочной комиссии заказчика']},
@@ -4772,7 +4775,7 @@ function vSettings(){
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;max-width:640px">
           <label class="fld"><span>Логин</span><input id="invLogin" placeholder="petrov"></label>
           <label class="fld"><span>Имя и фамилия</span><input id="invName" placeholder="Пётр Петров"></label>
-          <label class="fld"><span>Роль</span><input id="invRole" value="инженер"></label>
+          <label class="fld"><span>Роль</span><select id="invRole">${Object.keys(ROLE_VIEWS).map(r=>`<option value="${esc(r)}" ${r==='инженер'?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
           <label class="fld"><span>Уровень (0=дир,1=рук,3=сотр)</span><input id="invLvl" type="number" value="3" min="0" max="9"></label>
         </div>
         <button class="btn" data-invite="1" style="margin-top:10px">Создать приглашение</button>
@@ -4917,7 +4920,7 @@ const ORG_DEF = {name:'АО «Завод судового оборудовани
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'1.93',
+  version:'1.94',
   year:'2025–2026',
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
   contact:'alexkashin29.github.io/elling',
