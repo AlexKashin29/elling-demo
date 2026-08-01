@@ -952,6 +952,8 @@
   .ns-rev{font-size:9.5px;font-weight:700;color:var(--goz);background:color-mix(in srgb,var(--goz-base) 15%,transparent);border-radius:4px;padding:0 4px;margin-left:1px}
   .ns-mini{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:10.5px;font-family:var(--mono);color:var(--muted);cursor:pointer;border:1px solid var(--line);border-radius:20px;padding:2px 8px 2px 6px;transition:border-color .12s,color .12s}
   .ns-mini:hover{border-color:var(--accent,#2E6E8E);color:var(--ink2)}
+  .ns-mini-static{cursor:default}
+  .ns-mini-static:hover{border-color:var(--line);color:var(--muted)}
   .ns-mini-dot{width:7px;height:7px;border-radius:50%;flex:none}
   .ns-mini-bar{width:44px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
   .ns-mini-bar>i{display:block;height:100%}
@@ -5574,7 +5576,11 @@ function nsOrderMini(num){
     const l=nsStationRisk(s).level; if((NS_RANK[l]||0)>(NS_RANK[worst]||0)) worst=l; });
   const pct=total?Math.round(done*100/total):0;
   const lbl={risk:'срыв',warn:'риск',ok:'в графике',done:'готово'}[worst]||'';
-  return `<span class="ns-mini" data-nsgoto="${esc(sts[0].id)}" title="Проработка НС: ${done}/${total} критериев · ${lbl}. Открыть модуль проработки">
+  // клик ведёт в модуль НС только тем, у кого есть к нему доступ; остальным — информативный чип без навигации
+  const nav = canView('ns'); const cls = nav?'ns-mini':'ns-mini ns-mini-static';
+  const attr = nav?` data-nsgoto="${esc(sts[0].id)}"`:'';
+  const tip = nav?'Проработка НС: '+done+'/'+total+' критериев · '+lbl+'. Открыть модуль проработки':'Проработка НС: '+done+'/'+total+' критериев · '+lbl;
+  return `<span class="${cls}"${attr} title="${esc(tip)}">
     <span class="ns-mini-dot" style="background:${NS_RC[worst]}"></span>НС ${done}/${total}
     <span class="ns-mini-bar"><i style="width:${pct}%;background:${NS_RC[worst]}"></i></span></span>`;
 }
