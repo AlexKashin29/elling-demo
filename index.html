@@ -1,4 +1,4 @@
-﻿<title>Эллинг v1.91 «Юр-пакет · доступ по ролям · ROI · офлайн-демо» — рабочий MVP</title>
+﻿<title>Эллинг v1.92 «Что нового · доступ по ролям · юр-пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -4160,8 +4160,17 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '1.91';
-try{ const _vt=document.getElementById('verTag'); if(_vt) _vt.textContent='v'+APP_VER; }catch(e){}
+const APP_VER = '1.92';
+try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
+// Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
+const CHANGELOG = [
+  {v:'1.92', d:'август 2026', items:['«Что нового» в приложении — история релизов по клику на версию; синхронизация версий (под логотипом теперь всегда отражает изменения)']},
+  {v:'1.91', d:'август 2026', items:['Разграничение доступа по ролям: гард навигации + финансовая конфиденциальность (суммы/ставки скрыты не-финансовым ролям)','ROI-калькулятор доступен продажам из «Сделок», считает офлайн, печать экономобоснования','Технический паспорт ПО и лицензионное соглашение (EULA) для оценочной комиссии заказчика']},
+  {v:'1.87', d:'июль 2026', items:['Юридический пакет: 152-ФЗ согласие + отзыв, Пользовательское соглашение, EULA, паспорт продукта, печать пакета для юриста','Готовность интеграции: 1С (9 конфигураций), PDM/САПР, регуляторика/ЭДО — по ролям и методам обмена']},
+  {v:'1.84', d:'июль 2026', items:['Извещение об изменении по ГОСТ 2.503 — печатный документ','Все роли получили дневной поток «что требует вас»; кросс-модульный пульт директора']},
+  {v:'1.82', d:'июль 2026', items:['Проработка НС: аудит-трейл «что изменилось с снимка», фильтр портфеля, протокол ПСИ','Портал заказчика/ВП: готовность проработки КД без внутренней кухни']},
+  {v:'1.80', d:'июль 2026', items:['Модуль «Проработка насосных станций» (кастдев рук. ИЦ): график критериев, критпуть, приёмка ВП, подписанные снимки готовности','ИИ-оценка по аналогам видна в офлайн-демо']},
+];
 const THEME_KEY = 'elling_theme';
 function applyTheme(v){
   if(v) document.documentElement.dataset.theme = v;
@@ -4869,6 +4878,11 @@ curl -X POST -H "Authorization: Bearer elling-demo-token" -H "Content-Type: appl
         <div style="margin-top:12px"><button class="btn ghost" data-techpass="1" style="font-size:12px" title="печатный технический паспорт ПО — для оценочной комиссии заказчика (ИБ/ИТ/закупки)">🖨 Технический паспорт (для ИБ/закупок)</button></div>
         <div style="font-size:11px;color:var(--muted);margin-top:12px;border-top:1px solid var(--line2);padding-top:10px">© ${esc(VENDOR.year)} ${esc(VENDOR.holder)}. Все права защищены. Программа для ЭВМ «Эллинг» охраняется в соответствии с гл. 70 ГК РФ.</div>
       </div>
+      <div class="panel" style="margin-bottom:14px" id="whatsnew"><h3>Что нового <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· история релизов</span></h3>
+        ${CHANGELOG.map((r,idx)=>`<div style="padding:10px 0;${idx?'border-top:1px solid var(--line2)':''}">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px"><span class="stchip" style="font-family:var(--mono);font-size:10px;${idx===0?'color:var(--good);border:1px solid var(--good)':'color:var(--muted);border:1px solid var(--line)'}">v${esc(r.v)}</span><span style="font-size:11px;color:var(--muted)">${esc(r.d)}</span>${idx===0?'<span style="font-size:10px;color:var(--good)">● текущая</span>':''}</div>
+          <ul style="margin:0;padding-left:18px;font-size:12.5px;color:var(--ink2);line-height:1.5">${r.items.map(it=>`<li>${esc(it)}</li>`).join('')}</ul></div>`).join('')}
+      </div>
       <div class="panel"><h3>Система</h3>
       <div style="font-size:13px;color:var(--ink2);line-height:2">
         Сервер: <b style="color:${SRV.on?'var(--good)':'var(--muted)'}">${SRV.on?`подключён · rev ${SRV.rev}`:'локальный режим'}</b><br>
@@ -4902,7 +4916,7 @@ const ORG_DEF = {name:'АО «Завод судового оборудовани
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'1.91',
+  version:'1.92',
   year:'2025–2026',
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
   contact:'alexkashin29.github.io/elling',
@@ -6665,6 +6679,8 @@ document.addEventListener('click', e=>{
   { const el=e.target.closest('[data-legalprint]'); if(el){ printDoc(legalPrintHTML(el.dataset.legalprint)); ACTS.push('печать правового документа: '+el.dataset.legalprint); save(); return; } }
   { const el=e.target.closest('[data-legalpack]'); if(el){ printDoc(legalPackHTML()); ACTS.push('печать юридического пакета (ПДн+соглашение+EULA)'); save(); return; } }
   { const el=e.target.closest('[data-techpass]'); if(el){ printDoc(techPassportHTML()); ACTS.push('печать технического паспорта ПО'); save(); return; } }
+  { const el=e.target.closest('[data-whatsnew]'); if(el){ S.view='settings'; S.setTab='system'; render();
+      try{ setTimeout(()=>{ const wn=document.getElementById('whatsnew'); if(wn&&wn.scrollIntoView) wn.scrollIntoView({behavior:'smooth',block:'start'}); },70); }catch(_){} return; } }
   // отзыв согласия на обработку ПДн (152-ФЗ ст. 9): фиксируем запрос в аудит + уведомляем оператора
   { const el=e.target.closest('[data-pdnrevoke]'); if(el){
       let go=true; try{ go=window.confirm('Отозвать согласие на обработку персональных данных? Запрос будет передан оператору; отзыв влечёт прекращение доступа к системе.'); }catch(_){}
