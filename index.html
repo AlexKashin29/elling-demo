@@ -4636,15 +4636,32 @@ function vSettings(){
         <p style="font-size:11.5px;color:var(--muted);margin-top:10px"><b style="color:var(--good)">✓</b> полный доступ (правка) · <b style="color:var(--steel)">○</b> только чтение · <b>—</b> нет доступа. Финансы (маржа, себестоимость) видят дирекция и продажи (свои сделки); инженерам скрыто.</p>
       </div></section>
     <section class="set-sec" data-sec="auto" ${tab==='auto'?'':'hidden'}><div class="panel" style="margin-bottom:14px"><h3>Автоматизации <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· правила «триггер → действие» · убийца статусных звонков</span></h3>
-      ${(S.rules||[]).map(r=>`<div class="loadrow" style="align-items:flex-start">
+      ${(S.rules||[]).map(r=>{ const seed=/^R\d+$/.test(r.id);
+        return `<div class="loadrow" style="align-items:flex-start;gap:8px">
         <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;flex:1">
           <input type="checkbox" data-rule="${r.id}" ${r.enabled?'checked':''} style="accent-color:var(--accent);margin-top:3px;width:16px;height:16px">
-          <span style="font-size:13px;color:var(--ink)">${esc(r.name)}
+          <span style="font-size:13px;color:var(--ink)">${esc(r.name)}${seed?'':' <span class="stchip" style="font-size:9px;color:var(--accent);border:1px solid var(--accent)">своё</span>'}
             <span style="display:block;font-family:var(--mono);font-size:10px;color:var(--muted)">триггер: ${r.trigger==='overdue'?'просрочка':r.trigger==='to_rev'?'переход на согласование':r.trigger==='ns_done'?'проработка НС завершена':r.trigger} · действия: ${[r.act.comment&&'комментарий',r.act.notify&&'уведомление',r.act.prio&&'приоритет'].filter(Boolean).join(', ')||'—'}</span>
-          </span></label></div>`).join('')}
-      <button class="chip" id="runAuto" style="margin-top:8px">▶ Прогнать сейчас</button>
+          </span></label>${seed?'':`<button class="ns-x" data-ruledel="${r.id}" title="удалить правило" style="flex:none">✕</button>`}</div>`; }).join('')}
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="chip" id="runAuto">▶ Прогнать сейчас</button>
+        ${S._ruleAdd?'':`<button class="btn ghost" data-ruleadd="1" style="font-size:12px">+ Своё правило</button>`}</div>
+      ${S._ruleAdd?`<div class="panel" style="margin-top:10px;background:var(--panel2)">
+        <div style="font-weight:640;font-size:13px;margin-bottom:8px">Новое правило автоматизации</div>
+        <div style="display:grid;gap:8px">
+          <input id="ruleName" placeholder="Название (напр. «Просрочка → поднять приоритет»)">
+          <label class="fld"><span>Триггер</span><select id="ruleTrig">
+            <option value="overdue">Просрочка задачи</option>
+            <option value="to_rev">Задача → на согласование</option>
+            <option value="ns_done">Проработка НС завершена</option></select></label>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px">
+            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ruleActNotify" checked style="accent-color:var(--accent)">уведомление</label>
+            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ruleActComment" style="accent-color:var(--accent)">комментарий</label>
+            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ruleActPrio" style="accent-color:var(--accent)">поднять приоритет</label>
+          </div>
+          <div style="display:flex;gap:8px"><button class="btn" data-rulesave="1">Создать правило</button><button class="btn ghost" data-ruleadd="0">Отмена</button></div>
+        </div></div>`:''}
       ${S.autoMsg?`<div class="ai-box" style="margin-top:8px">${esc(S.autoMsg)}</div>`:''}
-      <p style="font-size:12px;color:var(--muted);margin-top:8px">Просрочка проверяется автоматически каждую минуту. В демо есть просроченная задача СТ-2465 — правило уже включено, нажмите «Прогнать» и смотрите колокол 🔔.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Просрочка проверяется автоматически каждую минуту. Свои правила добавляются здесь — триггер и действия под ваш процесс. В демо есть просроченная задача СТ-2465 — нажмите «Прогнать» и смотрите колокол 🔔.</p>
     </div></section>
     <section class="set-sec" data-sec="notify" ${tab==='notify'?'':'hidden'}>${vNotify()}</section>
     <section class="set-sec" data-sec="backup" ${tab==='backup'?'':'hidden'}>${vBackup()}</section>
@@ -6930,7 +6947,22 @@ document.addEventListener('click', e=>{
   if(!e.target.closest('.bell-wrap')){ const d=$('bellDrop'); if(d) d.classList.remove('open'); }
   const rc = e.target.closest('[data-rule]');
   if(rc){ /* checkbox сам обрабатывается в change */ }
-  if(e.target.id==='runAuto'){ const ch = runAutomations('manual'); S.autoMsg = ch?'Автоматизации сработали — проверьте колокол 🔔':'Нечего запускать: нет просроченных задач под включёнными правилами'; render(); return; }
+  if(e.target.id==='runAuto'){ const ch = runAutomations('manual') | (runAutomations('ns_done')?1:0); S.autoMsg = ch?'Автоматизации сработали — проверьте колокол 🔔':'Нечего запускать: нет просроченных задач и незакрытых событий под включёнными правилами'; render(); return; }
+  // билдер правил: открыть/закрыть форму
+  { const el=e.target.closest('[data-ruleadd]'); if(el){ S._ruleAdd = el.dataset.ruleadd==='1'; render(); return; } }
+  // создать своё правило автоматизации
+  { const el=e.target.closest('[data-rulesave]'); if(el){
+      const g=id=>document.getElementById(id); const name=(g('ruleName').value||'').trim();
+      const trig=g('ruleTrig').value; const act={comment:g('ruleActComment').checked?1:0,notify:g('ruleActNotify').checked?1:0,prio:g('ruleActPrio').checked?1:0};
+      if(!name){ toast('Введите название правила','bad'); return; }
+      if(!act.comment&&!act.notify&&!act.prio){ toast('Выберите хотя бы одно действие','bad'); return; }
+      S.rules=S.rules||[]; const id='RU'+((S.seq||0)+1)+'-'+(S.rules.length+1);
+      S.rules.push({id, name, trigger:trig, act, enabled:1});
+      S._ruleAdd=false; ACTS.push('создано правило автоматизации: '+name.slice(0,40)); save(); render();
+      toast('Правило создано и включено','ok'); return; } }
+  // удалить своё правило (seed R1-R4 не удаляются — кнопки нет)
+  { const el=e.target.closest('[data-ruledel]'); if(el){ const rid=el.dataset.ruledel;
+      if(/^R\d+$/.test(rid)) return; S.rules=(S.rules||[]).filter(x=>x.id!==rid); save(); render(); toast('Правило удалено','ok'); return; } }
   const pr = e.target.closest('[data-preset]');
   if(pr){ S.imp={text:PRESET_CSV[pr.dataset.preset]||'',rows:[],headers:[],map:{},msg:''}; render(); return; }
   if(e.target.id==='impParse'){ const {headers,rows}=parseCSV(($('impText')||{}).value||S.imp.text||'');
