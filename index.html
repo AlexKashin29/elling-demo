@@ -2700,10 +2700,29 @@ const ROI_FIELDS=[
   ['prevented_rework','Ловит радар закладок, %',70],
 ];
 function roiInputs(){ S.roiIn=S.roiIn||{}; const o={}; ROI_FIELDS.forEach(([k,,d])=>{ o[k]=(S.roiIn[k]!=null?S.roiIn[k]:d); }); return o; }
+// Клиентский двойник roi.py.compute — целочисленно (Math.floor для //), digest-совместимо.
+// Чтобы ROI считался и в офлайн-демо (заказчик видит рублёвую выгоду по своим числам без сервера).
+function roiComputeClient(inp){
+  const I=(v,d=0)=>{ const n=parseInt(v,10); return isNaN(n)?d:n; };
+  const tz_m=Math.max(0,I(inp.tz_per_month)), h_before=Math.max(0,I(inp.hours_before)), h_after=Math.max(0,I(inp.hours_after));
+  const rate_h=Math.max(0,I(inp.eng_rate_hour)), delay_day=Math.max(0,I(inp.delay_cost_day)), delay_days=Math.max(0,I(inp.delay_days_year));
+  const prevented=Math.min(100,Math.max(0,I(inp.prevented_share)));
+  const rework_cases=Math.max(0,I(inp.rework_cases_year)), rework_hours=Math.max(0,I(inp.rework_hours_case));
+  const prevented_rework=Math.min(100,Math.max(0,I(inp.prevented_rework)));
+  const tz_year=tz_m*12, hours_saved=Math.max(0,h_before-h_after);
+  const eng_saved=tz_year*hours_saved*rate_h;
+  const delay_saved=Math.floor(delay_day*delay_days*prevented/100);
+  const rework_saved=Math.floor(rework_cases*rework_hours*rate_h*prevented_rework/100);
+  const total=eng_saved+delay_saved+rework_saved;
+  return { inputs:{tz_per_month:tz_m,hours_before:h_before,hours_after:h_after,eng_rate_hour:rate_h,delay_cost_day:delay_day,delay_days_year:delay_days,prevented_share:prevented,rework_cases_year:rework_cases,rework_hours_case:rework_hours,prevented_rework:prevented_rework},
+    tz_per_year:tz_year, hours_saved_per_estimate:hours_saved, eng_hours_saved_year:tz_year*hours_saved,
+    eng_saved_year:eng_saved, delay_saved_year:delay_saved, rework_saved_year:rework_saved, total_year:total };
+}
 async function roiCalc(){
+  if(!SRV.on){ S.roi = roiComputeClient(roiInputs()); render(); return; }   // офлайн-демо: детерминированный клиентский расчёт
   try{ const r=await fetch('/api/roi',{method:'POST',headers:AH({'Content-Type':'application/json'}),body:JSON.stringify(roiInputs())});
-    S.roi = r.ok ? await r.json() : null;
-  }catch(_){ S.roi=null; } render();
+    S.roi = r.ok ? await r.json() : roiComputeClient(roiInputs());
+  }catch(_){ S.roi = roiComputeClient(roiInputs()); } render();
 }
 function rub(n){ return (n||0).toLocaleString('ru-RU')+' ₽'; }
 // Замыкание цикла: создать заказ по аналогу с преднаполненным составом (BOM аналога).
@@ -3495,8 +3514,38 @@ function vRoi(){
   const opsNote=`<div class="roi-ops"><b>Операционная реальность</b> (не входит в расчёт выше, чтобы не задваивать): ИЦ ${icf.level==='over'?'<b style="color:var(--bad)">перегружен</b> — очередь '+icf.totalDays+' инженеро-дней на '+icf.engineers+' инж.':(icf.level==='high'?'<b style="color:var(--warn)">под высокой нагрузкой</b>':'в норме')}${govN?', <b>'+govN+'</b> заказ(ов) приняты при перегрузке (под риском срока)':''}. Прозрачная очередь ИЦ + governance — механизм, за счёт которого статья «избежанные срывы» из модели становится реальной, а не декларацией.</div>`;
   return `<div class="an-panel"><div class="an-title">₽ ROI за минуту — по вашим числам <span class="mono" style="font-size:10px;color:var(--muted)">для разговора, не оценка сверху</span></div>
     <div class="roi-grid">${fields}</div>
-    <div style="margin-top:10px"><button class="btn" data-roicalc="1">Посчитать</button></div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-roicalc="1">Посчитать</button>${r?`<button class="btn ghost" data-roiprint="1" title="печатное обоснование экономии — для экономиста/финансовой службы заказчика">🖨 ROI-обоснование</button>`:''}</div>
     ${out}${opsNote}</div>`;
+}
+// Печатное ROI-обоснование — документ для экономиста/финслужбы заказчика (по его числам).
+function roiJustifyHTML(){
+  const o=(typeof org==='function')?org():{}; const r=S.roi; if(!r) return '<div class="pdoc"><div class="p-title">Сначала нажмите «Посчитать»</div></div>';
+  const i=r.inputs||{};
+  const payback = r.total_year>0 ? Math.max(1,Math.ceil(1200000/ (r.total_year/12))) : null;   // ориентир окупаемости к типовой годовой лицензии
+  return `<div class="pdoc">
+    <div class="p-org"><b>${esc(o.full||o.name||'')}</b>${o.inn?'<br>ИНН '+esc(o.inn):''}</div>
+    <div class="p-title">Экономическое обоснование внедрения ПО «Эллинг»<br><span>по числам предприятия · ${today()}</span></div>
+    <div class="p-note" style="margin:6px 0 8px">Расчёт построен на числах, названных предприятием (не оценка вендора). Арифметика детерминированная, целочисленная.</div>
+    <div style="font-size:14px;font-weight:700;margin:12px 0 4px">Исходные данные</div>
+    <table class="p-tbl"><tr><th>Показатель</th><th style="width:120px">Значение</th></tr>
+      <tr><td>ТЗ / просчётов в месяц</td><td class="p-r">${i.tz_per_month}</td></tr>
+      <tr><td>Часов на просчёт: сейчас → с ИИ-аналогом</td><td class="p-r">${i.hours_before} → ${i.hours_after}</td></tr>
+      <tr><td>Ставка инженера ИЦ, ₽/час</td><td class="p-r">${(i.eng_rate_hour||0).toLocaleString('ru-RU')}</td></tr>
+      <tr><td>Стоимость дня простоя/срыва, ₽</td><td class="p-r">${(i.delay_cost_day||0).toLocaleString('ru-RU')}</td></tr>
+      <tr><td>Сорванных дней в год · снимаем ранней видимостью</td><td class="p-r">${i.delay_days_year} · ${i.prevented_share}%</td></tr>
+      <tr><td>Случаев перезакладки/дублей в год · ловит радар</td><td class="p-r">${i.rework_cases_year} · ${i.prevented_rework}%</td></tr>
+    </table>
+    <div style="font-size:14px;font-weight:700;margin:14px 0 4px">Разложение экономии, ₽/год</div>
+    <table class="p-tbl"><tr><th>Статья</th><th style="width:150px">₽/год</th></tr>
+      <tr><td>Инженерное время ИЦ (${r.eng_hours_saved_year} н/ч/год × ставка)</td><td class="p-r">${(r.eng_saved_year||0).toLocaleString('ru-RU')}</td></tr>
+      <tr><td>Избежанные срывы поставки</td><td class="p-r">${(r.delay_saved_year||0).toLocaleString('ru-RU')}</td></tr>
+      <tr><td>Избежанная переработка (радар закладок)</td><td class="p-r">${(r.rework_saved_year||0).toLocaleString('ru-RU')}</td></tr>
+      <tr><th>ИТОГО экономии в год</th><th class="p-r">${(r.total_year||0).toLocaleString('ru-RU')} ₽</th></tr>
+    </table>
+    <div class="p-terms">Экономия «инженерное время» и «переработка» — прямая (высвобождение инженеро-часов ИЦ). «Избежанные срывы» реализуются при внедрении прозрачной очереди ИЦ и governance. ${payback?'Ориентировочная окупаемость типовой годовой лицензии — '+payback+' мес.':''} Итог является расчётной величиной по данным предприятия.</div>
+    <div class="p-sign"><div>Экономическая служба<span class="p-line"></span></div><div>${esc(o.dirRole||'Руководитель')}<span class="p-line"></span>${esc(o.director||'')}</div></div>
+    <div class="p-foot">ПО «Эллинг» · экономическое обоснование · ${today()}</div>
+  </div>`;
 }
 function kbSearchProjects(q){
   const tokens = (q||'').toLowerCase().split(/[^a-zа-яё0-9-]+/).filter(t=>t.length>1);
@@ -7373,6 +7422,7 @@ document.addEventListener('click', e=>{
   const kbp = e.target.closest('[data-kbproj]');
   if(kbp){ vKbProject(kbp.dataset.kbproj); return; }
   if(e.target.closest('[data-roicalc]')){ roiCalc(); return; }
+  if(e.target.closest('[data-roiprint]')){ printDoc(roiJustifyHTML()); ACTS.push('печать ROI-обоснования'); save(); return; }
   if(e.target.closest('[data-loadplan]')){ loadPlan(); return; }
   { const el=e.target.closest('[data-icprio]'); if(el){ const es=(S.estimates||[]).find(x=>x.id===el.dataset.icprio); if(es){ es.prio=es.prio==='hi'?'':'hi'; ACTS.push('просчёт '+(es.title||es.id)+(es.prio==='hi'?': срочно':': снята срочность')); save(); loadPlan(); } return; } }
   if(e.target.closest('[data-estsheet]')){ if(S.analog) printDoc(estimateSheetHTML()); return; }
