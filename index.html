@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.0.2 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.0.3 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -368,20 +368,43 @@
     .stwarn.alarm{color:#F6C3BB;background:#3D1A15;border-bottom-color:#7A3229}
   }
   /* Экран входа */
-  .lg-wrap{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;
-    background:radial-gradient(120% 90% at 70% 10%, var(--panel2) 0%, var(--bg) 60%);padding:20px}
-  .lg-card{width:min(92vw,380px);background:var(--panel);border:1px solid var(--line);
-    border-radius:16px;padding:32px 30px 26px;box-shadow:0 18px 60px rgba(0,0,0,.14)}
-  .lg-brand{font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
-  .lg-sub{font-size:13px;color:var(--muted);margin:2px 0 22px}
+  .lg-wrap{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:20px;overflow:hidden;
+    background:
+      radial-gradient(135% 105% at 74% -12%, color-mix(in srgb,var(--accent) 10%,var(--bg)) 0%, var(--bg) 56%),
+      linear-gradient(color-mix(in srgb,var(--accent) 5%,transparent) 1px,transparent 1px),
+      linear-gradient(90deg,color-mix(in srgb,var(--accent) 5%,transparent) 1px,transparent 1px);
+    background-size:100% 100%,32px 32px,32px 32px;background-position:center}
+  .lg-wrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:36%;pointer-events:none;z-index:0;
+    background:linear-gradient(to top, color-mix(in srgb,var(--accent) 11%,transparent), transparent)}
+  .lg-card{position:relative;z-index:1;width:min(93vw,392px);background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:34px 32px 22px;box-shadow:var(--sh-lg);overflow:hidden;
+    animation:lgCard .5s cubic-bezier(.16,1,.3,1)}
+  .lg-card::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;
+    background:linear-gradient(90deg,var(--accent),var(--steel) 55%,transparent)}
+  @keyframes lgCard{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .lg-head{display:flex;align-items:center;gap:13px;margin-bottom:20px}
+  .lg-mark{width:42px;height:42px;flex:none}
+  .lg-mark .hull{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:88;stroke-dashoffset:88;animation:lgDraw 1.1s .25s cubic-bezier(.5,0,.2,1) forwards}
+  .lg-mark .rib{stroke:var(--steel);stroke-width:1;opacity:.75}
+  .lg-mark .wl{stroke:var(--accent);stroke-width:1;stroke-dasharray:2.5 3;opacity:.55}
+  @keyframes lgDraw{to{stroke-dashoffset:0}}
+  .lg-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.19em;text-transform:uppercase;color:var(--accent)}
+  .lg-brand{font-size:27px;font-weight:800;letter-spacing:-.025em;color:var(--ink);line-height:1.02}
+  .lg-sub{font-size:12.5px;color:var(--muted);margin:0 0 20px;padding-bottom:16px;border-bottom:1px solid var(--line2)}
+  @media(prefers-reduced-motion:reduce){.lg-card{animation:none}.lg-mark .hull{stroke-dashoffset:0;animation:none}}
   .lg-lab{display:block;font-size:11px;font-weight:650;letter-spacing:.05em;
     text-transform:uppercase;color:var(--muted);margin:14px 0 5px}
   .lg-inp{width:100%;box-sizing:border-box;padding:11px 13px;font:inherit;font-size:14px;
-    color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:9px;outline:none}
-  .lg-inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+    color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:9px;outline:none;
+    transition:border-color .16s ease,box-shadow .16s ease,background .16s ease}
+  .lg-inp:focus{border-color:var(--accent);background:var(--panel);box-shadow:0 0 0 3px var(--accent-soft)}
   .lg-btn{width:100%;margin-top:22px;padding:12px;font:inherit;font-size:14px;font-weight:650;
-    color:#fff;background:var(--accent);border:0;border-radius:9px;cursor:pointer}
-  .lg-btn:hover{filter:brightness(1.08)} .lg-btn:disabled{opacity:.6;cursor:default}
+    color:#fff;background:var(--accent);border:0;border-radius:9px;cursor:pointer;
+    transition:filter .15s ease,transform .12s ease,box-shadow .15s ease;
+    box-shadow:0 2px 10px -3px color-mix(in srgb,var(--accent) 65%,transparent)}
+  .lg-btn:hover{filter:brightness(1.08);box-shadow:0 4px 16px -4px color-mix(in srgb,var(--accent) 70%,transparent)}
+  .lg-btn:active{transform:translateY(1px)} .lg-btn:disabled{opacity:.6;cursor:default;box-shadow:none}
   .lg-err{background:var(--risk-soft,#FBE9E7);color:var(--risk);border:1px solid var(--risk);
     border-radius:8px;padding:9px 11px;font-size:12.5px;margin-bottom:4px}
   .lg-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:18px}
@@ -2208,7 +2231,16 @@ function renderLoginMode(mode, err, opts){
   if(mode!=='claim') links.push('<a href="#" data-lgmode="claim">У меня код приглашения</a>');
   if(opts.bootstrap && mode!=='register') links.push('<a href="#" data-lgmode="register">Создать администратора</a>');
   const footer = `<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:14px;font-size:12.5px">${links.map(l=>l.replace('<a ','<a style="color:var(--accent);text-decoration:none" ')).join('')}</div>`;
-  $('lgWrap').innerHTML = `<form class="lg-card" id="lgForm"><div class="lg-brand">Эллинг</div><div class="lg-sub">${sub}</div>${errBox}${inner}${footer}<div class="lg-copy">© ${esc(VENDOR.year)} ${esc(VENDOR.holder)} · ПО «Эллинг» v${esc(VENDOR.version)}<br><a href="#" data-legal="eula" style="color:var(--muted);text-decoration:underline">Лицензионное соглашение</a></div></form>`;
+  // Марка: корпус судна на стапеле (эллинг = стапель) — видны шпангоуты «в постройке», ватерлиния.
+  const markSVG = `<svg class="lg-mark" viewBox="0 0 42 42" aria-hidden="true">
+    <line class="wl" x1="4" y1="27" x2="38" y2="27"/>
+    <path class="hull" d="M7 15 C 9 27, 16 32, 21 32 C 26 32, 33 27, 35 15"/>
+    <line class="rib" x1="13" y1="18.5" x2="13" y2="30"/>
+    <line class="rib" x1="21" y1="20" x2="21" y2="32"/>
+    <line class="rib" x1="29" y1="18.5" x2="29" y2="30"/>
+  </svg>`;
+  const head = `<div class="lg-head">${markSVG}<div><div class="lg-eyebrow">Производственный заказ · судостроение</div><div class="lg-brand">Эллинг</div></div></div>`;
+  $('lgWrap').innerHTML = `<form class="lg-card" id="lgForm">${head}<div class="lg-sub">${sub}</div>${errBox}${inner}${footer}<div class="lg-copy">© ${esc(VENDOR.year)} ${esc(VENDOR.holder)} · ПО «Эллинг» v${esc(VENDOR.version)}<br><a href="#" data-legal="eula" style="color:var(--muted);text-decoration:underline">Лицензионное соглашение</a></div></form>`;
 
   $('lgWrap').querySelectorAll('[data-lgmode]').forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); renderLoginMode(a.dataset.lgmode, '', opts); }));
   // правовые документы: открыть оверлей поверх формы, закрыть по кнопке/фону
@@ -2289,6 +2321,9 @@ async function checkStateSize(){
 }
 
 async function bootstrapSrv(){
+  // Предпросмотр экрана входа на статичном демо (?preview=login): офлайн-демо вход не
+  // показывает (сервера нет), но оценить первое впечатление можно без развёртывания.
+  if(/[?&]preview=login/.test(location.search)){ try{ paintLogin(null, {oidc:true, bootstrap:true}); }catch(_){} return; }
   if(!/^https?:$/.test(location.protocol)) return;
   try{
     // Сначала «кто я» — этот роут анонимный, он и отвечает, нужен ли вход вообще.
@@ -4246,10 +4281,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.0.2';
+const APP_VER = '2.0.3';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.0.3', d:'август 2026', items:['Экран входа поднят в собственную морскую идентику: марка «корпус судна на стапеле» (эллинг = стапель, видны шпангоуты «в постройке» и ватерлиния), blueprint-графитка фоном, spark-хайрлайн, отрисовка марки на входе, плавные фокус/наведение полей. Ушли от безликого generic-SaaS-логина. Предпросмотр без сервера — ?preview=login']},
   {v:'2.0.2', d:'август 2026', items:['Единый ритм появления по всему продукту: живой вход-каскад (fade-rise со стаггером) распространён на карточные виды — интеграции, команду, бенчмарки, выбор контура, — которые раньше «щёлкали» плоско. Уважение к prefers-reduced-motion сохранено']},
   {v:'2.0.1', d:'август 2026', items:['Интеграционный каталог дополнен под реальный ландшафт РФ-судостроения: 1С:УНФ (малые поставщики СКО), РРР (Российский Речной Регистр), казначейское сопровождение через «Электронный бюджет»/уполномоченный банк, nanoCAD/Вертикаль/AutoCAD (DWG/DXF) — по ролям и методам обмена (22 позиции, 3 контура)']},
   {v:'2.0', d:'август 2026', items:[
@@ -5043,7 +5079,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.0.2',
+  version:'2.0.3',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
