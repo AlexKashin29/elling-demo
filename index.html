@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.0.4 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.0.5 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -368,7 +368,7 @@
     .stwarn.alarm{color:#F6C3BB;background:#3D1A15;border-bottom-color:#7A3229}
   }
   /* Экран входа */
-  .lg-wrap{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:20px;overflow:hidden;
+  .lg-wrap{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:20px;
     background:
       radial-gradient(135% 105% at 74% -12%, color-mix(in srgb,var(--accent) 10%,var(--bg)) 0%, var(--bg) 56%),
       linear-gradient(color-mix(in srgb,var(--accent) 5%,transparent) 1px,transparent 1px),
@@ -412,7 +412,7 @@
   .lg-cs{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--ink2);line-height:1.45;cursor:pointer}
   .lg-cs input{margin:1px 0 0;flex:none;width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
   .lg-cs a{color:var(--accent);text-decoration:underline}
-  .legal-ov{position:fixed;inset:0;z-index:60;background:rgba(8,12,18,.6);backdrop-filter:blur(2px);display:grid;place-items:center;padding:20px}
+  .legal-ov{position:fixed;inset:0;z-index:9600;background:rgba(8,12,18,.6);backdrop-filter:blur(2px);display:grid;place-items:center;padding:20px}
   .legal-card{width:min(94vw,640px);max-height:88vh;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px -20px rgba(0,0,0,.5)}
   .legal-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:20px 22px 14px;border-bottom:1px solid var(--line)}
   .legal-t{font-size:16px;font-weight:700;color:var(--ink)}
@@ -430,7 +430,12 @@
   .sys-k{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .sys-ntd{display:inline-block;font-size:11px;color:var(--ink2);background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 8px;margin:0 5px 4px 0}
   @media(max-width:560px){.sys-row{grid-template-columns:1fr}}
-  .lg-copy{font-size:10.5px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.5}
+  .lg-legal{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:5px 10px;margin-top:18px;
+    padding-top:15px;border-top:1px solid var(--line2);font-size:11.5px}
+  .lg-legal a{color:var(--ink2);text-decoration:none;border-bottom:1px solid transparent;transition:color .15s,border-color .15s}
+  .lg-legal a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+  .lg-legal span{color:var(--muted);opacity:.6}
+  .lg-copy{font-size:10.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5}
   .appship{position:fixed;right:-26px;bottom:-14px;width:min(44vw,540px);height:auto;z-index:0;pointer-events:none;
     stroke:var(--ink);fill:none;stroke-width:1.3;opacity:.05;stroke-linecap:round;stroke-linejoin:round}
   :root[data-theme="dark"] .appship{opacity:.07}
@@ -2257,17 +2262,25 @@ function renderLoginMode(mode, err, opts){
     <line class="rib" x1="29" y1="18.5" x2="29" y2="30"/>
   </svg>`;
   const head = `<div class="lg-head">${markSVG}<div><div class="lg-eyebrow">Производственный заказ · судостроение</div><div class="lg-brand">Эллинг</div></div></div>`;
-  $('lgWrap').innerHTML = `<form class="lg-card" id="lgForm">${head}<div class="lg-sub">${sub}</div>${errBox}${inner}${footer}<div class="lg-copy">© ${esc(VENDOR.year)} ${esc(VENDOR.holder)} · ПО «Эллинг» v${esc(VENDOR.version)}<br><a href="#" data-legal="eula" style="color:var(--muted);text-decoration:underline">Лицензионное соглашение</a></div></form>`;
+  // Правовые документы доступны прямо с входа — все три (открываются оверлеем поверх формы).
+  const legalRow = `<div class="lg-legal"><a href="#" data-legal="pdn">Политика ПДн</a><span>·</span><a href="#" data-legal="terms">Пользовательское соглашение</a><span>·</span><a href="#" data-legal="eula">Лицензионное соглашение</a></div>`;
+  $('lgWrap').innerHTML = `<form class="lg-card" id="lgForm">${head}<div class="lg-sub">${sub}</div>${errBox}${inner}${footer}${legalRow}<div class="lg-copy">© ${esc(VENDOR.year)} ${esc(VENDOR.holder)} · ПО «Эллинг» v${esc(VENDOR.version)}</div></form>`;
 
   $('lgWrap').querySelectorAll('[data-lgmode]').forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); renderLoginMode(a.dataset.lgmode, '', opts); }));
   // правовые документы: открыть оверлей поверх формы, закрыть по кнопке/фону
   $('lgWrap').querySelectorAll('[data-legal]').forEach(a=>a.addEventListener('click', e=>{
     e.preventDefault();
     const old=$('legalOv'); if(old) old.remove();
-    $('lgWrap').insertAdjacentHTML('beforeend', legalOverlayHTML(a.dataset.legal));
+    // В document.body, а НЕ в #lgWrap: раньше оверлей вкладывался внутрь экрана входа
+    // (z-index 9000) и отрисовывался позади него — ссылка «не работала». Теперь на body,
+    // z-index 9600 — гарантированно поверх, из любого контекста (вход/приложение).
+    document.body.insertAdjacentHTML('beforeend', legalOverlayHTML(a.dataset.legal));
     const ov=$('legalOv');
-    ov.querySelectorAll('[data-legalclose]').forEach(b=>b.addEventListener('click', ()=>ov.remove()));
-    ov.addEventListener('click', ev=>{ if(ev.target===ov) ov.remove(); });
+    const closeOv=()=>{ ov.remove(); document.removeEventListener('keydown', onEsc); };
+    const onEsc=ev=>{ if(ev.key==='Escape') closeOv(); };
+    ov.querySelectorAll('[data-legalclose]').forEach(b=>b.addEventListener('click', closeOv));
+    ov.addEventListener('click', ev=>{ if(ev.target===ov) closeOv(); });
+    document.addEventListener('keydown', onEsc);
   }));
   const sso = $('lgSso'); if(sso) sso.addEventListener('click', ()=>{ location.href='/api/auth/oidc/start'; });
   if(mode==='login'){ try{ const se=new URLSearchParams(location.search).get('sso_error'); if(se){ const b=$('lgErr'); b.hidden=false; b.textContent='SSO: '+se; } }catch(_){} }
@@ -4298,10 +4311,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.0.4';
+const APP_VER = '2.0.5';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.0.5', d:'август 2026', items:['Фикс (регрессия v2.0.3): ссылка «Лицензионное соглашение» на экране входа не открывалась — оверлей вкладывался внутрь экрана входа (z-index 9000) и рисовался позади. Оверлей вынесен в document.body (z-index 9600) — открывается из любого контекста, закрывается по фону и Esc. На вход добавлены все три документа: Политика ПДн · Пользовательское соглашение · Лицензионное соглашение']},
   {v:'2.0.4', d:'август 2026', items:['Welcome-экран и «Сегодня» в едином языке первого впечатления: spark-хайрлайн и вход-анимация приветствия, hover-лифт карточек модулей со стаггером появления, шаги-онбординга с моно-бейджами и подсветкой, плитки хаба вводятся ритмом дашборда. Ушли от «rounded-lg везде» и плоского появления']},
   {v:'2.0.3', d:'август 2026', items:['Экран входа поднят в собственную морскую идентику: марка «корпус судна на стапеле» (эллинг = стапель, видны шпангоуты «в постройке» и ватерлиния), blueprint-графитка фоном, spark-хайрлайн, отрисовка марки на входе, плавные фокус/наведение полей. Ушли от безликого generic-SaaS-логина. Предпросмотр без сервера — ?preview=login']},
   {v:'2.0.2', d:'август 2026', items:['Единый ритм появления по всему продукту: живой вход-каскад (fade-rise со стаггером) распространён на карточные виды — интеграции, команду, бенчмарки, выбор контура, — которые раньше «щёлкали» плоско. Уважение к prefers-reduced-motion сохранено']},
@@ -5097,7 +5111,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.0.4',
+  version:'2.0.5',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
