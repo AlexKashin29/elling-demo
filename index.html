@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.0.3 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.0.4 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -523,6 +523,11 @@
   .view-in .stats .stat:nth-child(4){animation-delay:.15s}
   .view-in .stats .stat:nth-child(5){animation-delay:.19s}
   .view-in .stats .stat:nth-child(n+6){animation-delay:.22s}
+  /* плитки хаба «Сегодня» появлялись плоско — вводим тем же ритмом, что и статы дашборда */
+  .view-in .hub .hub-tile{animation:cardIn .42s cubic-bezier(.16,1,.3,1) backwards}
+  .view-in .hub .hub-tile:nth-child(1){animation-delay:.04s}.view-in .hub .hub-tile:nth-child(2){animation-delay:.08s}
+  .view-in .hub .hub-tile:nth-child(3){animation-delay:.12s}.view-in .hub .hub-tile:nth-child(4){animation-delay:.16s}
+  .view-in .hub .hub-tile:nth-child(n+5){animation-delay:.19s}
   .view-in .panel,.view-in .anacard,.view-in .wcard{animation:cardIn .46s cubic-bezier(.16,1,.3,1) backwards;animation-delay:.06s}
   /* v2.0.2: тот же живой вход распространён на карточные виды, что раньше «щёлкали» плоско
      (интеграции, команда, бенчмарки, выбор контура) — единый ритм появления по всему продукту */
@@ -805,28 +810,40 @@
   /* reports */
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
   /* v1.6 приветствие / тур */
-  .wl-bg{position:fixed;inset:0;z-index:90;background:rgba(6,10,15,.78);
+  .wl-bg{position:fixed;inset:0;z-index:90;background:rgba(6,10,15,.72);backdrop-filter:blur(3px);
     display:none;place-items:center;padding:20px}
   .wl-bg.open{display:grid}
-  .wl{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:640px;width:100%;
+  .wl{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:640px;width:100%;
     max-height:88vh;overflow-y:auto;padding:32px 34px;box-shadow:var(--sh-lg);position:relative}
+  .wl::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;border-radius:16px 16px 0 0;
+    background:linear-gradient(90deg,var(--accent),var(--steel) 55%,transparent)}
+  .wl-bg.open .wl{animation:wlIn .44s cubic-bezier(.16,1,.3,1)}
+  @keyframes wlIn{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
   .wl .eye{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
   .wl h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
   .wl h2 .g{color:var(--accent)}
   .wl .sub{font-size:14.5px;color:var(--ink2);margin:0 0 20px}
   .wl .sub b{color:var(--ink)}
-  .wl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}
+  .wl-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:22px}
   @media(max-width:520px){.wl-grid{grid-template-columns:1fr}}
-  .wl-mod{display:flex;gap:10px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);
-    border-radius:12px;padding:11px 13px;cursor:pointer;transition:border-color .14s,transform .14s}
-  .wl-mod:hover{border-color:var(--accent)}
-  .wl-mod .mi{font-size:16px;flex:none;margin-top:1px}
-  .wl-mod b{font-size:13.5px;display:block}
+  .wl-mod{display:flex;gap:11px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);
+    border-radius:11px;padding:12px 14px;cursor:pointer;position:relative;
+    transition:border-color .16s ease,transform .16s cubic-bezier(.16,1,.3,1),box-shadow .16s ease,background .16s ease}
+  .wl-mod:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--sh);background:var(--panel)}
+  .wl-mod:hover .mi{color:var(--accent)}
+  .wl-mod .mi{font-size:16px;flex:none;margin-top:1px;color:var(--ink2);transition:color .16s ease}
+  .wl-mod b{font-size:13.5px;display:block;letter-spacing:-.01em}
   .wl-mod span{font-size:11.5px;color:var(--muted);line-height:1.4}
+  .wl-bg.open .wl-mod{animation:cardIn .44s cubic-bezier(.16,1,.3,1) backwards}
+  .wl-bg.open .wl-mod:nth-child(1){animation-delay:.10s}.wl-bg.open .wl-mod:nth-child(2){animation-delay:.14s}
+  .wl-bg.open .wl-mod:nth-child(3){animation-delay:.18s}.wl-bg.open .wl-mod:nth-child(4){animation-delay:.22s}
+  .wl-bg.open .wl-mod:nth-child(5){animation-delay:.26s}.wl-bg.open .wl-mod:nth-child(6){animation-delay:.30s}
+  .wl-bg.open .wl-mod:nth-child(n+7){animation-delay:.33s}
   .wl h3{font-size:14px;color:var(--ink);font-weight:700;margin:0 0 10px;letter-spacing:-.01em}
-  .wl-step{display:flex;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line2);cursor:pointer;font-size:13.5px;color:var(--ink)}
-  .wl-step:hover{color:var(--accent)}
-  .wl-step .num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+  .wl-step{display:flex;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line2);cursor:pointer;font-size:13.5px;color:var(--ink);transition:color .15s ease,padding-left .15s ease}
+  .wl-step:hover{color:var(--accent);padding-left:4px}
+  .wl-step .num{width:22px;height:22px;border-radius:6px;background:var(--accent-soft);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);font-family:var(--mono);font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+  @media(prefers-reduced-motion:reduce){.wl-bg.open .wl,.wl-bg.open .wl-mod{animation:none}}
   .wl-act{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
   /* v1.3 графики */
   .chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:12px}
@@ -4281,10 +4298,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.0.3';
+const APP_VER = '2.0.4';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.0.4', d:'август 2026', items:['Welcome-экран и «Сегодня» в едином языке первого впечатления: spark-хайрлайн и вход-анимация приветствия, hover-лифт карточек модулей со стаггером появления, шаги-онбординга с моно-бейджами и подсветкой, плитки хаба вводятся ритмом дашборда. Ушли от «rounded-lg везде» и плоского появления']},
   {v:'2.0.3', d:'август 2026', items:['Экран входа поднят в собственную морскую идентику: марка «корпус судна на стапеле» (эллинг = стапель, видны шпангоуты «в постройке» и ватерлиния), blueprint-графитка фоном, spark-хайрлайн, отрисовка марки на входе, плавные фокус/наведение полей. Ушли от безликого generic-SaaS-логина. Предпросмотр без сервера — ?preview=login']},
   {v:'2.0.2', d:'август 2026', items:['Единый ритм появления по всему продукту: живой вход-каскад (fade-rise со стаггером) распространён на карточные виды — интеграции, команду, бенчмарки, выбор контура, — которые раньше «щёлкали» плоско. Уважение к prefers-reduced-motion сохранено']},
   {v:'2.0.1', d:'август 2026', items:['Интеграционный каталог дополнен под реальный ландшафт РФ-судостроения: 1С:УНФ (малые поставщики СКО), РРР (Российский Речной Регистр), казначейское сопровождение через «Электронный бюджет»/уполномоченный банк, nanoCAD/Вертикаль/AutoCAD (DWG/DXF) — по ролям и методам обмена (22 позиции, 3 контура)']},
@@ -5079,7 +5097,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.0.3',
+  version:'2.0.4',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
