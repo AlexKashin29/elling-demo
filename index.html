@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.0.15 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.0.16 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -878,6 +878,13 @@
   .re-chip{font-size:10px;color:var(--ink2);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
   .re-card .btn{margin-top:2px;width:100%}
   .re-now{font-family:var(--mono);font-size:11px;color:var(--good);border:1px solid color-mix(in srgb,var(--good) 40%,transparent);background:color-mix(in srgb,var(--good) 10%,transparent);border-radius:7px;padding:3px 9px;text-align:center}
+  .re-demo{border:1px solid color-mix(in srgb,var(--accent) 24%,transparent);background:color-mix(in srgb,var(--accent) 6%,transparent);border-radius:12px;padding:13px 15px;margin-bottom:6px}
+  .re-demo-h{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono);margin-bottom:11px}
+  .re-reset{margin-left:auto;font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink2);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 11px;cursor:pointer;transition:border-color .15s,color .15s}
+  .re-reset:hover{border-color:var(--accent);color:var(--accent)}
+  .re-jumps{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+  .re-jump{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 13px;cursor:pointer;font:inherit;font-size:13px;font-weight:600;color:var(--ink);transition:border-color .15s,transform .15s,box-shadow .15s}
+  .re-jump:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--sh)}
   /* v1.3 графики */
   .chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:12px}
   .ch-sub{font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:400;letter-spacing:.02em}
@@ -4392,10 +4399,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.0.15';
+const APP_VER = '2.0.16';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.0.16', d:'август 2026', items:['Демо-контроль-центр (🎭): к обзору ролей добавлен «Быстрый показ заказчику» — переходы в один клик к killer-моментам (крит-путь изделия, портфель, лента заказа, просчёт с ИИ-аналогом, база знаний, отчёты) под подходящей ролью, и «🔄 Демо заново» для восстановления тестовых данных между показами']},
   {v:'2.0.15', d:'август 2026', items:['Портфель изделий (обзор рук. ИЦ): на каждой карточке — компактная мини-дорожка критического пути (точки по статусам), видно не только «% готово», но ГДЕ по цепочке застряло изделие и какой этап красный. Консистентно с визуальным крит-путём в списке']},
   {v:'2.0.14', d:'август 2026', items:['Демо-админка ролей (кнопка 🎭 в шапке, офлайн-демо): обзор всех 12 ролей по тирам (дирекция/руководители/сотрудники) — доступные модули, финансовая видимость, охват; «Смотреть как →» в один клик перестраивает интерфейс под роль. Пройти продукт глазами каждого сотрудника на тестовых данных. Безопасно: только демо-режим; на сервере роль назначает директор, серверная проекция не отдаёт чужие данные при подмене на клиенте']},
   {v:'2.0.13', d:'август 2026', items:['Доступность (WCAG 2.2 AA, для ИТ-чек-листа закупок): контраст мелких подписей (--muted) поднят до AA-совместимого 4.5:1 в обеих темах (был 3.16–4.31, не проходил); доступные имена контролам-символам (кнопка темы «◐», зум/закрытие вьюера −/＋/↺/✕) через aria-label; узлы визуального крит-пути стали кнопками — доступны с клавиатуры (Enter/Space) и скринридеру; индикатор зума — aria-live']},
@@ -5202,7 +5210,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.0.15',
+  version:'2.0.16',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
@@ -6913,9 +6921,21 @@ function openRoleExplorer(){
     </div>`;
   };
   const groups=Object.keys(tiers).filter(t=>tiers[t].length).map(t=>`<div class="re-tier">${esc(t)}</div><div class="re-grid">${tiers[t].map(card).join('')}</div>`).join('');
+  // Быстрый показ killer-моментов (для демо заказчику): переход в нужный вид под подходящей ролью.
+  const JUMPS=[
+    ['ns|maksimov|list','🛠 Крит-путь изделия','визуальная цепочка, определяющая срок'],
+    ['ns|maksimov|portfolio','📊 Портфель изделий','все изделия с риском и мини-дорожками'],
+    ['order|orlov|2417','🧵 Лента заказа','события вместо звонков, по заказу №2417'],
+    ['estimates|belov|','⚡ Просчёт · ИИ-аналог','очередь оценки ТЗ, подбор аналога'],
+    ['kb|petrov|','🔎 База знаний','поиск аналогов по ТЗ + вьюер чертежей'],
+    ['reports|orlov|','📈 Отчёты директора','поток, метрики, здоровье проработки'],
+  ];
+  const jumpBtns=JUMPS.map(([d,t,h])=>`<button class="re-jump" data-demojump="${esc(d)}" title="${esc(h)}">${t}</button>`).join('');
   $('roleExplorer').innerHTML=`<div class="re-panel" role="dialog" aria-modal="true" aria-label="Демо-админка · обзор ролей">
     <div class="re-top"><h2>Демо-админка · обзор ролей</h2><button class="re-x" data-reclose="1" aria-label="Закрыть">✕</button></div>
-    <p class="re-sub">Тестовые данные загружены (${(S.orders||[]).length} заказов, ${(S.ns||[]).length} изделий, ${(S.deals||[]).length} сделок). Нажмите «Смотреть как» — меню, доступы и <b>финансовая видимость</b> перестроятся под роль, и вы пройдёте продукт глазами каждого сотрудника. <span style="color:var(--muted)">Демо-режим: в серверной установке роль назначает директор, а сервер не отдаёт чужие данные даже при подмене на клиенте.</span></p>
+    <p class="re-sub">Тестовые данные загружены (${(S.orders||[]).length} заказов, ${(S.ns||[]).length} изделий, ${(S.deals||[]).length} сделок). Нажмите «Смотреть как» — меню, доступы и <b>финансовая видимость</b> перестроятся под роль. <span style="color:var(--muted)">Демо-режим: в серверной установке роль назначает директор, а сервер не отдаёт чужие данные даже при подмене на клиенте.</span></p>
+    <div class="re-demo"><div class="re-demo-h">Быстрый показ заказчику<button class="re-reset" data-demoreset="1" title="восстановить исходные демо-данные">🔄 Демо заново</button></div>
+      <div class="re-jumps">${jumpBtns}</div></div>
     ${groups}
   </div>`;
   $('roleExplorer').classList.add('open');
@@ -7502,6 +7522,14 @@ document.addEventListener('click', e=>{
   const asr=e.target.closest('[data-asrole]');
   if(asr){ const k=asr.dataset.asrole; if(PEOPLE[k]){ S.currentUser=k; S.navOpen=navOpenForRole(k); if(!canView(S.view)) S.view='today'; closeRoleExplorer(); render(); toast('Роль: '+PEOPLE[k].full+' · '+PEOPLE[k].role,'ok'); } return; }
   if(e.target.closest('[data-reclose]') || e.target.id==='roleExplorer'){ closeRoleExplorer(); return; }
+  const dj=e.target.closest('[data-demojump]');
+  if(dj){ const parts=dj.dataset.demojump.split('|'); const u=parts[0], v=parts[1], opt=parts[2]||'';
+    if(PEOPLE[v]) S.currentUser=v; S.navOpen=navOpenForRole(S.currentUser); S.view=u;
+    if(u==='ns'){ if(opt==='portfolio'){ S.nsView='portfolio'; } else { S.nsView='list'; S.nsActive=(nsList()[0]||{}).id; } }
+    if(u==='order'){ const o=(S.orders||[]).find(x=>x.num===opt); if(o){ S.orderId=o.id; } else { S.view='flow'; } }
+    if(!canView(S.view) && S.view!=='order') S.view='today';   // страховка доступа
+    closeRoleExplorer(); render(); return; }
+  if(e.target.closest('[data-demoreset]')){ if(confirm('Восстановить исходные демо-данные? Текущие изменения будут заменены демонстрационным набором.')){ S=seed(); closeRoleExplorer(); render(); toast('Демо-данные восстановлены','ok'); } return; }
   if(e.target.id==='tourStart'){ startTour(); return; }
   const tr = e.target.closest('[data-tour]');
   if(tr){ const a=tr.dataset.tour;
