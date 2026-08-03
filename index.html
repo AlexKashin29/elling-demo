@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.0.11 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.0.12 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2461,8 +2461,10 @@ function renderDwg(){
       ${[['contour','Контур'],['dims','Размеры'],['title','Штамп'],['notes','Замечания']].map(([k,l])=>
         `<button class="dwg-lb ${L[k]?'on':''}" data-dlayer="${k}">${l}</button>`).join('')}
       <button class="dwg-lb ${DWG.mode==='annotate'?'on':''}" id="dwgAnn" title="кликните по чертежу, чтобы оставить замечание">Замечание</button>
-      <button class="dwg-zb" data-dzoom="out">−</button><button class="dwg-zb" data-dzoom="fit">↺</button><button class="dwg-zb" data-dzoom="in">＋</button>
-      <button class="dwg-zb" id="dwgClose">✕</button>
+      <button class="dwg-zb" data-dzoom="out" title="Отдалить (−)">−</button>
+      <span id="dwgZpct" title="масштаб просмотра (не масштаб чертежа)" style="font-family:var(--mono);font-size:11px;color:var(--muted);min-width:42px;text-align:center;user-select:none">${Math.round(DWG.s*100)}%</span>
+      <button class="dwg-zb" data-dzoom="fit" title="Вписать (0)">↺</button><button class="dwg-zb" data-dzoom="in" title="Приблизить (+)">＋</button>
+      <button class="dwg-zb" id="dwgClose" title="Закрыть (Esc)">✕</button>
     </div>
     <div class="dwg-stage ${DWG.mode==='annotate'?'annot':''}" id="dwgStage">${dwgSVG(DWG.code)}</div>
     <div class="dwg-side">
@@ -2494,6 +2496,7 @@ function dwgZoom(factor, cx, cy){
 function applyDwgTransform(){
   const root=document.getElementById('dwgRoot');
   if(root) root.setAttribute('transform',`translate(${DWG.tx},${DWG.ty}) scale(${DWG.s})`);
+  const z=document.getElementById('dwgZpct'); if(z) z.textContent=Math.round(DWG.s*100)+'%';   // индикатор зума без полного ре-рендера
 }
 
 function searchFiles(){
@@ -4348,10 +4351,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.0.11';
+const APP_VER = '2.0.12';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.0.12', d:'август 2026', items:['Вьюер чертежей: индикатор масштаба просмотра (живой, без ре-рендера SVG) + управление с клавиатуры (+/− зум, 0 — вписать, Esc — закрыть) с подсказками на кнопках. Базовые ожидания просмотрщика КД закрыты']},
   {v:'2.0.11', d:'август 2026', items:['Углубление флагмана «Проработка изделий»: критический путь (ядро модуля — цепочка, определяющая срок готовности) стал ВИЗУАЛЬНЫМ и интерактивным — дорожка узлов по статусам (готово/в работе/ждёт), индикатор «N/M готово», подсветка связей. Клик по узлу ведёт к критерию в списке с подсветкой. Раньше — только ★-звёзды и текстовая строка']},
   {v:'2.0.10', d:'август 2026', items:['Финальная зачистка репрофайла флагмана: убраны два остаточных ЖКХ-хвоста в глубоких строках (пустое состояние «Проработки» и комментарий сида ссылались на КНС/приёмный резервуар/решётки/НПВ/АУП) → заменены на судовые примеры (насосный агрегат/теплообменник/арматура ВД). Модуль теперь 100% в судовой лексике']},
   {v:'2.0.9', d:'август 2026', items:['Адверсариальное ревью нашло реальный critical, который зелёные тесты пропускали: архив ленты в Kotlin писался неканонично (Json.dumps с пробелами) → строка l3_feed.entry расходилась с Python (компактный канон) → при миграции между рантаймами на одной БД дедуп ломался и записи дублировались. Фикс: единый Json.canon в обоих рантаймах; байт-в-байт сырой строки архива подтверждён и закреплён тестом (test/feed_test пинит канон). Плюс защита от самоблокировки: директор не может сменить роль/доступ собственной учётке']},
@@ -5154,7 +5158,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.0.11',
+  version:'2.0.12',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
@@ -7919,7 +7923,14 @@ document.addEventListener('input', e=>{
     // результаты — по кнопке; в каталоге/файлах — живой фильтр
     if((S.kbTab||'search')!=='search'){ render(); const i=$('kbq'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length); } } }
 });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if($('welcome').classList.contains('open')) closeWelcome(); else if($('dwgViewer').classList.contains('open')) closeDwg(); else { closeDrawer(); $('createOverlay').classList.remove('open'); } } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if($('welcome').classList.contains('open')) closeWelcome(); else if($('dwgViewer').classList.contains('open')) closeDwg(); else { closeDrawer(); $('createOverlay').classList.remove('open'); } return; }
+  // Зум вьюера чертежей с клавиатуры (когда открыт и фокус не в поле ввода замечания)
+  if($('dwgViewer').classList.contains('open') && !/^(input|textarea|select)$/i.test((e.target.tagName||''))){
+    if(e.key==='+'||e.key==='='){ e.preventDefault(); dwgZoom(1.25); }
+    else if(e.key==='-'||e.key==='_'){ e.preventDefault(); dwgZoom(0.8); }
+    else if(e.key==='0'){ e.preventDefault(); DWG.s=1; DWG.tx=0; DWG.ty=0; applyDwgTransform(); }
+  }
+});
 
 /* drag & drop (доска задач И воронка сделок) */
 document.addEventListener('dragstart', e=>{
