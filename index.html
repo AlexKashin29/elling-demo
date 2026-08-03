@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.0.10 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.0.11 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -992,6 +992,25 @@
   .ns-crit{font-size:12px;color:var(--ink2);background:color-mix(in srgb,var(--accent,#2E6E8E) 8%,transparent);border:1px solid color-mix(in srgb,var(--accent,#2E6E8E) 26%,transparent);border-radius:9px;padding:8px 11px;margin-bottom:12px;line-height:1.4}
   .ns-crit b{color:var(--accent,#2E6E8E)}
   .ns-crit-star{color:var(--accent,#2E6E8E);font-size:12px}
+  /* Визуальный критический путь: цепочка узлов по статусам — «что определяет срок готовности» */
+  .cp-wrap{border:1px solid color-mix(in srgb,var(--accent) 24%,transparent);background:color-mix(in srgb,var(--accent) 6%,transparent);border-radius:11px;padding:11px 13px 13px;margin-bottom:12px}
+  .cp-head{font-size:11px;color:var(--ink2);margin-bottom:11px;display:flex;align-items:center;gap:7px}
+  .cp-head b{color:var(--accent);font-weight:700}
+  .cp-head .cp-fin{margin-left:auto;font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:20px;white-space:nowrap}
+  .cp-track{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin}
+  .cp-node{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:74px;flex:none;position:relative;cursor:pointer;background:none;border:none;padding:0;font:inherit}
+  @keyframes nsFlash{0%{background:color-mix(in srgb,var(--accent) 26%,transparent)}100%{background:transparent}}
+  .ns-row.cp-flash{animation:nsFlash 1.4s ease-out}
+  .cp-dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;font-family:var(--mono);border:2px solid;background:var(--panel);z-index:1;transition:transform .15s}
+  .cp-node:hover .cp-dot{transform:scale(1.12)}
+  .cp-node.done .cp-dot{border-color:var(--good);color:var(--good);background:color-mix(in srgb,var(--good) 16%,var(--panel))}
+  .cp-node.active .cp-dot{border-color:var(--warn);color:var(--warn);box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 22%,transparent)}
+  .cp-node.check .cp-dot{border-color:var(--accent);color:var(--accent)}
+  .cp-node.todo .cp-dot{border-color:var(--line);color:var(--muted)}
+  .cp-lbl{font-size:9.5px;line-height:1.25;color:var(--ink2);text-align:center;max-width:82px;height:24px;overflow:hidden}
+  .cp-link{flex:1 0 18px;height:2px;margin-top:12px;min-width:18px;background:var(--line);align-self:flex-start}
+  .cp-link.done{background:var(--good)}
+  @media(max-width:560px){.cp-node{min-width:60px} .cp-lbl{max-width:64px}}
   .ns-art-wrap{margin-left:7px;display:inline-flex;gap:4px;align-items:center;vertical-align:middle}
   .ns-art{font-size:10.5px;color:var(--accent,#2E6E8E);text-decoration:none;background:color-mix(in srgb,var(--accent,#2E6E8E) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent,#2E6E8E) 32%,transparent);border-radius:20px;padding:1px 8px;cursor:pointer;white-space:nowrap}
   .ns-art:hover{background:color-mix(in srgb,var(--accent,#2E6E8E) 18%,transparent)}
@@ -3051,6 +3070,24 @@ function nsCriticalPath(st){
   }
   return path;
 }
+// Визуальная дорожка критического пути: узлы по статусам, связь «сделано» подсвечена.
+// Делает видимым ядро модуля — цепочку, определяющую срок готовности изделия (было только ★+текст).
+function nsCritPathViz(crit){
+  if(!crit || crit.length<2) return '';
+  const cls=s=> s==='done'?'done': s==='wip'?'active': s==='check'?'check':'todo';
+  const glyph=(it,i)=> it.status==='done'?'✓': it.status==='wip'?'●': it.status==='check'?'◐': String(i+1);
+  const short=t=>{ t=String(t||''); return t.length>34?t.slice(0,32)+'…':t; };
+  const nodes=crit.map((it,i)=>{
+    const link = i>0 ? `<span class="cp-link ${crit[i-1].status==='done'?'done':''}"></span>` : '';
+    return link + `<div class="cp-node ${cls(it.status)}" data-cpjump="${esc(it.id)}" title="${esc(it.title||'')} — ${esc(nsStLabel(it.status))} · клик → к критерию">
+      <span class="cp-dot">${glyph(it,i)}</span><span class="cp-lbl">${esc(short(it.title))}</span></div>`;
+  }).join('');
+  const doneN=crit.filter(c=>c.status==='done').length;
+  const fin = doneN===crit.length
+    ? `<span class="cp-fin" style="color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)">✓ путь пройден</span>`
+    : `<span class="cp-fin" style="color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)">${doneN}/${crit.length} готово</span>`;
+  return `<div class="cp-wrap"><div class="cp-head"><b>★ Критический путь</b> — цепочка, определяющая срок готовности изделия${fin}</div><div class="cp-track">${nodes}</div></div>`;
+}
 // Типовые длительности критериев (кал. дни, доменная оценка) — для авто-расстановки сроков.
 const NS_DUR_DEFAULT = { d1:3, d2:3, d3:5, d4:3, d5:2, d6:4, d7:5, d8:4 };
 function nsDurFor(it){ const d=(typeof it.dur==='number'&&it.dur>0)?it.dur:NS_DUR_DEFAULT[it.id]; return (typeof d==='number'&&d>0)?d : 3; }
@@ -3372,7 +3409,7 @@ function vNS(){
     const logN = (it.log||[]).length;
     const logChip = logN ? `<span class="ns-log-chip ${S._nsLog===st.id+':'+it.id?'on':''}" data-nslog="${st.id}:${it.id}" title="история изменений">🕓 ${logN}</span>` : '';
     const logRow = (S._nsLog===st.id+':'+it.id && logN) ? `<div class="ns-logrow">${it.log.slice().reverse().map(e=>`<div class="ns-loge"><b>${nsLogFmt(e.t)}</b> · ${esc((PEOPLE[e.u]||{}).full||e.u||'—')} · ${esc(e.a)}</div>`).join('')}</div>` : '';
-    return `<div class="ns-row ${over?'ns-row-over':''}">
+    return `<div class="ns-row ${over?'ns-row-over':''}" data-critid="${esc(it.id)}">
       <button class="ns-st" data-nsstatus="${st.id}:${it.id}" style="background:${sm[1]}22;color:${sm[1]};border-color:${sm[1]}55" title="Клик — следующий статус">${sm[0]}</button>
       <div class="ns-title">${critIds.has(it.id)?'<span class="ns-crit-star" title="критический путь — определяет срок готовности">★</span> ':''}${esc(it.title||'')}${dep}${cf?`<span class="ns-dep conflict" title="${cfTitle}">⚠ раньше «${esc(cf.title||'')}»</span>`:''}${logChip}${art?`<span class="ns-art-wrap">${art}</span>`:''}</div>
       <select class="ns-sel" data-nsrole="${st.id}:${it.id}">${Object.keys(NS_ROLE).map(r=>`<option value="${r}" ${it.role===r?'selected':''}>${NS_ROLE[r]}</option>`).join('')}</select>
@@ -3385,7 +3422,7 @@ function vNS(){
   const remDue=(st.items||[]).filter(it=>it.status!=='done' && nsDay(it.due)!=null).map(it=>nsDay(it.due));
   const finishDay=remDue.length?Math.max.apply(null,remDue):null;
   const finishLate=finishDay!=null && finishDay<nsDay(todayISO());
-  const critLine = crit.length>=2 ? `<div class="ns-crit"><b>★ Критический путь</b> (определяет срок готовности): ${crit.map(c=>esc(c.title||'')).join(' → ')}</div>` : '';
+  const critLine = nsCritPathViz(crit);   // визуальная дорожка вместо текстовой строки (ядро модуля — наглядно)
   return `<div class="ns-wrap">
     <div class="ns-head">
       <div class="ns-tabs">${strip}</div>
@@ -4311,10 +4348,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.0.10';
+const APP_VER = '2.0.11';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.0.11', d:'август 2026', items:['Углубление флагмана «Проработка изделий»: критический путь (ядро модуля — цепочка, определяющая срок готовности) стал ВИЗУАЛЬНЫМ и интерактивным — дорожка узлов по статусам (готово/в работе/ждёт), индикатор «N/M готово», подсветка связей. Клик по узлу ведёт к критерию в списке с подсветкой. Раньше — только ★-звёзды и текстовая строка']},
   {v:'2.0.10', d:'август 2026', items:['Финальная зачистка репрофайла флагмана: убраны два остаточных ЖКХ-хвоста в глубоких строках (пустое состояние «Проработки» и комментарий сида ссылались на КНС/приёмный резервуар/решётки/НПВ/АУП) → заменены на судовые примеры (насосный агрегат/теплообменник/арматура ВД). Модуль теперь 100% в судовой лексике']},
   {v:'2.0.9', d:'август 2026', items:['Адверсариальное ревью нашло реальный critical, который зелёные тесты пропускали: архив ленты в Kotlin писался неканонично (Json.dumps с пробелами) → строка l3_feed.entry расходилась с Python (компактный канон) → при миграции между рантаймами на одной БД дедуп ломался и записи дублировались. Фикс: единый Json.canon в обоих рантаймах; байт-в-байт сырой строки архива подтверждён и закреплён тестом (test/feed_test пинит канон). Плюс защита от самоблокировки: директор не может сменить роль/доступ собственной учётке']},
   {v:'2.0.8', d:'август 2026', items:['Нагрузочный замер нового потолка (test/feed_scale_test): размер заказа в блобе ~4058 Б независимо от возраста (лента 40 и 2000 записей хранятся одинаково), потолок ~2000 заказов без сжатия (было ~171 и падал с возрастом), тысячи со сжатием, PUT < 65 мс на 800 заказах. Паспорт обновлён конкретной цифрой — оговорка про масштаб снята']},
@@ -5116,7 +5154,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.0.10',
+  version:'2.0.11',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
@@ -7166,6 +7204,12 @@ document.addEventListener('click', e=>{
   const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); ensureL3(ord.dataset.order); return; }
   const lf = e.target.closest('[data-loadfeed]');
   if(lf){ loadOrderFeed(lf.dataset.loadfeed); return; }
+  const cp = e.target.closest('[data-cpjump]');
+  if(cp){ const id=cp.dataset.cpjump;
+    // без CSS.escape (нет в части сред): id критерия может содержать спецсимволы селектора
+    const row=[...document.querySelectorAll('.ns-row[data-critid]')].find(r=>r.getAttribute('data-critid')===id);
+    if(row){ try{ row.scrollIntoView({behavior:'smooth',block:'center'}); }catch(_){ try{ row.scrollIntoView(); }catch(__){} }
+      row.classList.remove('cp-flash'); void row.offsetWidth; row.classList.add('cp-flash'); } return; }
   const adv = e.target.closest('[data-advance]');
   if(adv){ const o=S.orders.find(x=>x.id===adv.dataset.advance);
     if(o.stage<STAGE_NAMES.length-1){ o.stage++; if(o.stage>=8&&o.risk!=='done') o.risk='ok';
