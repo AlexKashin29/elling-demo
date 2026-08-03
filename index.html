@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.0.6 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.0.7 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1899,7 +1899,7 @@ try{
     S.nsSeedVer=NS_SEED_VER;
   }
 }catch(_){}
-function save(){ try{ const {_l3, ...rest}=S; localStorage.setItem(LSKEY, JSON.stringify(rest)); }catch(e){} queuePush(); }
+function save(){ try{ const {_l3, _feedArch, ...rest}=S; localStorage.setItem(LSKEY, JSON.stringify(rest)); }catch(e){} queuePush(); }
 // _l3 (кэш узлов состава, десятки тысяч) НЕ персистится: (1) не переполняет лимит
 // localStorage, (2) после перезагрузки кэш перечитывается из таблиц через ensureL3
 // с актуальным digest, а не залипает устаревшим. В сеть _l3 и так не уходит (не в SHARED).
@@ -4311,10 +4311,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.0.6';
+const APP_VER = '2.0.7';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.0.7', d:'август 2026', items:['Завершение архивации ленты: в карточке заказа — «↑ Загрузить всю историю ленты» (серверный режим), когда старые записи вынесены в архив. История подгружается по требованию и показывается display-only, не возвращаясь в синхронизируемый блоб. Пробел «глубже 40 записей не видно» закрыт']},
   {v:'2.0.6', d:'август 2026', items:['Архитектура — снят потолок единого блоба: лента заказа (73–98% размера и главный источник роста, «годовая лента») выносится в нормализованное хранилище (l3_feed), в блобе остаётся недавнее окно из 40 записей. Потолок числа заказов больше не зависит от их возраста; история ленты не теряется, доступна по /api/order/feed. Байт-в-байт в обоих рантаймах (Python + Kotlin), покрыто тестом']},
   {v:'2.0.5', d:'август 2026', items:['Фикс (регрессия v2.0.3): ссылка «Лицензионное соглашение» на экране входа не открывалась — оверлей вкладывался внутрь экрана входа (z-index 9000) и рисовался позади. Оверлей вынесен в document.body (z-index 9600) — открывается из любого контекста, закрывается по фону и Esc. На вход добавлены все три документа: Политика ПДн · Пользовательское соглашение · Лицензионное соглашение']},
   {v:'2.0.4', d:'август 2026', items:['Welcome-экран и «Сегодня» в едином языке первого впечатления: spark-хайрлайн и вход-анимация приветствия, hover-лифт карточек модулей со стаггером появления, шаги-онбординга с моно-бейджами и подсветкой, плитки хаба вводятся ритмом дашборда. Ушли от «rounded-lg везде» и плоского появления']},
@@ -5112,7 +5113,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.0.6',
+  version:'2.0.7',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
@@ -5757,6 +5758,20 @@ function vPlan(){
 function money(s){
   return canFin() ? esc(s) : '<span style="filter:blur(4px)">≈≈≈≈</span>';
 }
+// Дозагрузка полной истории ленты заказа из архива (l3_feed) по требованию: старые
+// записи, вынесенные из блоба ради снятия потолка. Display-only — в S.feed НЕ возвращаем
+// (иначе следующий push вернул бы их в блоб и снова заархивировал). Только серверный режим.
+async function loadOrderFeed(oid){
+  const o=S.orders.find(x=>x.id===oid); if(!o) return;
+  try{
+    const r=await fetch('/api/order/feed?order='+encodeURIComponent(o.id), {cache:'no-store', headers:AH()});
+    if(!r.ok){ toast('История ленты недоступна для этой роли'); return; }
+    const j=await r.json();
+    S._feedArch=S._feedArch||{}; S._feedArch[oid]=Array.isArray(j.archived)?j.archived:[];
+    render();
+    toast(j.count?('Загружена история: +'+j.count+' записей из архива'):'Вся история уже на экране','ok');
+  }catch(e){ toast('Не удалось загрузить историю ленты'); }
+}
 function vOrder(oid){
   const o = S.orders.find(x=>x.id===oid); if(!o) return '<div class="empty">заказ не найден</div>';
   const eps = S.epics.filter(e=>e.orderId===oid).map(e=>e.id);
@@ -5783,8 +5798,15 @@ function vOrder(oid){
     </div>
     <div class="panel evfeed"><h3>Лента заказа <span style="font-family:var(--mono);font-size:10px;color:var(--good)">· ${saved} событий вместо звонков</span></h3>
       ${o.goz?'<div class="xfeed-note">события с меткой <span class="xtag ext">⟷ верфь</span> синхронизированы с контуром верфи через Мост — остальное видно только вашей команде</div>':''}
-      ${(o.feed||[]).slice().reverse().map(f=>{ const xo=/Мост|синхронизир/i.test(f[1]);
-        return `<div class="ev"><span class="t">${esc(f[0])}</span><span>${safe(f[1])}${xo?' <span class="xtag ext">⟷ верфь</span>':''}${f[2]?'<span class="nocall">вместо звонка</span>':''}</span></div>`; }).join('')}
+      ${(()=>{ // архив ленты (старые записи, вынесенные в l3_feed) — display-only, не в синке
+        const arch=(S._feedArch&&S._feedArch[oid])||null;
+        const full=arch?arch.concat(o.feed||[]):(o.feed||[]);   // хронологически: архив(старое)+блоб(недавнее)
+        const canMore=SRV.on && !arch && (o.feed||[]).length>=40;   // окно заполнено → возможен архив
+        const head=canMore?`<button class="chip" data-loadfeed="${esc(o.id)}" style="margin-bottom:10px">↑ Загрузить всю историю ленты</button>`
+          :(arch&&arch.length?`<div class="xfeed-note">↑ показана полная история: ${arch.length} из архива + ${(o.feed||[]).length} недавних</div>`:'');
+        return head+full.slice().reverse().map(f=>{ const xo=/Мост|синхронизир/i.test(f[1]);
+          return `<div class="ev"><span class="t">${esc(f[0])}</span><span>${safe(f[1])}${xo?' <span class="xtag ext">⟷ верфь</span>':''}${f[2]?'<span class="nocall">вместо звонка</span>':''}</span></div>`; }).join('');
+      })()}
     </div>
   </div>
   ${nsOrderPanel(o.num)}
@@ -7139,6 +7161,8 @@ document.addEventListener('click', e=>{
   const nav2 = e.target.closest('[data-nav2]'); if(nav2){ S.view=nav2.dataset.nav2; render(); return; }
   { const nm=e.target.closest('[data-nsgoto]'); if(nm){ S.view='ns'; S.nsView='list'; S.nsActive=nm.dataset.nsgoto; render(); return; } }
   const ord = e.target.closest('[data-order]'); if(ord){ closeDrawer(); S.view='order'; S.orderId=ord.dataset.order; render(); ensureL3(ord.dataset.order); return; }
+  const lf = e.target.closest('[data-loadfeed]');
+  if(lf){ loadOrderFeed(lf.dataset.loadfeed); return; }
   const adv = e.target.closest('[data-advance]');
   if(adv){ const o=S.orders.find(x=>x.id===adv.dataset.advance);
     if(o.stage<STAGE_NAMES.length-1){ o.stage++; if(o.stage>=8&&o.risk!=='done') o.risk='ok';
