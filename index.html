@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.0.16 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.0.17 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -175,6 +175,20 @@
   .xown-leg i{width:9px;height:9px;border-radius:3px;display:inline-block}
   .xown-leg i.sup{background:var(--accent)}.xown-leg i.yard{background:var(--good)}
   .xown{font-size:9.5px;font-weight:700;border-radius:6px;padding:2px 8px;white-space:nowrap;flex:none}
+  /* Горизонтальный трекер вех заказа для внешнего заказчика («где мой заказ» с одного взгляда) */
+  .ptl-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px 14px;box-shadow:var(--sh);margin-bottom:12px;overflow-x:auto}
+  .ptl-track{display:flex;align-items:flex-start;min-width:min-content}
+  .ptl-node{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:96px;flex:none}
+  .ptl-dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;font-family:var(--mono);border:2px solid;background:var(--panel);z-index:1}
+  .ptl-node.done .ptl-dot{border-color:var(--good);color:var(--good);background:color-mix(in srgb,var(--good) 15%,var(--panel))}
+  .ptl-node.cur .ptl-dot{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 20%,transparent)}
+  .ptl-node.next .ptl-dot{border-color:var(--line);color:var(--muted)}
+  .ptl-lbl{font-size:11px;text-align:center;line-height:1.25;max-width:100px;color:var(--ink2);font-weight:600}
+  .ptl-node.next .ptl-lbl{color:var(--muted);font-weight:500}
+  .ptl-own{font-size:8.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--steel);background:var(--panel2);border-radius:5px;padding:1px 6px}
+  .ptl-own.yard{color:var(--accent);background:var(--accent-soft)}
+  .ptl-link{flex:1 0 22px;height:2px;margin-top:14px;min-width:22px;background:var(--line)}
+  .ptl-link.done{background:var(--good)}
   .xown.sup{background:var(--accent-soft);color:var(--accent)}
   .xown.yard{background:var(--good-soft);color:var(--good)}
   .xtag{display:inline-block;font-size:9.5px;font-weight:700;border-radius:5px;padding:1px 7px;vertical-align:middle}
@@ -4012,6 +4026,16 @@ function vSupply(){
 
 /* ---- Портал заказчика / ВП: внешний ограниченный вид заказа (статус, вехи, приёмка, Q&A). Скрыто: маржа, поставщики, задачи ---- */
 const PORTAL_PHASES=[['Контракт',4],['Проектирование · РКД',5],['Производство',6],['Приёмка ВП',7],['Отгрузка',8],['ПНР и гарантия',9]];
+// Горизонтальный трекер вех для внешнего заказчика: PORTAL_PHASES как связанные узлы
+// (выполнено/сейчас/предстоит) с указанием, чьё поле (поставщик / верфь·ВП).
+function portalTimeline(curIdx){
+  const nodes=PORTAL_PHASES.map((p,i)=>{
+    const st=i<curIdx?'done':i===curIdx?'cur':'next'; const yard=p[1]===7;
+    const link=i>0?`<span class="ptl-link ${i<=curIdx?'done':''}"></span>`:'';
+    return link+`<div class="ptl-node ${st}"><span class="ptl-dot">${st==='done'?'✓':st==='cur'?'●':(i+1)}</span><span class="ptl-lbl">${esc(p[0])}</span><span class="ptl-own ${yard?'yard':''}">${yard?'верфь·ВП':'поставщик'}</span></div>`;
+  }).join('');
+  return `<div class="ptl-wrap" role="img" aria-label="Ход исполнения заказа: этап ${curIdx+1} из ${PORTAL_PHASES.length} — ${esc(PORTAL_PHASES[curIdx][0])}"><div class="ptl-track">${nodes}</div></div>`;
+}
 function portalOrders(){ return (S.orders||[]).filter(o=>o.stage>=4); }
 function portalPending(){ return (S.portalQA||[]).filter(q=>!q.a).length; }
 function curPortalOrder(){ const os=portalOrders(); return os.find(o=>o.id===S.portalOrder)?S.portalOrder:(os[0]&&os[0].id); }
@@ -4047,6 +4071,7 @@ function vPortal(){
 
     <h4 class="psec">Ход исполнения</h4>
     <div class="xown-leg"><span><i class="sup"></i> статус двигает поставщик</span><span><i class="yard"></i> двигает верфь / ВП</span></div>
+    ${portalTimeline(curIdx)}
     <div class="anacard" style="cursor:default">
       ${PORTAL_PHASES.map((p,i)=>{ const st=i<curIdx?'done':i===curIdx?'cur':'next';
         const col=st==='done'?'var(--good)':st==='cur'?'var(--accent)':'var(--muted)';
@@ -4399,10 +4424,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.0.16';
+const APP_VER = '2.0.17';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.0.17', d:'август 2026', items:['Портал заказчика/ВП: горизонтальный трекер вех заказа («где мой заказ» с одного взгляда) — узлы Контракт→РКД→Производство→Приёмка ВП→Отгрузка→ПНР по статусам (выполнено/сейчас/предстоит) с пометкой чьё поле (поставщик / верфь·ВП). Внешнему участнику (PM верфи, военпред) наглядно, детальный список остался ниже']},
   {v:'2.0.16', d:'август 2026', items:['Демо-контроль-центр (🎭): к обзору ролей добавлен «Быстрый показ заказчику» — переходы в один клик к killer-моментам (крит-путь изделия, портфель, лента заказа, просчёт с ИИ-аналогом, база знаний, отчёты) под подходящей ролью, и «🔄 Демо заново» для восстановления тестовых данных между показами']},
   {v:'2.0.15', d:'август 2026', items:['Портфель изделий (обзор рук. ИЦ): на каждой карточке — компактная мини-дорожка критического пути (точки по статусам), видно не только «% готово», но ГДЕ по цепочке застряло изделие и какой этап красный. Консистентно с визуальным крит-путём в списке']},
   {v:'2.0.14', d:'август 2026', items:['Демо-админка ролей (кнопка 🎭 в шапке, офлайн-демо): обзор всех 12 ролей по тирам (дирекция/руководители/сотрудники) — доступные модули, финансовая видимость, охват; «Смотреть как →» в один клик перестраивает интерфейс под роль. Пройти продукт глазами каждого сотрудника на тестовых данных. Безопасно: только демо-режим; на сервере роль назначает директор, серверная проекция не отдаёт чужие данные при подмене на клиенте']},
@@ -5210,7 +5236,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.0.16',
+  version:'2.0.17',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
