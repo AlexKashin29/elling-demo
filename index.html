@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.2.0 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.2.1 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -990,6 +990,8 @@
   .anwhy-c.s{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent);background:color-mix(in srgb,var(--good) 9%,transparent)}
   .anwhy-c.p{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
   .anwhy-c.w{color:var(--muted)}
+  .an-hint{font-size:11.5px;color:var(--ink2);background:color-mix(in srgb,var(--warn) 8%,transparent);border:1px solid color-mix(in srgb,var(--warn) 22%,transparent);border-radius:8px;padding:6px 10px;margin-top:6px}
+  .an-hint b{color:var(--ink)}
   @media(max-width:640px){.anrow{grid-template-columns:40px 60px 1fr;grid-template-rows:auto auto}.anh{grid-column:1/-1;text-align:right}}
   /* ROI-калькулятор */
   .roi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
@@ -2933,8 +2935,13 @@ function analogPanel(){
       <span class="anh">${x.hours} → <b>${x.est_hours}</b> н/ч</span>
       ${chips?`<div class="anwhy">${chips}</div>`:''}</div>`;
   }).join('');
+  // Actionable-подсказка: у опорного аналога слабые измерения → что уточнить в ТЗ для точной оценки.
+  const bestA=(a.analogs||[]).find(x=>x.id===est.basis)||(a.analogs||[])[0];
+  const bp=(bestA&&bestA.parts)||{};
+  const weak=[['параметры (подача / давление / мощность)',bp.params],['шифр изделия',bp.codes],['материал исполнения',bp.materials]].filter(dm=>typeof dm[1]==='number'&&dm[1]<60).map(dm=>dm[0]);
+  const hint = weak.length ? `<div class="an-hint">ⓘ Чтобы поднять точность оценки — уточните в ТЗ: <b>${esc(weak.join(', '))}</b>.</div>` : '';
   const head = (est.best!=null)
-    ? `<div class="an-est"><div class="an-est-v">${est.low}–${est.high}<span> н/ч</span></div><div class="an-est-l">ИИ-оценка трудоёмкости по ${est.relevant} аналог${est.relevant==1?'у':'ам'}. Опора — «${esc((byId[est.basis]||{}).izdelie||est.basis)}», масштаб по ведущему параметру. Готовая цифра для ТКП за секунды вместо дней просчёта.</div></div>`
+    ? `<div class="an-est"><div class="an-est-v">${est.low}–${est.high}<span> н/ч</span></div><div class="an-est-l">ИИ-оценка трудоёмкости по ${est.relevant} аналог${est.relevant==1?'у':'ам'}. Опора — «${esc((byId[est.basis]||{}).izdelie||est.basis)}», масштаб по ведущему параметру. Готовая цифра для ТКП за секунды вместо дней просчёта.</div></div>${hint}`
     : `<div class="an-est"><div class="an-est-l">Близких аналогов для оценки не нашлось — уточните параметры ТЗ (подача, давление, мощность, материал, шифр).</div></div>`;
   // возврат оценки в заявку просчёта, откуда пришли (замыкает петлю Просчёт → аналог → просчитано)
   const estApply=(est.best!=null && S._estAnalogFor && S._estAnalogTz===S.kbq && (typeof estById==='function') && estById(S._estAnalogFor))
@@ -4576,10 +4583,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.2.0';
+const APP_VER = '2.2.1';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.2.1', d:'август 2026', items:['Killer-фича стала подсказывать: если у опорного аналога слабое измерение (например, материал совпал лишь на 40%%), ИИ-оценка теперь прямо говорит, что уточнить в ТЗ для точной цифры — «уточните материал исполнения / шифр / параметры». Оценка не просто прозрачна, но и ведёт к более точной: продажник знает, что доспросить у заказчика']},
   {v:'2.2.0', d:'август 2026', items:['Killer-фича прозрачнее: под каждым найденным аналогом теперь видна разбивка «почему ИИ его выбрал» — чипы вклада по параметрам, шифру, категории, материалу и смыслу (раньше это было только в тултипе). Инженер видит основание оценки, а не «магию»: совпало по параметрам 95%%, шифру 100%%, материалу 40%% — и доверяет цифре н/ч']},
   {v:'2.1.9', d:'август 2026', items:['Демо-центр (🎭): добавлен «Промышленный показ» — один клик переключает профиль завода на промышленный и открывает нужный экран промвертикали: проработку насоса НПЗ (API 610) или ГПЭС энергетики, портфель с фильтром 🏭, ленту заказа НПЗ, портал заказчика с вехами ОТК/инспекция/ПНР. Александру — показывать промышленную вертикаль так же гладко, как судостроительную']},
   {v:'2.1.8', d:'август 2026', items:['Промышленная вертикаль шире НПЗ — под промышленность в целом (нефтегаз, энергетика, химия, ЖКХ, машиностроение). Расширены подписи (профиль завода, заголовок блока, тип «Промышленный насос»); в проработку добавлено второе изделие из другой отрасли — газопоршневая электростанция ГПЭС-1,5 МВт (энергетика, тип «газовый двигатель»). Теперь демо промвертикали показывает и нефтегаз (насос НПЗ), и генерацию (ГПА), а не только НПЗ']},
@@ -5400,7 +5408,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.2.0',
+  version:'2.2.1',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
