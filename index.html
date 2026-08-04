@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.1.9 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.2.0 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -985,6 +985,11 @@
   .anbar i{display:block;height:100%;border-radius:99px}
   .annm{font-size:13px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .anh{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .anwhy{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;margin:1px 0 6px}
+  .anwhy-c{font-size:9.5px;font-family:var(--mono);letter-spacing:.02em;padding:1px 7px;border-radius:20px;border:1px solid var(--line);white-space:nowrap}
+  .anwhy-c.s{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent);background:color-mix(in srgb,var(--good) 9%,transparent)}
+  .anwhy-c.p{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+  .anwhy-c.w{color:var(--muted)}
   @media(max-width:640px){.anrow{grid-template-columns:40px 60px 1fr;grid-template-rows:auto auto}.anh{grid-column:1/-1;text-align:right}}
   /* ROI-калькулятор */
   .roi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
@@ -2918,11 +2923,15 @@ function analogPanel(){
     const col=x.score>=70?'var(--good)':x.score>=40?'var(--warn)':'var(--line)';
     const parts=x.parts||{};
     const why=[parts.type>=100?'тип':'', parts.codes>=90?'шифр':'', parts.params>=60?'параметры':'', parts.cats>=100?'категория':'', parts.materials>=50?'материал':'', parts.vector>=50?'смысл':''].filter(Boolean).join(' · ');
+    // Видимая разбивка «почему ИИ выбрал этот аналог» — чтобы инженер доверял оценке, а не тултипу.
+    const dims=[['тип',parts.type],['шифр',parts.codes],['параметры',parts.params],['категория',parts.cats],['материал',parts.materials],['смысл',parts.vector]].filter(dm=>typeof dm[1]==='number');
+    const chips=dims.map(([l,v])=>`<span class="anwhy-c ${v>=80?'s':v>=50?'p':'w'}" title="вклад в совпадение">${l} ${Math.round(v)}%</span>`).join('');
     return `<div class="anrow" data-kbproj="${esc(x.id)}" title="совпало: ${esc(why||'частично')}">
       <span class="anpct" style="color:${col}">${x.score}%</span>
       <div class="anbar"><i style="width:${Math.max(3,x.score)}%;background:${col}"></i></div>
       <span class="annm">${esc(x.name||(byId[x.id]||{}).izdelie||x.id)}</span>
-      <span class="anh">${x.hours} → <b>${x.est_hours}</b> н/ч</span></div>`;
+      <span class="anh">${x.hours} → <b>${x.est_hours}</b> н/ч</span>
+      ${chips?`<div class="anwhy">${chips}</div>`:''}</div>`;
   }).join('');
   const head = (est.best!=null)
     ? `<div class="an-est"><div class="an-est-v">${est.low}–${est.high}<span> н/ч</span></div><div class="an-est-l">ИИ-оценка трудоёмкости по ${est.relevant} аналог${est.relevant==1?'у':'ам'}. Опора — «${esc((byId[est.basis]||{}).izdelie||est.basis)}», масштаб по ведущему параметру. Готовая цифра для ТКП за секунды вместо дней просчёта.</div></div>`
@@ -4567,10 +4576,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.1.9';
+const APP_VER = '2.2.0';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.2.0', d:'август 2026', items:['Killer-фича прозрачнее: под каждым найденным аналогом теперь видна разбивка «почему ИИ его выбрал» — чипы вклада по параметрам, шифру, категории, материалу и смыслу (раньше это было только в тултипе). Инженер видит основание оценки, а не «магию»: совпало по параметрам 95%%, шифру 100%%, материалу 40%% — и доверяет цифре н/ч']},
   {v:'2.1.9', d:'август 2026', items:['Демо-центр (🎭): добавлен «Промышленный показ» — один клик переключает профиль завода на промышленный и открывает нужный экран промвертикали: проработку насоса НПЗ (API 610) или ГПЭС энергетики, портфель с фильтром 🏭, ленту заказа НПЗ, портал заказчика с вехами ОТК/инспекция/ПНР. Александру — показывать промышленную вертикаль так же гладко, как судостроительную']},
   {v:'2.1.8', d:'август 2026', items:['Промышленная вертикаль шире НПЗ — под промышленность в целом (нефтегаз, энергетика, химия, ЖКХ, машиностроение). Расширены подписи (профиль завода, заголовок блока, тип «Промышленный насос»); в проработку добавлено второе изделие из другой отрасли — газопоршневая электростанция ГПЭС-1,5 МВт (энергетика, тип «газовый двигатель»). Теперь демо промвертикали показывает и нефтегаз (насос НПЗ), и генерацию (ГПА), а не только НПЗ']},
   {v:'2.1.7', d:'август 2026', items:['Фильтр портфеля по сегменту: в портфеле изделий появились чипы 🚢 Судостроение / 🏭 Промышленность (показываются, когда есть обе вертикали). Broad-фильтр над типом — выбрал сегмент, и список типов сузился до него. Руководителю с изделиями двух вертикалей — отсечь одну в один клик']},
@@ -5390,7 +5400,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.1.9',
+  version:'2.2.0',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
