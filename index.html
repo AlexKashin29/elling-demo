@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.2.2 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.2.3 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -4583,10 +4583,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.2.2';
+const APP_VER = '2.2.3';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.2.3', d:'август 2026', items:['Оценочный лист заказчику — обоснованнее: в печатный документ добавлено основание совпадения опорного аналога (параметры, шифр, материал, категория). Заказчик видит, на чём стоит оценка трудоёмкости, а не «магическую» цифру — то же обоснование, что и в панели ИИ-подбора']},
   {v:'2.2.2', d:'август 2026', items:['Отчёты директора — срез по вертикалям: если завод ведёт и судовое, и промышленное оборудование, в отчётах появляется панель «Портфель изделий по вертикалям» (🚢 Судостроение / 🏭 Промышленность) с числом изделий, риском и долей портфеля. Директору видно, из чего состоит инженерный портфель и где риск по каждой вертикали']},
   {v:'2.2.1', d:'август 2026', items:['Killer-фича стала подсказывать: если у опорного аналога слабое измерение (например, материал совпал лишь на 40%%), ИИ-оценка теперь прямо говорит, что уточнить в ТЗ для точной цифры — «уточните материал исполнения / шифр / параметры». Оценка не просто прозрачна, но и ведёт к более точной: продажник знает, что доспросить у заказчика']},
   {v:'2.2.0', d:'август 2026', items:['Killer-фича прозрачнее: под каждым найденным аналогом теперь видна разбивка «почему ИИ его выбрал» — чипы вклада по параметрам, шифру, категории, материалу и смыслу (раньше это было только в тултипе). Инженер видит основание оценки, а не «магию»: совпало по параметрам 95%%, шифру 100%%, материалу 40%% — и доверяет цифре н/ч']},
@@ -5409,7 +5410,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.2.2',
+  version:'2.2.3',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
@@ -5483,6 +5484,9 @@ function estimateSheetHTML(){
   const o=org(); const est=a.estimate||{};
   const byId={}; (S.kbProjects||[]).forEach(p=>byId[p.id]=p);
   const basis=byId[est.basis]||{};
+  // Основание совпадения опорного аналога — в документ, чтобы оценка выглядела обоснованной, не «магией».
+  const _bA=(a.analogs||[]).find(x=>x.id===est.basis)||{}; const _bp=_bA.parts||{};
+  const matchedDims=[[_bp.params>=60,'параметры'],[_bp.codes>=90,'шифр изделия'],[_bp.materials>=50,'материал'],[_bp.cats>=100,'категория'],[_bp.type>=100,'тип'],[_bp.vector>=50,'смысл ТЗ']].filter(dm=>dm[0]).map(dm=>dm[1]);
   const rows=(a.analogs||[]).filter(x=>x.score>0).slice(0,5).map((x,i)=>{
     const p=byId[x.id]||{};
     return `<tr><td>${i+1}</td><td>${esc(x.name||p.izdelie||x.id)}${p.code?` <span class="p-note">${esc(p.code)}</span>`:''}</td>
@@ -5495,7 +5499,7 @@ function estimateSheetHTML(){
     <div class="p-title">Оценочный лист трудоёмкости<br><span>№ ${esc(num)} от ${today()}</span></div>
     <div class="p-to"><b>По техническому заданию:</b> ${esc((S.kbq||a.demoTz||'—').slice(0,400))}${cats?`<br><b>Распознанные признаки:</b> ${cats}`:''}</div>
     ${est.best!=null?`<div style="font-size:22px;font-weight:700;margin:14px 0 3px">Предварительная оценка: ${est.low}–${est.high} н/ч</div>
-      <div class="p-note" style="margin-bottom:12px">Опора — исполненное изделие «${esc(basis.izdelie||est.basis)}»${basis.hours?` (${basis.hours} н/ч, заказ №${esc(basis.order||'—')})`:''}, масштаб по ведущему параметру ТЗ.</div>`
+      <div class="p-note" style="margin-bottom:12px">Опора — исполненное изделие «${esc(basis.izdelie||est.basis)}»${basis.hours?` (${basis.hours} н/ч, заказ №${esc(basis.order||'—')})`:''}, масштаб по ведущему параметру ТЗ.${matchedDims.length?` Основание совпадения: ${esc(matchedDims.join(', '))}.`:''}</div>`
       :`<div class="p-note" style="margin:14px 0">Близких аналогов для количественной оценки не найдено — требуется просчёт инженерного центра.</div>`}
     <table class="p-tbl">
       <tr><th style="width:34px">№</th><th>Изделие-аналог</th><th style="width:66px">Похоже</th><th style="width:88px">Факт, н/ч</th><th style="width:98px">Оценка, н/ч</th></tr>
