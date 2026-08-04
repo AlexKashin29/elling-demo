@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.1.1 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.1.2 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -3089,6 +3089,15 @@ const NS_SEG = { marine:['🚢','Судостроение'], industry:['🏭','�
 function nsSegOf(st){ return (NS_TYPES[st&&st.type]||{}).seg || 'marine'; }
 function nsSegBadge(st){ const s=nsSegOf(st), m=NS_SEG[s]||NS_SEG.marine;
   return `<span class="ns-seg-b ns-seg-${s}" title="сегмент: ${m[1]}">${m[0]} ${esc(m[1])}</span>`; }
+// Отраслевой профиль завода — определяет, какая вертикаль показывается первой и как
+// подписан завод. Хранится в реквизитах (org().segment). 'both' = универсальный.
+const NS_SEG_HDR = { marine:'Судостроение · РМРС / ВП', industry:'Промышленность · НПЗ / газ · Ростехнадзор / ТР ТС' };
+const SEG_PROFILE = {
+  both:    ['Производитель СКО и промышленного оборудования','Оба (универсальный)'],
+  marine:  ['Производитель судового комплектующего оборудования (СКО)','Судостроение'],
+  industry:['Производитель промышленного оборудования (НПЗ / газ / энергетика)','Промышленность'],
+};
+function nsSegPref(){ const p=org().segment; return SEG_PROFILE[p]?p:'both'; }
 // Зависимости критериев по инженерной последовательности проработки изделий (доменное
 // знание вшито — ноль ручной настройки): критерий «готов к старту» только когда его
 // предшественники завершены. Так инженер испытаний видит, что его «Схемы автоматизации»
@@ -3490,8 +3499,10 @@ const nsTypeMenu=(cls)=>{
   const keys=Object.keys(NS_TYPES);
   const seg=s=>keys.filter(k=>(NS_TYPES[k].seg||'marine')===s)
     .map(k=>`<button class="ns-add-t" data-nsaddtype="${k}" data-seg="${NS_TYPES[k].seg||'marine'}">${esc(NS_TYPES[k].label)}</button>`).join('');
-  const hdr=t=>`<div class="ns-add-seg">${t}</div>`;
-  return `<div class="ns-add-menu ${cls||''}"><button class="ns-goz-tog ${S._nsAddGoz?'on':''}" data-nsgoztoggle title="гособоронзаказ: добавит согласование КД с военпредом">${S._nsAddGoz?'☑':'☐'} ГОЗ · военпред (ВП)</button>${hdr('Судостроение · РМРС / ВП')}${seg('marine')}${hdr('Промышленность · НПЗ / газ · Ростехнадзор / ТР ТС')}${seg('industry')}</div>`;
+  const pref=nsSegPref();
+  const order = pref==='industry' ? ['industry','marine'] : ['marine','industry'];
+  const hdr=s=>`<div class="ns-add-seg">${NS_SEG_HDR[s]}${pref===s?' · ваш профиль':''}</div>`;
+  return `<div class="ns-add-menu ${cls||''}"><button class="ns-goz-tog ${S._nsAddGoz?'on':''}" data-nsgoztoggle title="гособоронзаказ: добавит согласование КД с военпредом">${S._nsAddGoz?'☑':'☐'} ГОЗ · военпред (ВП)</button>${order.map(s=>hdr(s)+seg(s)).join('')}</div>`;
 };
 function vNS(){
   const list=nsList();
@@ -4492,10 +4503,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.1.1';
+const APP_VER = '2.1.2';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.1.2', d:'август 2026', items:['Отраслевой профиль завода (Настройки → Организация): Судостроение / Промышленность / Оба. Профиль подстраивает продукт под вертикаль — при создании изделия ваш блок показан первым и помечен «ваш профиль», а подпись завода в реквизитах отражает отрасль. НПЗ-заводу не нужно продираться через судовые типы, и наоборот']},
   {v:'2.1.1', d:'август 2026', items:['Промышленная вертикаль, развитие: сегментные метки (🚢 Судостроение / 🏭 Промышленность) на карточках изделий и в портфеле — видно вертикаль с одного взгляда; в Базе знаний появился промышленный аналог (нефтяной насос НК-560 по API 610, НПЗ) — ИИ-подбор аналога и оценка трудоёмкости теперь работают и на промышленном ТЗ, не только на судовом']},
   {v:'2.1.0', d:'август 2026', items:['Промышленный блок: платформа вышла за пределы судостроения. При создании изделия появился отдельный сегмент «Промышленность · НПЗ / газ / энергетика» с тремя типами — Промышленный насос (НПЗ, API 610 / NACE), Газовый двигатель / ГПА (Ростехнадзор ОПО) и Сосуд под давлением (ТР ТС 032, ГОСТ 34233, экспертиза ПБ). Регуляторная рамка не РМРС/ВП, а Ростехнадзор / ТР ТС / промбезопасность — готовые цепочки критериев под каждый тип. Тот же движок проработки, зависимостей и сроков']},
   {v:'2.0.17', d:'август 2026', items:['Портал заказчика/ВП: горизонтальный трекер вех заказа («где мой заказ» с одного взгляда) — узлы Контракт→РКД→Производство→Приёмка ВП→Отгрузка→ПНР по статусам (выполнено/сейчас/предстоит) с пометкой чьё поле (поставщик / верфь·ВП). Внешнему участнику (PM верфи, военпред) наглядно, детальный список остался ниже']},
@@ -5017,7 +5029,7 @@ function vSettings(){
       <div class="panel" style="margin-bottom:14px">
         <div class="org-head"><span class="org-mark"></span>
           <div style="flex:1"><div class="org-name">${esc(org().name)}</div>
-            <div class="org-sub">Производитель СКО</div></div>
+            <div class="org-sub">${esc(SEG_PROFILE[nsSegPref()][0])}</div></div>
           <span class="stchip" style="color:var(--accent);border:1px solid var(--accent)">дизайн-партнёр</span></div>
         ${canAdmin()?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px">
           ${[['ogName','Краткое название',org().name],['ogFull','Полное название',org().full],
@@ -5026,6 +5038,7 @@ function vSettings(){
              ['ogDir','Руководитель (для подписи)',org().director],['ogDirRole','Должность',org().dirRole]]
             .map(([id,t,v])=>`<label class="fld"><span>${t}</span><input id="${id}" value="${esc(v||'')}"></label>`).join('')}
           <label class="fld"><span>Налоговый режим (для ТКП)</span><select id="ogTax">${Object.keys(TAX_MODES).map(k=>`<option value="${k}"${org().taxMode===k?' selected':''}>${esc(TAX_MODES[k].col.replace('Цена, руб. ',''))}</option>`).join('')}</select></label>
+          <label class="fld"><span>Отраслевой профиль завода</span><select id="ogSegment">${Object.keys(SEG_PROFILE).map(k=>`<option value="${k}"${nsSegPref()===k?' selected':''}>${esc(SEG_PROFILE[k][1])}</option>`).join('')}</select></label>
         </div>
         <button class="btn" id="orgSave" style="margin-top:12px">Сохранить реквизиты</button>`
         :`<div class="org-grid">
@@ -5306,7 +5319,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.1.1',
+  version:'2.1.2',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
@@ -7705,7 +7718,7 @@ document.addEventListener('click', e=>{
     const g=id=>(($(id)||{}).value||'').trim();
     S.org={name:g('ogName'),full:g('ogFull'),inn:g('ogInn'),kpp:g('ogKpp'),ogrn:g('ogOgrn'),
       addr:g('ogAddr'),phone:g('ogPhone'),email:g('ogEmail'),director:g('ogDir'),dirRole:g('ogDirRole'),
-      taxMode:(($('ogTax')||{}).value)||'osn20'};
+      taxMode:(($('ogTax')||{}).value)||'osn20', segment:(($('ogSegment')||{}).value)||'both'};
     ACTS.push('обновлены реквизиты организации');
     save(); render(); toast('Реквизиты сохранены — теперь они в ТКП и накладных','ok'); return; }
   /* Печатные формы: ТКП из сделки, накладная из отгрузки */
