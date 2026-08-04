@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.2.1 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.2.2 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -4583,10 +4583,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.2.1';
+const APP_VER = '2.2.2';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.2.2', d:'август 2026', items:['Отчёты директора — срез по вертикалям: если завод ведёт и судовое, и промышленное оборудование, в отчётах появляется панель «Портфель изделий по вертикалям» (🚢 Судостроение / 🏭 Промышленность) с числом изделий, риском и долей портфеля. Директору видно, из чего состоит инженерный портфель и где риск по каждой вертикали']},
   {v:'2.2.1', d:'август 2026', items:['Killer-фича стала подсказывать: если у опорного аналога слабое измерение (например, материал совпал лишь на 40%%), ИИ-оценка теперь прямо говорит, что уточнить в ТЗ для точной цифры — «уточните материал исполнения / шифр / параметры». Оценка не просто прозрачна, но и ведёт к более точной: продажник знает, что доспросить у заказчика']},
   {v:'2.2.0', d:'август 2026', items:['Killer-фича прозрачнее: под каждым найденным аналогом теперь видна разбивка «почему ИИ его выбрал» — чипы вклада по параметрам, шифру, категории, материалу и смыслу (раньше это было только в тултипе). Инженер видит основание оценки, а не «магию»: совпало по параметрам 95%%, шифру 100%%, материалу 40%% — и доверяет цифре н/ч']},
   {v:'2.1.9', d:'август 2026', items:['Демо-центр (🎭): добавлен «Промышленный показ» — один клик переключает профиль завода на промышленный и открывает нужный экран промвертикали: проработку насоса НПЗ (API 610) или ГПЭС энергетики, портфель с фильтром 🏭, ленту заказа НПЗ, портал заказчика с вехами ОТК/инспекция/ПНР. Александру — показывать промышленную вертикаль так же гладко, как судостроительную']},
@@ -5408,7 +5409,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.2.1',
+  version:'2.2.2',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
@@ -6519,6 +6520,13 @@ function vReports(){
   const loads = Object.keys(PEOPLE).filter(p=>PEOPLE[p].role==='инженер'||PEOPLE[p].role==='рук. ИЦ')
     .map(p=>[p, S.tasks.filter(t=>t.who===p&&t.col!=='done').length]);
   const maxL = Math.max(1,...loads.map(l=>l[1]));
+  // Срез инженерного портфеля по вертикалям — ценно директору завода, ведущего и судовое, и промышленное.
+  const segStat={}; const nsL=nsList();
+  nsL.forEach(st=>{ const s=nsSegOf(st); const r=nsStationRisk(st); const o=(segStat[s]=segStat[s]||{n:0,risk:0}); o.n++; if(r.level==='risk'||r.level==='warn') o.risk++; });
+  const segKeys=Object.keys(segStat);
+  const segPanel = (segKeys.length>1 && nsL.length) ? `<div class="panel" style="margin-top:14px"><h3>Портфель изделий по вертикалям</h3>
+      ${segKeys.map(s=>{ const o=segStat[s], share=Math.round(o.n/nsL.length*100); return `<div class="loadrow"><span class="nm">${NS_SEG[s][0]} ${esc(NS_SEG[s][1])} — <b>${o.n}</b> изд.${o.risk?` · <span style="color:var(--warn)">${o.risk} с риском</span>`:''}</span><span class="bar"><i style="width:${share}%"></i></span><span class="n">${share}%</span></div>`; }).join('')}
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Состав инженерного портфеля по вертикалям — для завода, ведущего и судовое, и промышленное оборудование.</p></div>` : '';
   return `<div class="exp-bar" style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:14px;flex-wrap:wrap">
       <button class="btn ghost" id="expCSV">Выгрузить в Excel (CSV)</button>
       <button class="btn ghost" id="expPrint" title="печатная сводка по портфелю одним листом — для дирекции/собственника">🖨 Сводка для дирекции (PDF)</button>
@@ -6541,6 +6549,7 @@ function vReports(){
       <p style="font-size:12px;color:var(--muted);margin-top:10px">Метрики потока видит рук. ИЦ и директор. Первые 3 месяца после внедрения не публикуются наружу — принцип адопшена.</p>
     </div>
     <div class="panel" style="margin-top:14px">${chartNSHealth()}</div>
+    ${segPanel}
     ${canAudit()?`<div class="panel" style="margin-top:14px"><h3>Журнал аудита <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">· сервер · кто, когда, что</span></h3>
       <div id="auditBox"><div class="empty">доступен при подключённом сервере</div></div>
     </div>`:`<div class="panel" style="margin-top:14px"><h3>Журнал аудита</h3>
