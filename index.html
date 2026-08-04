@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.1.6 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.1.7 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -3799,12 +3799,14 @@ function vNSPortfolio(){
   // фильтр портфеля: по риску (клик по счётчику), типу изделия и ГОЗ — руководителю ИЦ отсеять сегмент
   const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false});
   const riskMatch=(lvl)=> F.risk==='graph' ? (lvl==='ok'||lvl==='done') : (lvl===F.risk);
-  const shown=rows.filter(x=> (!F.risk||riskMatch(x.r.level)) && (!F.type||x.st.type===F.type) && (!F.goz||x.st.goz));
-  const typesPresent=[...new Set(rows.map(x=>x.st.type).filter(t=>t&&NS_TYPES[t]))];
+  const shown=rows.filter(x=> (!F.risk||riskMatch(x.r.level)) && (!F.seg||nsSegOf(x.st)===F.seg) && (!F.type||x.st.type===F.type) && (!F.goz||x.st.goz));
+  const segsPresent=[...new Set(rows.map(x=>nsSegOf(x.st)))];
+  const typesPresent=[...new Set(rows.map(x=>x.st.type).filter(t=>t&&NS_TYPES[t]&&(!F.seg||(NS_TYPES[t].seg||'marine')===F.seg)))];
+  const segChips=segsPresent.length>1 ? segsPresent.map(s=>`<button class="ns-pf-tchip ${F.seg===s?'on':''}" data-nspfseg="${s}" title="только: ${NS_SEG[s][1]}">${NS_SEG[s][0]} ${esc(NS_SEG[s][1])}</button>`).join('') : '';
   const sc=(key,cls,label,val)=>`<button class="ns-pf-sc ${cls} ${F.risk===key?'on':''}" data-nspfrisk="${key}" title="показать только: ${label}"><b>${val}</b> ${label}</button>`;
   const typeChips=typesPresent.map(t=>`<button class="ns-pf-tchip ${F.type===t?'on':''}" data-nspftype="${t}">${esc((NS_TYPES[t]||NS_TYPES.base).label)}</button>`).join('');
   const gozN=rows.filter(x=>x.st.goz).length;
-  const filtered=!!(F.risk||F.type||F.goz);
+  const filtered=!!(F.risk||F.type||F.goz||F.seg);
   const cards=shown.map(({st,r})=>{ const crit=nsCriticalPath(st);
     const critDays=crit.reduce((s,c)=>s+nsDurFor(c),0);
     const typeLabel=(NS_TYPES[st.type]||NS_TYPES.base).label;
@@ -3827,6 +3829,7 @@ function vNSPortfolio(){
       ${sc('risk','bad','срыв',cnt('risk'))}
     </div>
     <div class="ns-pf-filters">
+      ${segChips?`<span class="ns-pf-flabel">Сегмент:</span>${segChips}`:''}
       <span class="ns-pf-flabel">Тип:</span>${typeChips}
       ${gozN?`<button class="ns-pf-tchip goz ${F.goz?'on':''}" data-nspfgoz="1" title="только ГОЗ (военная приёмка)">ГОЗ · ВП (${gozN})</button>`:''}
       ${filtered?`<button class="ns-pf-clear" data-nspfclear="1">✕ сбросить фильтр</button>`:''}
@@ -4550,10 +4553,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.1.6';
+const APP_VER = '2.1.7';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.1.7', d:'август 2026', items:['Фильтр портфеля по сегменту: в портфеле изделий появились чипы 🚢 Судостроение / 🏭 Промышленность (показываются, когда есть обе вертикали). Broad-фильтр над типом — выбрал сегмент, и список типов сузился до него. Руководителю с изделиями двух вертикалей — отсечь одну в один клик']},
   {v:'2.1.6', d:'август 2026', items:['Портал заказчика под промышленность: вехи и вокабуляр портала зависят от вертикали заказа. Для судового — верфь и приёмка ВП (как было); для промышленного (НПЗ/газ) — заказчик и его инспекция вместо военпреда, цепочка Контракт → Проектирование·КД → Производство → Приёмка: ОТК + инспекция (FAT) → Отгрузка → ПНР и шеф-монтаж. Вертикаль определяется по связанному изделию, иначе по профилю завода']},
   {v:'2.1.5', d:'август 2026', items:['Промышленная сделка в CRM-воронке: в пайплайне продаж появилась сделка «Насос нефтяной НК-360/230 (API 610) для АВТ-6» (Газпром нефтехим Салават, 9,8 млн ₽, стадия «Контракт»). Замыкает сквозную нить вертикали НПЗ: сделка → заказ ПРН-2409 → изделие в проработке → аналог в БЗ. Продажный контур теперь работает и на промышленность, не только на судостроение']},
   {v:'2.1.4', d:'август 2026', items:['Промышленный заказ сквозь весь продукт: в списке заказов и ленте появился заказ ПРН-2409 «Насос нефтяной НК-360/230 (API 610)» для НПЗ (Газпром нефтехим Салават, установка АВТ-6) — связан с изделием в проработке и промышленным аналогом в БЗ. Лента показывает промышленный сценарий: опросный лист по ЭДО → ИИ-подбор аналога 84%%/410 н/ч → согласование NACE → отставание по чертежу. Вертикаль НПЗ теперь видна не только в проработке, но и в CRM-потоке заказа']},
@@ -5370,7 +5374,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.1.6',
+  version:'2.1.7',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
@@ -8040,8 +8044,9 @@ document.addEventListener('click', e=>{
   // фильтр портфеля НС
   { const el=e.target.closest('[data-nspfrisk]'); if(el){ const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false}); const v=el.dataset.nspfrisk||null; F.risk=(F.risk===v?null:v); render(); return; } }
   { const el=e.target.closest('[data-nspftype]'); if(el){ const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false}); const v=el.dataset.nspftype; F.type=(F.type===v?null:v); render(); return; } }
+  { const el=e.target.closest('[data-nspfseg]'); if(el){ const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false}); const v=el.dataset.nspfseg; F.seg=(F.seg===v?null:v); F.type=null; render(); return; } }
   { const el=e.target.closest('[data-nspfgoz]'); if(el){ const F=S.nsPfFilter||(S.nsPfFilter={risk:null,type:null,goz:false}); F.goz=!F.goz; render(); return; } }
-  { const el=e.target.closest('[data-nspfclear]'); if(el){ S.nsPfFilter={risk:null,type:null,goz:false}; render(); return; } }
+  { const el=e.target.closest('[data-nspfclear]'); if(el){ S.nsPfFilter={risk:null,type:null,goz:false,seg:null}; render(); return; } }
   // связка Просчёт → ИИ-оценка: заявка несёт ТЗ, подбираем аналог и оценку трудоёмкости
   { const el=e.target.closest('[data-estanalog]'); if(el){ const est=(S.estimates||[]).find(x=>x.id===el.dataset.estanalog);
       if(est){ S._estAnalogFor=est.id;   // помним заявку, чтобы вернуть оценку аналога обратно
