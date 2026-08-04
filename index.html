@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.1.5 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.1.6 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -4126,16 +4126,40 @@ function vSupply(){
 }
 
 /* ---- Портал заказчика / ВП: внешний ограниченный вид заказа (статус, вехи, приёмка, Q&A). Скрыто: маржа, поставщики, задачи ---- */
-const PORTAL_PHASES=[['Контракт',4],['Проектирование · РКД',5],['Производство',6],['Приёмка ВП',7],['Отгрузка',8],['ПНР и гарантия',9]];
-// Горизонтальный трекер вех для внешнего заказчика: PORTAL_PHASES как связанные узлы
-// (выполнено/сейчас/предстоит) с указанием, чьё поле (поставщик / верфь·ВП).
-function portalTimeline(curIdx){
-  const nodes=PORTAL_PHASES.map((p,i)=>{
-    const st=i<curIdx?'done':i===curIdx?'cur':'next'; const yard=p[1]===7;
+// Вехи и вокабуляр портала зависят от вертикали заказа: у судового — верфь и
+// военная приёмка (ВП); у промышленного (НПЗ/газ) — заказчик и его инспекция
+// (ОТК + FAT, при необходимости Ростехнадзор), а не военпред.
+const PORTAL_SEG = {
+  marine: {
+    phases:[['Контракт',4],['Проектирование · РКД',5],['Производство',6],['Приёмка ВП',7],['Отгрузка',8],['ПНР и гарантия',9]],
+    party:'Верфь / ВП',
+    note:'Верфь и военная приёмка работают с заказом как <b>внешние участники</b> — видят только вехи, документы, приёмку и Q&A, синхронизированные из вашего контура.',
+    acceptOwner:'верфь · ВП', legend:'двигает верфь / ВП',
+  },
+  industry: {
+    phases:[['Контракт',4],['Проектирование · КД',5],['Производство',6],['Приёмка: ОТК + инспекция',7],['Отгрузка',8],['ПНР и шеф-монтаж',9]],
+    party:'Заказчик / инспекция',
+    note:'Заказчик и его инспекция (при необходимости — Ростехнадзор) работают с заказом как <b>внешние участники</b> — видят вехи, документы, приёмку (FAT) и Q&A, синхронизированные из вашего контура.',
+    acceptOwner:'заказчик · инспекция', legend:'двигает заказчик / инспекция',
+  },
+};
+const PORTAL_PHASES = PORTAL_SEG.marine.phases;   // алиас: судовые вехи по умолчанию
+function portalPhases(seg){ return PORTAL_SEG[seg]||PORTAL_SEG.marine; }
+// Вертикаль заказа: по связанному изделию в проработке (order↔num), иначе — профиль завода.
+function portalSegOf(order){
+  if(order){ const st=(S.ns||[]).find(x=>x&&x.order&&order.num&&x.order===order.num); if(st) return nsSegOf(st); }
+  return (typeof nsSegPref==='function'?nsSegPref():'marine');
+}
+// Горизонтальный трекер вех для внешнего заказчика: связанные узлы (выполнено/сейчас/
+// предстоит) с указанием, чьё поле (поставщик / приёмка внешнего участника).
+function portalTimeline(curIdx, seg){
+  const V=portalPhases(seg), phases=V.phases;
+  const nodes=phases.map((p,i)=>{
+    const st=i<curIdx?'done':i===curIdx?'cur':'next'; const acc=p[1]===7;
     const link=i>0?`<span class="ptl-link ${i<=curIdx?'done':''}"></span>`:'';
-    return link+`<div class="ptl-node ${st}"><span class="ptl-dot">${st==='done'?'✓':st==='cur'?'●':(i+1)}</span><span class="ptl-lbl">${esc(p[0])}</span><span class="ptl-own ${yard?'yard':''}">${yard?'верфь·ВП':'поставщик'}</span></div>`;
+    return link+`<div class="ptl-node ${st}"><span class="ptl-dot">${st==='done'?'✓':st==='cur'?'●':(i+1)}</span><span class="ptl-lbl">${esc(p[0])}</span><span class="ptl-own ${acc?'yard':''}">${acc?esc(V.acceptOwner):'поставщик'}</span></div>`;
   }).join('');
-  return `<div class="ptl-wrap" role="img" aria-label="Ход исполнения заказа: этап ${curIdx+1} из ${PORTAL_PHASES.length} — ${esc(PORTAL_PHASES[curIdx][0])}"><div class="ptl-track">${nodes}</div></div>`;
+  return `<div class="ptl-wrap" role="img" aria-label="Ход исполнения заказа: этап ${curIdx+1} из ${phases.length} — ${esc(phases[curIdx][0])}"><div class="ptl-track">${nodes}</div></div>`;
 }
 function portalOrders(){ return (S.orders||[]).filter(o=>o.stage>=4); }
 function portalPending(){ return (S.portalQA||[]).filter(q=>!q.a).length; }
@@ -4145,16 +4169,17 @@ function vPortal(){
   const pre=(S.orders||[]).filter(o=>o.stage<4).length;
   if(!orders.length) return '<div class="empty">пока нет заказов на стадии контракта и позже — портал открывается заказчику после подписания контракта</div>';
   const oid=curPortalOrder(); const o=orders.find(x=>x.id===oid);
-  const curIdx = PORTAL_PHASES.reduce((acc,p,i)=>o.stage>=p[1]?i:acc, 0);
+  const seg = portalSegOf(o); const V = portalPhases(seg); const phases = V.phases;
+  const curIdx = phases.reduce((acc,p,i)=>o.stage>=p[1]?i:acc, 0);
   const docs=(S.portalDocs||[]).filter(d=>d.orderId===oid);
   const qa=(S.portalQA||[]).filter(q=>q.orderId===oid);
   const mgr=PEOPLE.sokolova?PEOPLE.sokolova.full:'ваш менеджер';
   return `<div class="xorg">
       <div class="xorg-side"><span class="xdot cloud"></span><div><b>Поставщик</b><small>облако · вы</small></div></div>
       <div class="xorg-link"><span class="xarrow">⟷</span><span class="xsync">⟳ синхронизировано · сейчас</span></div>
-      <div class="xorg-side"><span class="xdot box"></span><div><b>Верфь / ВП</b><small>закрытый контур · внешний участник</small></div></div>
+      <div class="xorg-side"><span class="xdot box"></span><div><b>${esc(V.party)}</b><small>закрытый контур · внешний участник</small></div></div>
     </div>
-    <div class="xorg-note">Верфь и военная приёмка работают с заказом как <b>внешние участники</b> — видят только вехи, документы, приёмку и Q&A, синхронизированные из вашего контура. <span style="color:var(--muted)">Скрыто: цена и маржа, свои поставщики, внутренние задачи и переписка.</span></div>
+    <div class="xorg-note">${V.note} <span style="color:var(--muted)">Скрыто: цена и маржа, свои поставщики, внутренние задачи и переписка.</span></div>
     <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
       ${orders.map(x=>`<button class="chip" data-portalorder="${x.id}" aria-pressed="${x.id===oid}">№${esc(x.num)} · ${esc(x.customer)}</button>`).join('')}</div>
 
@@ -4162,7 +4187,7 @@ function vPortal(){
       <div class="ana-top">
         <div><div class="ana-name">Заказ №${esc(o.num)} · ${esc(o.title)}${o.goz?' <span class="stchip" style="color:var(--accent);border:1px solid var(--accent);font-size:9px">ГОЗ · приёмка ВП</span>':''}</div>
           <div class="ana-meta">${esc(o.customer)} · ${esc(o.vessel)}</div></div>
-        <span class="stchip" style="color:var(--steel);border:1px solid var(--steel)">этап: ${PORTAL_PHASES[curIdx][0]}</span>
+        <span class="stchip" style="color:var(--steel);border:1px solid var(--steel)">этап: ${phases[curIdx][0]}</span>
       </div>
       <div style="display:flex;gap:24px;flex-wrap:wrap;margin:12px 0 4px;font-size:12.5px;color:var(--ink2)">
         <span>Плановый срок: <b style="color:var(--ink)">${esc(o.due)}</b></span>
@@ -4171,16 +4196,16 @@ function vPortal(){
     </div>
 
     <h4 class="psec">Ход исполнения</h4>
-    <div class="xown-leg"><span><i class="sup"></i> статус двигает поставщик</span><span><i class="yard"></i> двигает верфь / ВП</span></div>
-    ${portalTimeline(curIdx)}
+    <div class="xown-leg"><span><i class="sup"></i> статус двигает поставщик</span><span><i class="yard"></i> ${esc(V.legend)}</span></div>
+    ${portalTimeline(curIdx, seg)}
     <div class="anacard" style="cursor:default">
-      ${PORTAL_PHASES.map((p,i)=>{ const st=i<curIdx?'done':i===curIdx?'cur':'next';
+      ${phases.map((p,i)=>{ const st=i<curIdx?'done':i===curIdx?'cur':'next';
         const col=st==='done'?'var(--good)':st==='cur'?'var(--accent)':'var(--muted)';
-        const yard = p[1]===7; // «Приёмка ВП» — поле верфи/ВП, остальное двигает поставщик
-        return `<div style="display:flex;gap:12px;align-items:center;padding:9px 0;${i<PORTAL_PHASES.length-1?'border-bottom:1px solid var(--line2)':''}">
+        const yard = p[1]===7; // веха приёмки — поле внешнего участника, остальное двигает поставщик
+        return `<div style="display:flex;gap:12px;align-items:center;padding:9px 0;${i<phases.length-1?'border-bottom:1px solid var(--line2)':''}">
           <span style="width:14px;height:14px;border-radius:50%;flex:none;background:${st==='next'?'transparent':col};border:2px solid ${col}"></span>
           <span style="flex:1;font-size:13.5px;color:${st==='next'?'var(--muted)':'var(--ink)'};font-weight:${st==='cur'?'700':'500'}">${p[0]}</span>
-          <span class="xown ${yard?'yard':'sup'}">${yard?'верфь · ВП':'поставщик'}</span>
+          <span class="xown ${yard?'yard':'sup'}">${yard?esc(V.acceptOwner):'поставщик'}</span>
           <span class="stchip" style="color:${col};border:1px solid ${col};font-size:9px">${st==='done'?'выполнено':st==='cur'?'сейчас':'предстоит'}</span>
         </div>`; }).join('')}
     </div>
@@ -4525,10 +4550,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.1.5';
+const APP_VER = '2.1.6';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.1.6', d:'август 2026', items:['Портал заказчика под промышленность: вехи и вокабуляр портала зависят от вертикали заказа. Для судового — верфь и приёмка ВП (как было); для промышленного (НПЗ/газ) — заказчик и его инспекция вместо военпреда, цепочка Контракт → Проектирование·КД → Производство → Приёмка: ОТК + инспекция (FAT) → Отгрузка → ПНР и шеф-монтаж. Вертикаль определяется по связанному изделию, иначе по профилю завода']},
   {v:'2.1.5', d:'август 2026', items:['Промышленная сделка в CRM-воронке: в пайплайне продаж появилась сделка «Насос нефтяной НК-360/230 (API 610) для АВТ-6» (Газпром нефтехим Салават, 9,8 млн ₽, стадия «Контракт»). Замыкает сквозную нить вертикали НПЗ: сделка → заказ ПРН-2409 → изделие в проработке → аналог в БЗ. Продажный контур теперь работает и на промышленность, не только на судостроение']},
   {v:'2.1.4', d:'август 2026', items:['Промышленный заказ сквозь весь продукт: в списке заказов и ленте появился заказ ПРН-2409 «Насос нефтяной НК-360/230 (API 610)» для НПЗ (Газпром нефтехим Салават, установка АВТ-6) — связан с изделием в проработке и промышленным аналогом в БЗ. Лента показывает промышленный сценарий: опросный лист по ЭДО → ИИ-подбор аналога 84%%/410 н/ч → согласование NACE → отставание по чертежу. Вертикаль НПЗ теперь видна не только в проработке, но и в CRM-потоке заказа']},
   {v:'2.1.3', d:'август 2026', items:['Промышленное демо-изделие «из коробки»: в проработке появился нефтяной насос НК-360/230 по API 610 (НПЗ, среда H₂S, ТР ТС 010) — с живым спектром статусов и цепочкой критериев (опросный лист → расчёт/NPSH → NACE → API 610 → КД → ТР ТС → стенд → FAT → паспорт). Теперь при профиле «Промышленность» вертикаль видна сразу, а не только создаётся вручную']},
@@ -5344,7 +5370,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.1.5',
+  version:'2.1.6',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
