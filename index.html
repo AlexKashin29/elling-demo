@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.0.17 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.1.0 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1165,6 +1165,8 @@
   .ns-add-wrap{position:relative}
   .ns-add-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;display:flex;flex-direction:column;gap:3px;background:var(--panel);border:1px solid var(--line2);border-radius:11px;padding:6px;box-shadow:0 8px 26px rgba(0,0,0,.18);min-width:230px}
   .ns-add-menu.center{position:static;flex-direction:row;flex-wrap:wrap;justify-content:center;box-shadow:none;background:transparent;border:none;padding:0;gap:8px;min-width:0}
+  .ns-add-seg{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;padding:7px 10px 2px}
+  .ns-add-menu.center .ns-add-seg{flex-basis:100%;text-align:center;padding:10px 0 2px}
   .ns-add-t{text-align:left;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--ink);font-size:12.5px;padding:8px 11px;cursor:pointer}
   .ns-add-t:hover{background:color-mix(in srgb,var(--accent,#2E6E8E) 12%,transparent);border-color:color-mix(in srgb,var(--accent,#2E6E8E) 30%,transparent)}
   .ns-goz-tog{text-align:left;background:transparent;border:1px dashed var(--line2);border-radius:8px;color:var(--muted);font-size:11.5px;padding:6px 10px;cursor:pointer;margin-bottom:4px}
@@ -3027,6 +3029,45 @@ const NS_TYPES = {
     ['Приёмо-сдаточные испытания','asu',5,['d7','d8']],
     ['Приёмка ВП, паспорт системы','asu',4,['d9']],
   ]},
+  // --- Промышленный блок: оборудование для НПЗ / газа / энергетики. Тот же движок
+  // проработки, но регуляторная рамка не РМРС/ВП, а Ростехнадзор / ТР ТС / промбезопасность
+  // (API 610, NACE MR0175, ТР ТС 010/2011 и 032/2013, ГОСТ 34233, экспертиза ПБ).
+  inpump: {label:'Промышленный насос (НПЗ)', example:'Нефтяной насос ЦНС по API 610', seg:'industry', items:[
+    ['Опросный лист / ТЗ заказчика','proj',3,[]],
+    ['Гидравлический расчёт (подача / напор / NPSH)','proj',3,['d1']],
+    ['Материальное исполнение (NACE MR0175, H₂S)','proj',3,['d1']],
+    ['Прочность и виброустойчивость (API 610)','proj',3,['d2','d3']],
+    ['Сборочный чертёж и КД (ЕСКД, литера)','proj',5,['d4']],
+    ['Оценка соответствия ТР ТС 010/2011','proj',3,['d5']],
+    ['Программа и методика приёмо-сдаточных испытаний','proj',3,['d5']],
+    ['Стендовые испытания (ГОСТ 6134 / API 610)','asu',5,['d6','d7']],
+    ['Приёмка ОТК + инспекция заказчика (FAT)','asu',4,['d8']],
+    ['Паспорт, сертификат ТР ТС, декларация','asu',3,['d9']],
+  ]},
+  gasengine: {label:'Газовый двигатель / ГПА', example:'Газопоршневой агрегат ГПА-4', seg:'industry', items:[
+    ['Опросный лист / ТЗ (топливо, мощность)','proj',3,[]],
+    ['Тепловой и газодинамический расчёт','proj',3,['d1']],
+    ['Система газоподготовки и защит (ПАЗ)','proj',3,['d1','d2']],
+    ['Сборочный чертёж и КД (ЕСКД, литера)','proj',5,['d2','d3']],
+    ['Согласование с Ростехнадзором (ОПО)','proj',3,['d4']],
+    ['Оценка соответствия ТР ТС 010/2011','proj',3,['d4']],
+    ['Программа ресурсных и приёмочных испытаний','proj',3,['d4']],
+    ['Стендовые испытания (обкатка, ресурс)','asu',6,['d6','d7']],
+    ['Шеф-монтаж и пуско-наладка (ПНР)','asu',4,['d8']],
+    ['Паспорт, сертификат ТР ТС, гарантия','asu',3,['d9']],
+  ]},
+  vessel: {label:'Сосуд под давлением', example:'Колонна / реактор / аппарат НПЗ', seg:'industry', items:[
+    ['Опросный лист / ТЗ (среда, P, T)','proj',3,[]],
+    ['Технологический и прочностной расчёт (ГОСТ 34233)','proj',3,['d1']],
+    ['Материалы и припуск на коррозию','proj',3,['d1']],
+    ['Сборочный чертёж и КД (ЕСКД, литера)','proj',5,['d2','d3']],
+    ['Экспертиза промбезопасности / согласование','proj',4,['d4']],
+    ['Оценка соответствия ТР ТС 032/2013','proj',3,['d4']],
+    ['Изготовление: контроль сварки (РК / УЗК)','asu',5,['d5','d6']],
+    ['Гидравлическое (пневматическое) испытание','asu',4,['d7']],
+    ['Техническое освидетельствование','asu',3,['d8']],
+    ['Паспорт сосуда (ТР ТС 032), клеймение','asu',3,['d9']],
+  ]},
 };
 // Зависимости критериев по инженерной последовательности проработки изделий (доменное
 // знание вшито — ноль ручной настройки): критерий «готов к старту» только когда его
@@ -3425,7 +3466,13 @@ function nsCycleStatus(stId,itId){ const st=nsById(stId); if(!st) return;
     try{ runAutomations('ns_done'); }catch(_){}   // проработка изделия завершена? → правило R4
   }
   save(); render(); }
-const nsTypeMenu=(cls)=>`<div class="ns-add-menu ${cls||''}"><button class="ns-goz-tog ${S._nsAddGoz?'on':''}" data-nsgoztoggle title="гособоронзаказ: добавит согласование КД с военпредом">${S._nsAddGoz?'☑':'☐'} ГОЗ · военпред (ВП)</button>${Object.keys(NS_TYPES).map(k=>`<button class="ns-add-t" data-nsaddtype="${k}">${esc(NS_TYPES[k].label)}</button>`).join('')}</div>`;
+const nsTypeMenu=(cls)=>{
+  const keys=Object.keys(NS_TYPES);
+  const seg=s=>keys.filter(k=>(NS_TYPES[k].seg||'marine')===s)
+    .map(k=>`<button class="ns-add-t" data-nsaddtype="${k}" data-seg="${NS_TYPES[k].seg||'marine'}">${esc(NS_TYPES[k].label)}</button>`).join('');
+  const hdr=t=>`<div class="ns-add-seg">${t}</div>`;
+  return `<div class="ns-add-menu ${cls||''}"><button class="ns-goz-tog ${S._nsAddGoz?'on':''}" data-nsgoztoggle title="гособоронзаказ: добавит согласование КД с военпредом">${S._nsAddGoz?'☑':'☐'} ГОЗ · военпред (ВП)</button>${hdr('Судостроение · РМРС / ВП')}${seg('marine')}${hdr('Промышленность · НПЗ / газ · Ростехнадзор / ТР ТС')}${seg('industry')}</div>`;
+};
 function vNS(){
   const list=nsList();
   if(!list.length) return `<div class="ns-wrap"><div class="an-panel" style="text-align:center;padding:34px 20px">
@@ -4424,10 +4471,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.0.17';
+const APP_VER = '2.1.0';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.1.0', d:'август 2026', items:['Промышленный блок: платформа вышла за пределы судостроения. При создании изделия появился отдельный сегмент «Промышленность · НПЗ / газ / энергетика» с тремя типами — Промышленный насос (НПЗ, API 610 / NACE), Газовый двигатель / ГПА (Ростехнадзор ОПО) и Сосуд под давлением (ТР ТС 032, ГОСТ 34233, экспертиза ПБ). Регуляторная рамка не РМРС/ВП, а Ростехнадзор / ТР ТС / промбезопасность — готовые цепочки критериев под каждый тип. Тот же движок проработки, зависимостей и сроков']},
   {v:'2.0.17', d:'август 2026', items:['Портал заказчика/ВП: горизонтальный трекер вех заказа («где мой заказ» с одного взгляда) — узлы Контракт→РКД→Производство→Приёмка ВП→Отгрузка→ПНР по статусам (выполнено/сейчас/предстоит) с пометкой чьё поле (поставщик / верфь·ВП). Внешнему участнику (PM верфи, военпред) наглядно, детальный список остался ниже']},
   {v:'2.0.16', d:'август 2026', items:['Демо-контроль-центр (🎭): к обзору ролей добавлен «Быстрый показ заказчику» — переходы в один клик к killer-моментам (крит-путь изделия, портфель, лента заказа, просчёт с ИИ-аналогом, база знаний, отчёты) под подходящей ролью, и «🔄 Демо заново» для восстановления тестовых данных между показами']},
   {v:'2.0.15', d:'август 2026', items:['Портфель изделий (обзор рук. ИЦ): на каждой карточке — компактная мини-дорожка критического пути (точки по статусам), видно не только «% готово», но ГДЕ по цепочке застряло изделие и какой этап красный. Консистентно с визуальным крит-путём в списке']},
@@ -5236,7 +5284,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.0.17',
+  version:'2.1.0',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
