@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.1.0 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.1.1 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1167,6 +1167,9 @@
   .ns-add-menu.center{position:static;flex-direction:row;flex-wrap:wrap;justify-content:center;box-shadow:none;background:transparent;border:none;padding:0;gap:8px;min-width:0}
   .ns-add-seg{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;padding:7px 10px 2px}
   .ns-add-menu.center .ns-add-seg{flex-basis:100%;text-align:center;padding:10px 0 2px}
+  .ns-seg-b{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;letter-spacing:.02em;padding:2px 7px;border-radius:20px;border:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+  .ns-seg-marine{color:#2E6E8E;border-color:#2E6E8E44;background:#2E6E8E12}
+  .ns-seg-industry{color:#B8722C;border-color:#B8722C44;background:#B8722C14}
   .ns-add-t{text-align:left;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--ink);font-size:12.5px;padding:8px 11px;cursor:pointer}
   .ns-add-t:hover{background:color-mix(in srgb,var(--accent,#2E6E8E) 12%,transparent);border-color:color-mix(in srgb,var(--accent,#2E6E8E) 30%,transparent)}
   .ns-goz-tog{text-align:left;background:transparent;border:1px dashed var(--line2);border-radius:8px;color:var(--muted);font-size:11.5px;padding:6px 10px;cursor:pointer;margin-bottom:4px}
@@ -1753,6 +1756,17 @@ function seed(){
           {type:'Извещение', name:'ИИ-1 · замена подшипника SKF → ГПЗ', ver:'проведено 2022', where:'привязано к СБ-1893-02'},
           {type:'Протокол', name:'ПСИ давлением 60 бар', ver:'пройдено', where:'Заказ №1893 · Приёмка'},
           {type:'Сертификат', name:'СТО №22.00891.120', ver:'до 2027', where:'реестр сертификатов'},
+        ]},
+      {id:'PR-IND1', izdelie:'Насос нефтяной НК-560/210', code:'НК-560', order:'ПРН-2208', year:2023, hours:410, seg:'industry',
+        customer:'Газпром нефтехим Салават', vessel:'установка ЭЛОУ-АВТ-6', status:'исполнен',
+        tz:'Центробежный нефтяной насос по API 610 (тип OH2) для установки первичной переработки нефти. Подача 560 м³/ч, напор 210 м, рабочее давление 63 бар, температура перекачиваемой среды до 200 °C. Среда — нефть сернистая, содержание H₂S. Материальное исполнение по NACE MR0175. Привод — электродвигатель 400 кВт. Оценка соответствия ТР ТС 010/2011.',
+        tags:'насос нефтяной api610 нпз сернистая нефть h2s nace 63 бар 560 подача напор электропривод тр тс промышленный переработка',
+        docs:[
+          {type:'ТЗ', name:'Опросный лист / ТЗ на насос НК-560', ver:'v1 · архив', where:'Заказ ПРН-2208 · /ТЗ'},
+          {type:'Чертёж', name:'СБ-2208-01 · Сборочный чертёж насоса', ver:'v1.4', code:'СБ-2208-01', where:'DWG · вьюер'},
+          {type:'Расчёт', name:'Гидравлический расчёт и NPSH', ver:'v2', where:'Заказ ПРН-2208 · /Расчёты'},
+          {type:'Протокол', name:'Стендовые испытания по API 610', ver:'пройдено', where:'Заказ ПРН-2208 · Приёмка'},
+          {type:'Сертификат', name:'Декларация о соответствии ТР ТС 010/2011', ver:'до 2028', where:'реестр сертификатов'},
         ]},
       {id:'PR2', izdelie:'Насос ЦВ-300', code:'ЦВ-300', order:'1204', year:2019, hours:295,
         customer:'Адмиралтейские верфи', vessel:'пр. 20385', status:'исполнен',
@@ -3069,6 +3083,12 @@ const NS_TYPES = {
     ['Паспорт сосуда (ТР ТС 032), клеймение','asu',3,['d9']],
   ]},
 };
+// Сегмент изделия (вертикаль) выводится из типа: судостроение (РМРС/ВП) или
+// промышленность (Ростехнадзор/ТР ТС). Метка делает вертикаль видимой везде.
+const NS_SEG = { marine:['🚢','Судостроение'], industry:['🏭','Промышленность'] };
+function nsSegOf(st){ return (NS_TYPES[st&&st.type]||{}).seg || 'marine'; }
+function nsSegBadge(st){ const s=nsSegOf(st), m=NS_SEG[s]||NS_SEG.marine;
+  return `<span class="ns-seg-b ns-seg-${s}" title="сегмент: ${m[1]}">${m[0]} ${esc(m[1])}</span>`; }
 // Зависимости критериев по инженерной последовательности проработки изделий (доменное
 // знание вшито — ноль ручной настройки): критерий «готов к старту» только когда его
 // предшественники завершены. Так инженер испытаний видит, что его «Схемы автоматизации»
@@ -3545,6 +3565,7 @@ function vNS(){
     <div class="an-panel">
       <div class="ns-title-row">
         <input class="ns-name" type="text" data-nsname="${st.id}" value="${esc(st.name)}">
+        ${nsSegBadge(st)}
         ${st.goz?`<span class="ns-goz-badge" title="гособоронзаказ · военная приёмка">ГОЗ · ВП</span>`:''}
         <span class="ns-prog">${p.done}/${p.total} готово · ${p.pct}%${p.over?` · <b class="ns-over">${p.over} просрочено</b>`:''}${finishDay!=null?` · план готовности ${nsFmtDay(finishDay)}${finishLate?' <b class="ns-over">(просрочен)</b>':''}`:''}</span>
         <button class="ns-del" data-nsdelst="${st.id}" title="Удалить изделие">🗑</button>
@@ -3757,7 +3778,7 @@ function vNSPortfolio(){
     const eng=[st.proj?((PEOPLE[st.proj]||{}).full||st.proj):'', st.asu?((PEOPLE[st.asu]||{}).full||st.asu):''].filter(Boolean).join(' · ');
     return `<button class="ns-pf-card" data-nstab="${st.id}" data-nsview="list">
       <div class="ns-pf-h"><span class="ns-pf-nm">${esc(st.name)}</span><span class="ns-pf-risk" style="color:${RC[r.level]};border-color:${RC[r.level]}55;background:${RC[r.level]}18">${r.label}</span></div>
-      <div class="ns-pf-type">${esc(typeLabel)}${st.goz?' · <b class="ns-pf-goz">ГОЗ · ВП</b>':''}</div>
+      <div class="ns-pf-type">${nsSegBadge(st)} ${esc(typeLabel)}${st.goz?' · <b class="ns-pf-goz">ГОЗ · ВП</b>':''}</div>
       <div class="ns-pf-bar"><i style="width:${r.pct}%;background:${RC[r.level]}"></i></div>
       ${nsCritPathMini(crit)}
       <div class="ns-pf-stat">${r.done}/${r.total} готово · ${r.pct}%${r.finish!=null?` · готовность ${nsFmtDay(r.finish)}`:''}</div>
@@ -4471,10 +4492,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.1.0';
+const APP_VER = '2.1.1';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.1.1', d:'август 2026', items:['Промышленная вертикаль, развитие: сегментные метки (🚢 Судостроение / 🏭 Промышленность) на карточках изделий и в портфеле — видно вертикаль с одного взгляда; в Базе знаний появился промышленный аналог (нефтяной насос НК-560 по API 610, НПЗ) — ИИ-подбор аналога и оценка трудоёмкости теперь работают и на промышленном ТЗ, не только на судовом']},
   {v:'2.1.0', d:'август 2026', items:['Промышленный блок: платформа вышла за пределы судостроения. При создании изделия появился отдельный сегмент «Промышленность · НПЗ / газ / энергетика» с тремя типами — Промышленный насос (НПЗ, API 610 / NACE), Газовый двигатель / ГПА (Ростехнадзор ОПО) и Сосуд под давлением (ТР ТС 032, ГОСТ 34233, экспертиза ПБ). Регуляторная рамка не РМРС/ВП, а Ростехнадзор / ТР ТС / промбезопасность — готовые цепочки критериев под каждый тип. Тот же движок проработки, зависимостей и сроков']},
   {v:'2.0.17', d:'август 2026', items:['Портал заказчика/ВП: горизонтальный трекер вех заказа («где мой заказ» с одного взгляда) — узлы Контракт→РКД→Производство→Приёмка ВП→Отгрузка→ПНР по статусам (выполнено/сейчас/предстоит) с пометкой чьё поле (поставщик / верфь·ВП). Внешнему участнику (PM верфи, военпред) наглядно, детальный список остался ниже']},
   {v:'2.0.16', d:'август 2026', items:['Демо-контроль-центр (🎭): к обзору ролей добавлен «Быстрый показ заказчику» — переходы в один клик к killer-моментам (крит-путь изделия, портфель, лента заказа, просчёт с ИИ-аналогом, база знаний, отчёты) под подходящей ролью, и «🔄 Демо заново» для восстановления тестовых данных между показами']},
@@ -5284,7 +5306,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.1.0',
+  version:'2.1.1',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
