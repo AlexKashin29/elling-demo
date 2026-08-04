@@ -1,4 +1,4 @@
-﻿<title>Эллинг v2.1.8 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
+﻿<title>Эллинг v2.1.9 «Готовность к трансляции · серверная авторизация, судовые изделия, правовой пакет» — рабочий MVP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -4567,10 +4567,11 @@ function openDeal(id){
 }
 
 /* ---- v0.8: тема (авто → тёмная → светлая), приём Datrix ---- */
-const APP_VER = '2.1.8';
+const APP_VER = '2.1.9';
 try{ const _vt=document.getElementById('verTag'); if(_vt){ _vt.textContent='v'+APP_VER; _vt.style.cursor='pointer'; _vt.title='Что нового'; _vt.setAttribute('data-whatsnew','1'); } }catch(e){}
 // Что нового — заметные пользователю релизы (для «продукт развивается»). Свежее — сверху.
 const CHANGELOG = [
+  {v:'2.1.9', d:'август 2026', items:['Демо-центр (🎭): добавлен «Промышленный показ» — один клик переключает профиль завода на промышленный и открывает нужный экран промвертикали: проработку насоса НПЗ (API 610) или ГПЭС энергетики, портфель с фильтром 🏭, ленту заказа НПЗ, портал заказчика с вехами ОТК/инспекция/ПНР. Александру — показывать промышленную вертикаль так же гладко, как судостроительную']},
   {v:'2.1.8', d:'август 2026', items:['Промышленная вертикаль шире НПЗ — под промышленность в целом (нефтегаз, энергетика, химия, ЖКХ, машиностроение). Расширены подписи (профиль завода, заголовок блока, тип «Промышленный насос»); в проработку добавлено второе изделие из другой отрасли — газопоршневая электростанция ГПЭС-1,5 МВт (энергетика, тип «газовый двигатель»). Теперь демо промвертикали показывает и нефтегаз (насос НПЗ), и генерацию (ГПА), а не только НПЗ']},
   {v:'2.1.7', d:'август 2026', items:['Фильтр портфеля по сегменту: в портфеле изделий появились чипы 🚢 Судостроение / 🏭 Промышленность (показываются, когда есть обе вертикали). Broad-фильтр над типом — выбрал сегмент, и список типов сузился до него. Руководителю с изделиями двух вертикалей — отсечь одну в один клик']},
   {v:'2.1.6', d:'август 2026', items:['Портал заказчика под промышленность: вехи и вокабуляр портала зависят от вертикали заказа. Для судового — верфь и приёмка ВП (как было); для промышленного (НПЗ/газ) — заказчик и его инспекция вместо военпреда, цепочка Контракт → Проектирование·КД → Производство → Приёмка: ОТК + инспекция (FAT) → Отгрузка → ПНР и шеф-монтаж. Вертикаль определяется по связанному изделию, иначе по профилю завода']},
@@ -5389,7 +5390,7 @@ function ndsCalc(sum, mode){
 const VENDOR = {
   product:'Эллинг',
   holder:'Правообладатель ПО «Эллинг»',
-  version:'2.1.8',
+  version:'2.1.9',
   year:'2025–2026',
   inn:'',   // реквизиты правообладателя указываются в лицензионном договоре (не выдумываем)
   reg:'подготовка к включению в единый реестр российского ПО (Минцифры России, ПП-1236)',
@@ -7110,11 +7111,22 @@ function openRoleExplorer(){
     ['reports|orlov|','📈 Отчёты директора','поток, метрики, здоровье проработки'],
   ];
   const jumpBtns=JUMPS.map(([d,t,h])=>`<button class="re-jump" data-demojump="${esc(d)}" title="${esc(h)}">${t}</button>`).join('');
+  // Промышленный набор: 4-я часть 'industry' переключает профиль завода, opt может быть id изделия.
+  const JUMPS_IND=[
+    ['ns|maksimov|NS4|industry','🏭 Насос НПЗ · проработка','промышленный профиль · насос по API 610'],
+    ['ns|maksimov|NS5|industry','⚡ ГПЭС энергетики · проработка','газопоршневая электростанция'],
+    ['ns|maksimov|portfolio|industry','📊 Портфель · фильтр 🏭','только промышленные изделия'],
+    ['order|orlov|ПРН-2409|industry','🧵 Заказ НПЗ · лента','Газпром нефтехим · насос НК-360'],
+    ['portal|orlov|ПРН-2409|industry','🛡 Портал заказчика (НПЗ)','вехи ОТК/инспекция/ПНР вместо ВП'],
+  ];
+  const jumpBtnsInd=JUMPS_IND.map(([d,t,h])=>`<button class="re-jump" data-demojump="${esc(d)}" title="${esc(h)}">${t}</button>`).join('');
   $('roleExplorer').innerHTML=`<div class="re-panel" role="dialog" aria-modal="true" aria-label="Демо-админка · обзор ролей">
     <div class="re-top"><h2>Демо-админка · обзор ролей</h2><button class="re-x" data-reclose="1" aria-label="Закрыть">✕</button></div>
     <p class="re-sub">Тестовые данные загружены (${(S.orders||[]).length} заказов, ${(S.ns||[]).length} изделий, ${(S.deals||[]).length} сделок). Нажмите «Смотреть как» — меню, доступы и <b>финансовая видимость</b> перестроятся под роль. <span style="color:var(--muted)">Демо-режим: в серверной установке роль назначает директор, а сервер не отдаёт чужие данные даже при подмене на клиенте.</span></p>
     <div class="re-demo"><div class="re-demo-h">Быстрый показ заказчику<button class="re-reset" data-demoreset="1" title="восстановить исходные демо-данные">🔄 Демо заново</button></div>
-      <div class="re-jumps">${jumpBtns}</div></div>
+      <div class="re-jumps">${jumpBtns}</div>
+      <div class="re-demo-h" style="margin-top:12px">🏭 Промышленная вертикаль <span style="font-weight:400;color:var(--muted)">— нефтегаз · энергетика (переключит профиль завода)</span></div>
+      <div class="re-jumps">${jumpBtnsInd}</div></div>
     ${groups}
   </div>`;
   $('roleExplorer').classList.add('open');
@@ -7702,11 +7714,17 @@ document.addEventListener('click', e=>{
   if(asr){ const k=asr.dataset.asrole; if(PEOPLE[k]){ S.currentUser=k; S.navOpen=navOpenForRole(k); if(!canView(S.view)) S.view='today'; closeRoleExplorer(); render(); toast('Роль: '+PEOPLE[k].full+' · '+PEOPLE[k].role,'ok'); } return; }
   if(e.target.closest('[data-reclose]') || e.target.id==='roleExplorer'){ closeRoleExplorer(); return; }
   const dj=e.target.closest('[data-demojump]');
-  if(dj){ const parts=dj.dataset.demojump.split('|'); const u=parts[0], v=parts[1], opt=parts[2]||'';
+  if(dj){ const parts=dj.dataset.demojump.split('|'); const u=parts[0], v=parts[1], opt=parts[2]||'', seg=parts[3]||'';
+    if(seg){ S.org=Object.assign({}, S.org||{}, {segment:seg}); }   // профиль завода под показ (промышленный/судовой)
     if(PEOPLE[v]) S.currentUser=v; S.navOpen=navOpenForRole(S.currentUser); S.view=u;
-    if(u==='ns'){ if(opt==='portfolio'){ S.nsView='portfolio'; } else { S.nsView='list'; S.nsActive=(nsList()[0]||{}).id; } }
+    if(u==='ns'){
+      if(opt==='portfolio'){ S.nsView='portfolio'; if(seg) S.nsPfFilter={risk:null,type:null,goz:false,seg}; }
+      else if(opt && (S.ns||[]).some(x=>x.id===opt)){ S.nsView='list'; S.nsActive=opt; }   // конкретное изделие
+      else { S.nsView='list'; S.nsActive=(nsList()[0]||{}).id; }
+    }
     if(u==='order'){ const o=(S.orders||[]).find(x=>x.num===opt); if(o){ S.orderId=o.id; } else { S.view='flow'; } }
-    if(!canView(S.view) && S.view!=='order') S.view='today';   // страховка доступа
+    if(u==='portal'){ const o=(S.orders||[]).find(x=>x.num===opt); if(o){ S.portalOrder=o.id; } }
+    if(!canView(S.view) && S.view!=='order' && S.view!=='portal') S.view='today';   // страховка доступа
     closeRoleExplorer(); render(); return; }
   if(e.target.closest('[data-demoreset]')){ if(confirm('Восстановить исходные демо-данные? Текущие изменения будут заменены демонстрационным набором.')){ S=seed(); closeRoleExplorer(); render(); toast('Демо-данные восстановлены','ok'); } return; }
   if(e.target.id==='tourStart'){ startTour(); return; }
